@@ -1,8 +1,21 @@
+import { Coordinate } from './Coordinate'
+import { PaintCanvas } from './PaintCanvas'
+import { PaintPalette } from './PaintPalette'
 import './style.css'
 
-const app = document.querySelector<HTMLDivElement>('#app')!
+const elMain = document.querySelector<HTMLDivElement>('#main')!
+const elPalette = document.querySelector<HTMLDivElement>('#palette')!
 
-app.innerHTML = `
-  <h1>Hello Vite!</h1>
-  <a href="https://vitejs.dev/guide/features.html" target="_blank">Documentation</a>
-`
+const setting = new PaintPalette(elPalette)
+const canvas = new PaintCanvas(elMain)
+
+setting.onScaleChange.listen(scale => {
+  canvas.coord = new Coordinate(canvas.coord.anchor, canvas.coord.scroll, scale, canvas.coord.angle)
+})
+setting.onAngleChange.listen(angle => {
+  canvas.coord = new Coordinate(canvas.coord.anchor,canvas.coord.scroll, canvas.coord.scale, angle)
+})
+setting.onScrollChange.listen(offset => {
+  canvas.coord = new Coordinate(canvas.coord.anchor, offset, canvas.coord.scale, canvas.coord.angle)
+})
+canvas.coord = new Coordinate(canvas.coord.anchor, setting.scroll, setting.scale, setting.angle)
