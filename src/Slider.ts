@@ -1,16 +1,13 @@
 export class Slider {
   private elOuter: HTMLDivElement
   private elSlider: HTMLInputElement
-  private elLabel: HTMLLabelElement
-  private elLabelText: HTMLSpanElement
-  private elText: HTMLSpanElement
 
   constructor(label: string, min = 0, max = 100, value = 0) {
     const elOuter = (this.elOuter = document.createElement('div'))
     const elSlider = (this.elSlider = document.createElement('input'))
-    const elLabel = (this.elLabel = document.createElement('label'))
-    const elLabelText = (this.elLabelText = document.createElement('span'))
-    const elText = (this.elText = document.createElement('span'))
+    const elLabel = document.createElement('label')
+    const elLabelText = document.createElement('span')
+    const elText = document.createElement('span')
 
     elOuter.appendChild(elLabel)
     elLabel.appendChild(elLabelText)
