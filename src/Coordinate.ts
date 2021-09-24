@@ -18,14 +18,14 @@ export class Coordinate {
     this.angle = angle
   }
 
-  toLocal(gp: Point): Point {
-    return gp.rotate(this.angle).scale(this.scale).move(this.anchor)
-  }
+  // toLocal(gp: Point): Point {
+  //   return gp.rotate(this.angle).scale(this.scale).move(this.anchor)
+  // }
 
-  toGlobal(lp: Point): Point {
-    return lp
-      .move(this.anchor.scale(-1))
-      .scale(1 / this.scale)
-      .rotate(-this.angle)
-  }
+  // toGlobal(lp: Point): Point {
+  //   return lp
+  //     .move(this.anchor.scale(-1))
+  //     .scale(1 / this.scale)
+  //     .rotate(-this.angle)
+  // }
 }

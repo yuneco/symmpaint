@@ -21,11 +21,11 @@ export class AbstractCanvas {
   set coord(c: Coordinate) {
     this._coord = c
     this.ctx.resetTransform()
-    this.ctx.translate(c.scroll.x, c.scroll.y)
     this.ctx.scale(1 / c.scale, 1 / c.scale)
     this.ctx.translate(-c.anchor.x, -c.anchor.y)
     this.ctx.rotate((-c.angle / 180) * Math.PI)
     this.ctx.translate(c.anchor.x, c.anchor.y)
+    this.ctx.translate(c.scroll.x, c.scroll.y)
   }
 
   get coord() {
@@ -45,11 +45,11 @@ export class AbstractCanvas {
     const c = this.coord
     ctx.resetTransform()
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.translate(-c.anchor.x, -c.anchor.y)
     ctx.rotate((c.angle / 180) * Math.PI)
     ctx.translate(c.anchor.x, c.anchor.y)
     ctx.scale(c.scale, c.scale)
-    ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.drawImage(this.el, 0, 0)
     ctx.strokeStyle = '#aaaaaa'
     ctx.strokeRect(0, 0, canvas.width, canvas.height)

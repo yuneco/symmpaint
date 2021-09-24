@@ -14,14 +14,14 @@ export class Slider {
 
     elOuter.appendChild(elLabel)
     elLabel.appendChild(elLabelText)
-    elLabel.appendChild(elSlider)
     elLabel.appendChild(elText)
+    elLabel.appendChild(elSlider)
 
     elSlider.type = 'range'
     elSlider.min = String(min)
     elSlider.max = String(max)
     elSlider.value = String(value)
-    elLabelText.textContent = label
+    elLabelText.textContent = `${label}: `
     elText.textContent = elSlider.value
 
     elSlider.addEventListener('input', () => {
