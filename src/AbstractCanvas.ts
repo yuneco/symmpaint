@@ -13,6 +13,7 @@ export class AbstractCanvas {
     canvas.width = w
     canvas.height = h
     canvas.style.border = '1px solid #aaa'
+    ctx.lineCap = 'round'
     this.el = canvas
     this.ctx = ctx
     this._coord = new Coordinate()
@@ -33,9 +34,12 @@ export class AbstractCanvas {
   }
 
   moveTo(p: Point) {
+    this.ctx.beginPath()
     this.ctx.moveTo(p.x, p.y)
   }
-  drawTo(p: Point) {
+  drawTo(p: Point, pressure = 0.5) {
+    const lineW = 10 * pressure
+    this.ctx.lineWidth = lineW
     this.ctx.lineTo(p.x, p.y)
     this.ctx.stroke()
   }
