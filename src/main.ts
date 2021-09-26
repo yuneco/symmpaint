@@ -1,4 +1,3 @@
-import { Coordinate } from './Coordinate'
 import { PaintCanvas } from './PaintCanvas'
 import { PaintPalette } from './PaintPalette'
 import './style.css'
@@ -9,13 +8,22 @@ const elPalette = document.querySelector<HTMLDivElement>('#palette')!
 const setting = new PaintPalette(elPalette)
 const canvas = new PaintCanvas(elMain)
 
-setting.onScaleChange.listen(scale => {
-  canvas.coord = new Coordinate(canvas.coord.anchor, canvas.coord.scroll, scale, canvas.coord.angle)
+setting.onScaleChange.listen((scale) => {
+  canvas.coord = canvas.coord.clone({ scale })
 })
-setting.onAngleChange.listen(angle => {
-  canvas.coord = new Coordinate(canvas.coord.anchor,canvas.coord.scroll, canvas.coord.scale, angle)
+setting.onAngleChange.listen((angle) => {
+  canvas.coord = canvas.coord.clone({ angle })
 })
-setting.onScrollChange.listen(offset => {
-  canvas.coord = new Coordinate(canvas.coord.anchor, offset, canvas.coord.scale, canvas.coord.angle)
+setting.onScrollChange.listen((scroll) => {
+  canvas.coord = canvas.coord.clone({ scroll })
 })
-canvas.coord = new Coordinate(canvas.coord.anchor, setting.scroll, setting.scale, setting.angle)
+
+canvas.coord = canvas.coord.clone({
+  scroll: setting.scroll,
+  scale: setting.scale,
+  angle: setting.angle,
+})
+
+setting.onPenCountChange.listen((count) => {
+  canvas.penCount = count
+})

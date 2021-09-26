@@ -7,10 +7,12 @@ export class PaintPalette {
   private _angle: number = 0
   private _scrollX: number = 0
   private _scrollY: number = 0
+  private _penCount: number = 1
 
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
   readonly onScrollChange = new PaintEvent<Point>()
+  readonly onPenCountChange = new PaintEvent<number>()
 
   get scale() {
     return this._scale
@@ -22,6 +24,10 @@ export class PaintPalette {
 
   get scroll() {
     return new Point(this._scrollX, this._scrollY)
+  }
+
+  get penCount() {
+    return this._penCount
   }
 
   private set scale(v: number) {
@@ -48,21 +54,30 @@ export class PaintPalette {
     this.onScrollChange.fire(new Point(this._scrollX, this._scrollY))
   }
 
+  private set penCount(v: number) {
+    if (this.penCount === v) return
+    this._penCount = v
+    this.onPenCountChange.fire(v)
+  }
+
   constructor(parent: HTMLElement) {
     const slScale = new Slider('Scale', 50, 300, 100)
     const slAngle = new Slider('Angle', -180, 180, 0)
     const slX = new Slider('Scroll X', -400, 400, 0)
     const slY = new Slider('Scroll Y', -400, 400, 0)
+    const slPenCount = new Slider('Pen Count', 1, 12, 1)
     
     parent.appendChild(slScale.el)
     parent.appendChild(slAngle.el)
     parent.appendChild(slX.el)
     parent.appendChild(slY.el)
+    parent.appendChild(slPenCount.el)
 
     this.scale = Number(slScale.value) / 100
     this.angle = Number(slAngle.value)
     this.scrollX = Number(slX.value)
     this.scrollY = Number(slY.value)
+    this.penCount = Number(slPenCount.value)
 
     slScale.slider.addEventListener('input', () => {
       this.scale = Number(slScale.value) / 100
@@ -75,6 +90,9 @@ export class PaintPalette {
     })
     slY.slider.addEventListener('input', () => {
       this.scrollY = Number(slY.value)
+    })
+    slPenCount.slider.addEventListener('input', () => {
+      this.penCount = Number(slPenCount.value)
     })
   }
 }

@@ -1,11 +1,12 @@
 import { Coordinate } from './Coordinate'
+import { Pen } from './Pen'
 import { Point } from './Point'
 
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
   readonly ctx: CanvasRenderingContext2D
   private _coord: Coordinate
-  lastPoint: Point = new Point()
+  private _pen: Pen
 
   constructor(w: number, h: number) {
     const canvas = document.createElement('canvas')
@@ -18,16 +19,21 @@ export class AbstractCanvas {
     this.el = canvas
     this.ctx = ctx
     this._coord = new Coordinate()
+    this._pen = new Pen(ctx, w, h)
   }
 
   set coord(c: Coordinate) {
     this._coord = c
     this.ctx.resetTransform()
-    this.ctx.scale(1 / c.scale, 1 / c.scale)
     this.ctx.translate(-c.anchor.x, -c.anchor.y)
+    this.ctx.scale(1 / c.scale, 1 / c.scale)
     this.ctx.rotate((-c.angle / 180) * Math.PI)
     this.ctx.translate(c.anchor.x, c.anchor.y)
     this.ctx.translate(c.scroll.x, c.scroll.y)
+  }
+
+  get pen() {
+    return this._pen
   }
 
   get coord() {
@@ -35,17 +41,11 @@ export class AbstractCanvas {
   }
 
   moveTo(p: Point) {
-    this.lastPoint = p
+    this.pen.moveTo(p)
   }
 
   drawTo(p: Point, pressure = 0.5) {
-    const lineW = 10 * pressure
-    this.ctx.lineWidth = lineW
-    this.ctx.beginPath()
-    this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y)
-    this.ctx.lineTo(p.x, p.y)
-    this.ctx.stroke()
-    this.lastPoint = p
+    this.pen.drawTo(p, pressure)
   }
 
   output(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
@@ -56,8 +56,8 @@ export class AbstractCanvas {
     ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.translate(-c.anchor.x, -c.anchor.y)
     ctx.rotate((c.angle / 180) * Math.PI)
-    ctx.translate(c.anchor.x, c.anchor.y)
     ctx.scale(c.scale, c.scale)
+    ctx.translate(c.anchor.x, c.anchor.y)
     ctx.drawImage(this.el, 0, 0)
     ctx.strokeStyle = '#aaaaaa'
     ctx.strokeRect(0, 0, canvas.width, canvas.height)

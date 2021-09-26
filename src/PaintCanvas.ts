@@ -17,6 +17,8 @@ export class PaintCanvas {
     isWatchMove: false,
   }
 
+  private _penCount = 1
+
   constructor(parent: HTMLElement) {
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
@@ -46,8 +48,21 @@ export class PaintCanvas {
   }
 
   set coord(c: Coordinate) {
-    this.canvas.coord = new Coordinate(new Point(-WIDTH / 2, -HEIGHT / 2), c.scroll, c.scale, c.angle)
+    this.canvas.coord = c.clone({anchor: new Point(-WIDTH / 2, -HEIGHT / 2)})
     this.canvas.output(this.view.el, this.view.ctx)
+  }
+
+  get penCount() {
+    return this._penCount
+  }
+  set penCount(n: number) {
+    if (n === this.penCount) return
+    const pen = this.canvas.pen
+    pen.clearChildren()
+    if (n <= 1) return
+    for(let penNo = 1; penNo < n; penNo++) {
+      pen.addChildPen(new Coordinate({angle: penNo * 360 / n}))
+    }
   }
 
   private event2canvasPoint(ev: PointerEvent): Point {

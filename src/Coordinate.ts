@@ -1,21 +1,38 @@
 import { Point } from './Point'
 
+type CoordinateData = {
+  anchor: Point;
+  scroll: Point;
+  scale: number;
+  angle: number;
+}
+
 export class Coordinate {
   readonly anchor: Point
   readonly scroll: Point
   readonly scale: number
   readonly angle: number
 
-  constructor(
-    anchor = new Point(),
-    scroll = new Point(),
-    scale = 1,
-    angle = 0
+  constructor(data?: Partial<CoordinateData>
   ) {
-    this.anchor = anchor
-    this.scroll = scroll
-    this.scale = scale
-    this.angle = angle
+    this.anchor = data?.anchor ?? new Point()
+    this.scroll = data?.scroll ?? new Point()
+    this.scale = data?.scale ?? 1
+    this.angle = data?.angle ?? 0
+  }
+
+  toData(): CoordinateData {
+    return {
+      anchor: this.anchor,
+      scroll: this.scroll,
+      scale: this.scale,
+      angle: this.angle,
+    }
+  }
+
+  clone(data?: Partial<CoordinateData>): Coordinate {
+    const base = this.toData()
+    return new Coordinate({...base, ...data})
   }
 
   // toLocal(gp: Point): Point {
