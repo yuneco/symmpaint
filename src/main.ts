@@ -60,3 +60,8 @@ window.addEventListener('keydown', (ev) => {
     setting.penCount--
   }
 })
+
+// iOSのスクロール無効化
+window.addEventListener('touchmove', function(event) {
+  event.preventDefault();
+});
