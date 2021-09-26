@@ -182,6 +182,7 @@ export class PaintCanvas {
     if (action === 'draw') {
       this.drawTo(this.event2canvasPoint(ev), ev.pressure || 0.5)
     }
+    ev.preventDefault()
   }
   private onUp(ev: PointerEvent) {
     const action = this.eventStatus.activeEvent
