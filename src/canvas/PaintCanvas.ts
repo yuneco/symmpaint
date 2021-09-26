@@ -180,7 +180,7 @@ export class PaintCanvas {
   private onMove(ev: PointerEvent) {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
-      this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+      this.drawTo(this.event2canvasPoint(ev), ev.pressure || 0.5)
     }
   }
   private onUp(ev: PointerEvent) {
