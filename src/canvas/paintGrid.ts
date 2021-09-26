@@ -13,6 +13,19 @@ export const  clearCanvas = (canvas: AbstractCanvas): void => {
 }
 
 /**
+ * キャンバスを塗りつぶします
+ * @param canvas 
+ * @param color
+ */
+ export const  fillCanvas = (canvas: AbstractCanvas, color: string): void => {
+  canvas.ctx.save()
+  canvas.ctx.resetTransform()
+  canvas.ctx.fillStyle = color
+  canvas.ctx.fillRect(0, 0, canvas.width, canvas.height)
+  canvas.ctx.restore()
+}
+
+/**
  * 
  * @param canvas キャンバスに外枠を描きます
  */
@@ -35,7 +48,7 @@ export const paintKaraidGrid = (canvas: AbstractCanvas, count: number): void => 
   canvas.ctx.resetTransform()
   canvas.ctx.translate(center.x, center.y)
   canvas.ctx.lineWidth = 1
-  canvas.ctx.strokeStyle = '#aaddeeaa';
+  canvas.ctx.strokeStyle = '#aaccccbb';
   for(let index = 0; index < count; index++) {
     canvas.ctx.beginPath()
     canvas.ctx.moveTo(0, 0)

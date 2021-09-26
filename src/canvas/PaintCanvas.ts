@@ -3,9 +3,13 @@ import { Coordinate } from '../coords/Coordinate'
 import { DragWatcher } from '../events/DragWatcher'
 import { KeyPressWatcher } from '../events/KeyPressWatcher'
 import { PaintEvent } from '../events/PaintEvent'
-import { clearCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
+import { fillCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
 import { Point } from '../coords/Point'
-import { actionCursor, keysAction, PointerAction } from '../events/pointerAction'
+import {
+  actionCursor,
+  keysAction,
+  PointerAction,
+} from '../events/pointerAction'
 import { normalizeAngle } from '../coords/CoordUtil'
 
 // TODO: サイズは可変にする
@@ -198,10 +202,10 @@ export class PaintCanvas {
   }
 
   private rePaint() {
-    clearCanvas(this.view)
+    fillCanvas(this.view, '#cccccc')
+    this.canvas.output(this.view.ctx)
     if (this.penCount >= 2) {
       paintKaraidGrid(this.view, this.penCount)
     }
-    this.canvas.output(this.view.ctx)
   }
 }

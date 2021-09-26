@@ -55,7 +55,8 @@ export class AbstractCanvas {
   clear() {
     this.ctx.save()
     this.ctx.resetTransform()
-    this.ctx.clearRect(0, 0, this.width, this.height)
+    this.ctx.fillStyle = '#ffffff'
+    this.ctx.fillRect(0, 0, this.width, this.height)
     this.ctx.restore()
   }
 
