@@ -6,6 +6,7 @@ import { PaintEvent } from './PaintEvent'
 import { clearCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
 import { Point } from './Point'
 import { actionCursor, keysAction, PointerAction } from './pointerAction'
+import { normalizeAngle } from './utils/CoordUtil'
 
 const WIDTH = 800
 const HEIGHT = 800
@@ -52,7 +53,7 @@ export class PaintCanvas {
       this.requestScrollTo.fire(scroll)
     })
     this.dragWatcher.listenRotate(({ dStart }) => {
-      const angle = this.eventStatus.startCoord.angle + dStart
+      const angle = normalizeAngle(this.eventStatus.startCoord.angle + dStart)
       this.requestRotateTo.fire(angle)
     })
   }
