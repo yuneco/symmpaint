@@ -61,6 +61,7 @@ export class Pen {
     this.applyCoord()
     if (this.isDrawSelf) {
       this.ctx.lineWidth = this.lineWidth * pressure
+      this.ctx.strokeStyle = this.color
       this.ctx.beginPath()
       this.ctx.moveTo(this.position.x, this.position.y)
       this.ctx.lineTo(p.x, p.y)

@@ -1,5 +1,6 @@
-import { PaintEvent } from "./PaintEvent"
-import { Point } from "./Point"
+import { PaintEvent } from "../PaintEvent"
+import { Point } from "../Point"
+import { Button } from "./Bitton"
 import { Slider } from "./Slider"
 
 export class PaintPalette {
@@ -13,6 +14,7 @@ export class PaintPalette {
   readonly onAngleChange = new PaintEvent<number>()
   readonly onScrollChange = new PaintEvent<Point>()
   readonly onPenCountChange = new PaintEvent<number>()
+  readonly onClear = new PaintEvent<void>()
 
   get scale() {
     return this._scale
@@ -66,12 +68,14 @@ export class PaintPalette {
     const slX = new Slider('Scroll X', -400, 400, 0)
     const slY = new Slider('Scroll Y', -400, 400, 0)
     const slPenCount = new Slider('Pen Count', 1, 12, 1)
+    const btnClear = new Button('Clear All')
     
     parent.appendChild(slScale.el)
     parent.appendChild(slAngle.el)
     parent.appendChild(slX.el)
     parent.appendChild(slY.el)
     parent.appendChild(slPenCount.el)
+    parent.appendChild(btnClear.el)
 
     this.scale = Number(slScale.value) / 100
     this.angle = Number(slAngle.value)
@@ -79,20 +83,23 @@ export class PaintPalette {
     this.scrollY = Number(slY.value)
     this.penCount = Number(slPenCount.value)
 
-    slScale.slider.addEventListener('input', () => {
+    slScale.addEventListener('input', () => {
       this.scale = Number(slScale.value) / 100
     })
-    slAngle.slider.addEventListener('input', () => {
+    slAngle.addEventListener('input', () => {
       this.angle = Number(slAngle.value)
     })
-    slX.slider.addEventListener('input', () => {
+    slX.addEventListener('input', () => {
       this.scrollX = Number(slX.value)
     })
-    slY.slider.addEventListener('input', () => {
+    slY.addEventListener('input', () => {
       this.scrollY = Number(slY.value)
     })
-    slPenCount.slider.addEventListener('input', () => {
+    slPenCount.addEventListener('input', () => {
       this.penCount = Number(slPenCount.value)
+    })
+    btnClear.addEventListener('click', () => {
+      this.onClear.fire()
     })
   }
 }

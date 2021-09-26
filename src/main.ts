@@ -1,5 +1,5 @@
 import { PaintCanvas } from './PaintCanvas'
-import { PaintPalette } from './PaintPalette'
+import { PaintPalette } from './ui/PaintPalette'
 import './style.css'
 
 const elMain = document.querySelector<HTMLDivElement>('#main')!
@@ -26,4 +26,8 @@ canvas.coord = canvas.coord.clone({
 
 setting.onPenCountChange.listen((count) => {
   canvas.penCount = count
+})
+
+setting.onClear.listen(() => {
+  canvas.clear()
 })

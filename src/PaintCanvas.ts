@@ -4,7 +4,7 @@ import { Point } from './Point'
 
 const WIDTH = 800
 const HEIGHT = 800
-const RESOLUTION = 1//window.devicePixelRatio
+const RESOLUTION = 1 //window.devicePixelRatio
 
 type EventStatus = {
   isWatchMove: boolean
@@ -27,12 +27,9 @@ export class PaintCanvas {
     this.registerEventHandlers()
   }
 
-
   private registerEventHandlers() {
     const inp = this.view.el
-    inp.addEventListener('pointerdown', (ev: PointerEvent) =>
-      this.onDown(ev)
-    )
+    inp.addEventListener('pointerdown', (ev: PointerEvent) => this.onDown(ev))
     inp.addEventListener(
       'pointermove',
       (ev: PointerEvent) => this.eventStatus.isWatchMove && this.onMove(ev)
@@ -48,7 +45,7 @@ export class PaintCanvas {
   }
 
   set coord(c: Coordinate) {
-    this.canvas.coord = c.clone({anchor: new Point(-WIDTH / 2, -HEIGHT / 2)})
+    this.canvas.coord = c.clone({ anchor: new Point(-WIDTH / 2, -HEIGHT / 2) })
     this.canvas.output(this.view.el, this.view.ctx)
   }
 
@@ -60,9 +57,14 @@ export class PaintCanvas {
     const pen = this.canvas.pen
     pen.clearChildren()
     if (n <= 1) return
-    for(let penNo = 1; penNo < n; penNo++) {
-      pen.addChildPen(new Coordinate({angle: penNo * 360 / n}))
+    for (let penNo = 1; penNo < n; penNo++) {
+      pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n }))
     }
+  }
+
+  clear() {
+    this.canvas.clear()
+    this.canvas.output(this.view.el, this.view.ctx)
   }
 
   private event2canvasPoint(ev: PointerEvent): Point {
@@ -88,5 +90,4 @@ export class PaintCanvas {
     this.canvas.drawTo(p, pressure)
     this.canvas.output(this.view.el, this.view.ctx)
   }
-
 }

@@ -5,6 +5,8 @@ import { Point } from './Point'
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
   readonly ctx: CanvasRenderingContext2D
+  readonly width: number
+  readonly height: number
   private _coord: Coordinate
   private _pen: Pen
 
@@ -12,6 +14,8 @@ export class AbstractCanvas {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Failed to get 2d context for canvas')
+    this.width = w
+    this.height = h
     canvas.width = w
     canvas.height = h
     canvas.style.border = '1px solid #aaa'
@@ -46,6 +50,13 @@ export class AbstractCanvas {
 
   drawTo(p: Point, pressure = 0.5) {
     this.pen.drawTo(p, pressure)
+  }
+
+  clear() {
+    this.ctx.save()
+    this.ctx.resetTransform()
+    this.ctx.clearRect(0, 0, this.width, this.height)
+    this.ctx.restore()
   }
 
   output(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
