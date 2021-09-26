@@ -28,6 +28,7 @@ export class PaintCanvas {
   }
   private readonly requestChangeZoom = new PaintEvent<boolean>()
   private readonly requestScrollTo = new PaintEvent<Point>()
+  private readonly requestRotateTo = new PaintEvent<number>()
 
   private _penCount = 1
 
@@ -36,16 +37,23 @@ export class PaintCanvas {
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     parent.appendChild(this.view.el)
     this.registerEventHandlers()
+
+    // キー状態の変更監視
     this.keyWatcher = new KeyPressWatcher()
     this.keyWatcher.listen(() => {
       // キー押下状態変更時にカーソルを更新
       this.view.el.style.cursor = actionCursor(keysAction(this.keyWatcher.keys))
     })
 
+    // ドラッグ操作の状態監視
     this.dragWatcher = new DragWatcher(this.view.el)
     this.dragWatcher.listenMove(({dStart}) => {
       const scroll = this.eventStatus.startCoord.scroll.move(dStart)
       this.requestScrollTo.fire(scroll)
+    })
+    this.dragWatcher.listenRotate(({dStart}) => {
+      const angle = this.eventStatus.startCoord.angle + dStart
+      this.requestRotateTo.fire(angle)
     })
   }
 
@@ -94,6 +102,12 @@ export class PaintCanvas {
   ) {
     this.requestScrollTo.listen(...params)
   }
+  listenRequestRotateTo(
+    ...params: Parameters<typeof this.requestRotateTo.listen>
+  ) {
+    this.requestRotateTo.listen(...params)
+  }
+
 
   clear() {
     this.canvas.clear()
@@ -118,6 +132,10 @@ export class PaintCanvas {
     if (action === 'scroll') {
       this.eventStatus.isWatchMove = true
       this.dragWatcher.watchingAction = 'dragmove'
+    }
+    if (action === 'rotate') {
+      this.eventStatus.isWatchMove = true
+      this.dragWatcher.watchingAction = 'dragrotate'
     }
   }
   private onMove(ev: PointerEvent) {

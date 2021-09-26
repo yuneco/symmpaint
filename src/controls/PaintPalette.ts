@@ -64,7 +64,7 @@ export class PaintPalette {
 
   constructor(parent: HTMLElement) {
     const slScale = (this.slScale = new Slider('Scale', 50, 300, 100, true))
-    const slAngle = (this.slAngle = new Slider('Angle', -180, 180, 0))
+    const slAngle = (this.slAngle = new Slider('Angle', -360, 360, 0))
     const slX = (this.slX = new Slider('Scroll X', -400, 400, 0))
     const slY = (this.slY = new Slider('Scroll Y', -400, 400, 0))
     const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 12, 1))

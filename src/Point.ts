@@ -19,6 +19,10 @@ export class Point {
     return new Point(this.x - p.x, this.y - p.y)
   }
 
+  get angle() {
+    return Math.atan2(this.y, this.x) / Math.PI * 180
+  }
+
   rotate(angle: number): Point {
     const rad = (angle / 180) * Math.PI
     const cos = Math.cos(rad)

@@ -37,7 +37,10 @@ setting.onClear.listen(() => {
 canvas.listenRequestZoom((isUp) => {
   setting.scale = getNextZoom(setting.scale, isUp)
 })
-canvas.listenRequestScrollTo(pos => {
+canvas.listenRequestScrollTo((pos) => {
   setting.scrollX = pos.x
   setting.scrollY = pos.y
+})
+canvas.listenRequestRotateTo((angle) => {
+  setting.angle = angle
 })
