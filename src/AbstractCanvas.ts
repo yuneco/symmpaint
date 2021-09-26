@@ -59,19 +59,16 @@ export class AbstractCanvas {
     this.ctx.restore()
   }
 
-  output(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+  output(ctx: CanvasRenderingContext2D) {
     ctx.save()
     const c = this.coord
     ctx.resetTransform()
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.translate(-c.anchor.x, -c.anchor.y)
     ctx.rotate((c.angle / 180) * Math.PI)
     ctx.scale(c.scale, c.scale)
     ctx.translate(c.anchor.x, c.anchor.y)
     ctx.drawImage(this.el, 0, 0)
-    ctx.strokeStyle = '#aaaaaa'
-    ctx.strokeRect(0, 0, canvas.width, canvas.height)
     ctx.restore()
   }
 }

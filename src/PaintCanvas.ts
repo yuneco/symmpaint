@@ -3,6 +3,7 @@ import { Coordinate } from './Coordinate'
 import { DragWatcher } from './DragWatcher'
 import { KeyPressWatcher } from './KeyPressWatcher'
 import { PaintEvent } from './PaintEvent'
+import { clearCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
 import { Point } from './Point'
 import { actionCursor, keysAction, PointerAction } from './pointerAction'
 
@@ -24,17 +25,16 @@ export class PaintCanvas {
   private readonly eventStatus: EventStatus = {
     isWatchMove: false,
     activeEvent: undefined,
-    startCoord: new Coordinate()
+    startCoord: new Coordinate(),
   }
   private readonly requestChangeZoom = new PaintEvent<boolean>()
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
 
-  private _penCount = 1
-
   constructor(parent: HTMLElement) {
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    paintOutBorder(this.canvas)
     parent.appendChild(this.view.el)
     this.registerEventHandlers()
 
@@ -47,11 +47,11 @@ export class PaintCanvas {
 
     // ドラッグ操作の状態監視
     this.dragWatcher = new DragWatcher(this.view.el)
-    this.dragWatcher.listenMove(({dStart}) => {
+    this.dragWatcher.listenMove(({ dStart }) => {
       const scroll = this.eventStatus.startCoord.scroll.move(dStart)
       this.requestScrollTo.fire(scroll)
     })
-    this.dragWatcher.listenRotate(({dStart}) => {
+    this.dragWatcher.listenRotate(({ dStart }) => {
       const angle = this.eventStatus.startCoord.angle + dStart
       this.requestRotateTo.fire(angle)
     })
@@ -76,11 +76,11 @@ export class PaintCanvas {
 
   set coord(c: Coordinate) {
     this.canvas.coord = c.clone({ anchor: new Point(-WIDTH / 2, -HEIGHT / 2) })
-    this.canvas.output(this.view.el, this.view.ctx)
+    this.rePaint()
   }
 
   get penCount() {
-    return this._penCount
+    return this.canvas.pen.childCount + 1
   }
   set penCount(n: number) {
     if (n === this.penCount) return
@@ -90,6 +90,7 @@ export class PaintCanvas {
     for (let penNo = 1; penNo < n; penNo++) {
       pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n }))
     }
+    this.rePaint()
   }
 
   set penWidth(v: number) {
@@ -112,10 +113,10 @@ export class PaintCanvas {
     this.requestRotateTo.listen(...params)
   }
 
-
   clear() {
     this.canvas.clear()
-    this.canvas.output(this.view.el, this.view.ctx)
+    paintOutBorder(this.canvas)
+    this.rePaint()
   }
 
   private event2canvasPoint(ev: PointerEvent): Point {
@@ -163,6 +164,14 @@ export class PaintCanvas {
   }
   private drawTo(p: Point, pressure = 0.5) {
     this.canvas.drawTo(p, pressure)
-    this.canvas.output(this.view.el, this.view.ctx)
+    this.rePaint()
+  }
+
+  private rePaint() {
+    clearCanvas(this.view)
+    if (this.penCount >= 2) {
+      paintKaraidGrid(this.view, this.penCount)
+    }
+    this.canvas.output(this.view.ctx)
   }
 }

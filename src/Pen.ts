@@ -31,6 +31,10 @@ export class Pen {
     })
   }
 
+  get childCount() {
+    return this.children.length
+  }
+
   addChildPen(coord?: Coordinate) {
     const pen = new Pen(this.ctx, this.outWidth, this.outHeight)
     pen.lineWidth = this.lineWidth
