@@ -33,6 +33,7 @@ export class KeyPressWatcher {
 
   destroy() {
     this._removeEvents()
+    this.onChange.clear()
   }
 
   key(name: string): boolean {

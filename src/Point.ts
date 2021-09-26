@@ -15,6 +15,10 @@ export class Point {
     return new Point(this.x + p.x, this.y + p.y)
   }
 
+  sub(p: Point): Point {
+    return new Point(this.x - p.x, this.y - p.y)
+  }
+
   rotate(angle: number): Point {
     const rad = (angle / 180) * Math.PI
     const cos = Math.cos(rad)

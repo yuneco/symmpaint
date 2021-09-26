@@ -9,4 +9,8 @@ export class PaintEvent<T> {
     if (this.listeners.includes(fn)) return
     this.listeners.push(fn)
   }
+
+  clear() {
+    this.listeners.length = 0
+  }
 }

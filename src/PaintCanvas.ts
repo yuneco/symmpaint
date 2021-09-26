@@ -1,5 +1,6 @@
 import { AbstractCanvas } from './AbstractCanvas'
 import { Coordinate } from './Coordinate'
+import { DragWatcher } from './DragWatcher'
 import { KeyPressWatcher } from './KeyPressWatcher'
 import { PaintEvent } from './PaintEvent'
 import { Point } from './Point'
@@ -10,32 +11,41 @@ const HEIGHT = 800
 const RESOLUTION = 1 //window.devicePixelRatio
 
 type EventStatus = {
-  isWatchMove: boolean,
+  isWatchMove: boolean
   activeEvent: PointerAction | undefined
+  startCoord: Coordinate
 }
 
 export class PaintCanvas {
   private readonly canvas: AbstractCanvas
   private readonly view: AbstractCanvas
   private readonly keyWatcher: KeyPressWatcher
+  private readonly dragWatcher: DragWatcher
   private readonly eventStatus: EventStatus = {
     isWatchMove: false,
-    activeEvent: undefined
+    activeEvent: undefined,
+    startCoord: new Coordinate()
   }
   private readonly requestChangeZoom = new PaintEvent<boolean>()
+  private readonly requestScrollTo = new PaintEvent<Point>()
 
   private _penCount = 1
 
   constructor(parent: HTMLElement) {
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
-    //parent.appendChild(this.canvas.el)
     parent.appendChild(this.view.el)
     this.registerEventHandlers()
     this.keyWatcher = new KeyPressWatcher()
     this.keyWatcher.listen(() => {
       // キー押下状態変更時にカーソルを更新
       this.view.el.style.cursor = actionCursor(keysAction(this.keyWatcher.keys))
+    })
+
+    this.dragWatcher = new DragWatcher(this.view.el)
+    this.dragWatcher.listenMove(({dStart}) => {
+      const scroll = this.eventStatus.startCoord.scroll.move(dStart)
+      this.requestScrollTo.fire(scroll)
     })
   }
 
@@ -74,8 +84,15 @@ export class PaintCanvas {
     }
   }
 
-  listenRequestZoom(...params: Parameters<typeof this.requestChangeZoom.listen>) {
+  listenRequestZoom(
+    ...params: Parameters<typeof this.requestChangeZoom.listen>
+  ) {
     this.requestChangeZoom.listen(...params)
+  }
+  listenRequestScrollTo(
+    ...params: Parameters<typeof this.requestScrollTo.listen>
+  ) {
+    this.requestScrollTo.listen(...params)
   }
 
   clear() {
@@ -90,20 +107,33 @@ export class PaintCanvas {
   private onDown(ev: PointerEvent) {
     const action = keysAction(this.keyWatcher.keys)
     this.eventStatus.activeEvent = action
-    if (action === 'draw'){
+    this.eventStatus.startCoord = this.coord
+
+    if (action === 'draw') {
       this.eventStatus.isWatchMove = true
       this.moveTo(this.event2canvasPoint(ev))
     }
     if (action === 'zoomup') this.requestChangeZoom.fire(true)
     if (action === 'zoomdown') this.requestChangeZoom.fire(false)
+    if (action === 'scroll') {
+      this.eventStatus.isWatchMove = true
+      this.dragWatcher.watchingAction = 'dragmove'
+    }
   }
   private onMove(ev: PointerEvent) {
-    this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+    const action = this.eventStatus.activeEvent
+    if (action === 'draw') {
+      this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+    }
   }
   private onUp(ev: PointerEvent) {
+    const action = this.eventStatus.activeEvent
+    if (action === 'draw') {
+      this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+    }
     this.eventStatus.isWatchMove = false
-    this.drawTo(this.event2canvasPoint(ev), ev.pressure)
     this.eventStatus.activeEvent = undefined
+    this.dragWatcher.watchingAction = undefined
   }
 
   private moveTo(p: Point) {
