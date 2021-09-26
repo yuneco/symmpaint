@@ -1,21 +1,28 @@
 import { AbstractCanvas } from './AbstractCanvas'
 import { Coordinate } from './Coordinate'
+import { KeyPressWatcher } from './KeyPressWatcher'
+import { PaintEvent } from './PaintEvent'
 import { Point } from './Point'
+import { actionCursor, keysAction, PointerAction } from './pointerAction'
 
 const WIDTH = 800
 const HEIGHT = 800
 const RESOLUTION = 1 //window.devicePixelRatio
 
 type EventStatus = {
-  isWatchMove: boolean
+  isWatchMove: boolean,
+  activeEvent: PointerAction | undefined
 }
 
 export class PaintCanvas {
-  private canvas: AbstractCanvas
-  private view: AbstractCanvas
-  private eventStatus: EventStatus = {
+  private readonly canvas: AbstractCanvas
+  private readonly view: AbstractCanvas
+  private readonly keyWatcher: KeyPressWatcher
+  private readonly eventStatus: EventStatus = {
     isWatchMove: false,
+    activeEvent: undefined
   }
+  private readonly requestChangeZoom = new PaintEvent<boolean>()
 
   private _penCount = 1
 
@@ -25,6 +32,11 @@ export class PaintCanvas {
     //parent.appendChild(this.canvas.el)
     parent.appendChild(this.view.el)
     this.registerEventHandlers()
+    this.keyWatcher = new KeyPressWatcher()
+    this.keyWatcher.listen(() => {
+      // キー押下状態変更時にカーソルを更新
+      this.view.el.style.cursor = actionCursor(keysAction(this.keyWatcher.keys))
+    })
   }
 
   private registerEventHandlers() {
@@ -62,6 +74,10 @@ export class PaintCanvas {
     }
   }
 
+  listenRequestZoom(...params: Parameters<typeof this.requestChangeZoom.listen>) {
+    this.requestChangeZoom.listen(...params)
+  }
+
   clear() {
     this.canvas.clear()
     this.canvas.output(this.view.el, this.view.ctx)
@@ -72,8 +88,14 @@ export class PaintCanvas {
   }
 
   private onDown(ev: PointerEvent) {
-    this.eventStatus.isWatchMove = true
-    this.moveTo(this.event2canvasPoint(ev))
+    const action = keysAction(this.keyWatcher.keys)
+    this.eventStatus.activeEvent = action
+    if (action === 'draw'){
+      this.eventStatus.isWatchMove = true
+      this.moveTo(this.event2canvasPoint(ev))
+    }
+    if (action === 'zoomup') this.requestChangeZoom.fire(true)
+    if (action === 'zoomdown') this.requestChangeZoom.fire(false)
   }
   private onMove(ev: PointerEvent) {
     this.drawTo(this.event2canvasPoint(ev), ev.pressure)
@@ -81,6 +103,7 @@ export class PaintCanvas {
   private onUp(ev: PointerEvent) {
     this.eventStatus.isWatchMove = false
     this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+    this.eventStatus.activeEvent = undefined
   }
 
   private moveTo(p: Point) {

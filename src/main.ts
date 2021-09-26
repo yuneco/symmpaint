@@ -1,6 +1,7 @@
 import { PaintCanvas } from './PaintCanvas'
-import { PaintPalette } from './ui/PaintPalette'
+import { PaintPalette } from './controls/PaintPalette'
 import './style.css'
+import { getNextZoom } from './controls/zoomTable'
 
 const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
@@ -30,4 +31,9 @@ setting.onPenCountChange.listen((count) => {
 
 setting.onClear.listen(() => {
   canvas.clear()
+})
+
+// キャンバスからの変更要求
+canvas.listenRequestZoom((isUp) => {
+  setting.scale = getNextZoom(setting.scale, isUp)
 })
