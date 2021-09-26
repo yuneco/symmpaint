@@ -28,6 +28,9 @@ canvas.coord = canvas.coord.clone({
 setting.onPenCountChange.listen((count) => {
   canvas.penCount = count
 })
+setting.onPenWidthChange.listen((width) => {
+  canvas.penWidth = width
+})
 
 setting.onClear.listen(() => {
   canvas.clear()

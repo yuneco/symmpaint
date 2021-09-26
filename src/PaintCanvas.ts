@@ -92,6 +92,10 @@ export class PaintCanvas {
     }
   }
 
+  set penWidth(v: number) {
+    this.canvas.pen.changeLineWidth(v)
+  }
+
   listenRequestZoom(
     ...params: Parameters<typeof this.requestChangeZoom.listen>
   ) {

@@ -9,11 +9,13 @@ export class PaintPalette {
   private readonly slX: Slider
   private readonly slY: Slider
   private readonly slPenCount: Slider
+  private readonly slPenWidth: Slider
 
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
   readonly onScrollChange = new PaintEvent<Point>()
   readonly onPenCountChange = new PaintEvent<number>()
+  readonly onPenWidthChange = new PaintEvent<number>()
   readonly onClear = new PaintEvent<void>()
 
   get scale() {
@@ -30,6 +32,10 @@ export class PaintPalette {
 
   get penCount() {
     return this.slPenCount.value
+  }
+
+  get penWidth() {
+    return this.slPenWidth.value
   }
 
   set scale(v: number) {
@@ -62,12 +68,19 @@ export class PaintPalette {
     this.onPenCountChange.fire(this.slPenCount.value)
   }
 
+  set penWidth(v: number) {
+    if (this.penWidth === v) return
+    this.slPenWidth.value = v
+    this.onPenWidthChange.fire(this.slPenWidth.value)
+  }
+
   constructor(parent: HTMLElement) {
     const slScale = (this.slScale = new Slider('Scale', 50, 300, 100, true))
     const slAngle = (this.slAngle = new Slider('Angle', -360, 360, 0))
     const slX = (this.slX = new Slider('Scroll X', -400, 400, 0))
     const slY = (this.slY = new Slider('Scroll Y', -400, 400, 0))
     const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 12, 1))
+    const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 1, 40, 10))
     const btnClear = new Button('Clear All')
 
     parent.appendChild(slScale.el)
@@ -75,6 +88,7 @@ export class PaintPalette {
     parent.appendChild(slX.el)
     parent.appendChild(slY.el)
     parent.appendChild(slPenCount.el)
+    parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
 
     slScale.addEventListener('input', () => {
@@ -91,6 +105,9 @@ export class PaintPalette {
     })
     slPenCount.addEventListener('input', () => {
       this.onPenCountChange.fire(slPenCount.value)
+    })
+    slPenWidth.addEventListener('input', () => {
+      this.onPenWidthChange.fire(slPenWidth.value)
     })
     btnClear.addEventListener('click', () => {
       this.onClear.fire()

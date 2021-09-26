@@ -33,6 +33,8 @@ export class Pen {
 
   addChildPen(coord?: Coordinate) {
     const pen = new Pen(this.ctx, this.outWidth, this.outHeight)
+    pen.lineWidth = this.lineWidth
+    pen.color = this.color
     if (coord) {
       pen.coord = coord
     }
@@ -41,6 +43,13 @@ export class Pen {
 
   clearChildren() {
     this.children.length = 0
+  }
+
+  changeLineWidth(v: number, shouldApplyChildren = true) {
+    this.lineWidth = v
+    if (shouldApplyChildren) {
+      this.children.forEach(p => p.changeLineWidth(v))
+    }
   }
 
   private applyCoord() {
