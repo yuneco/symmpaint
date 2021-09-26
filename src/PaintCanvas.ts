@@ -63,7 +63,7 @@ export class PaintCanvas {
   }
   private onUp(ev: PointerEvent) {
     this.eventStatus.isWatchMove = false
-    this.drawTo(this.event2canvasPoint(ev))
+    this.drawTo(this.event2canvasPoint(ev), ev.pressure)
   }
 
   private moveTo(p: Point) {

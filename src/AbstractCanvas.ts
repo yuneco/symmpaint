@@ -5,6 +5,7 @@ export class AbstractCanvas {
   readonly el: HTMLCanvasElement
   readonly ctx: CanvasRenderingContext2D
   private _coord: Coordinate
+  lastPoint: Point = new Point()
 
   constructor(w: number, h: number) {
     const canvas = document.createElement('canvas')
@@ -34,14 +35,17 @@ export class AbstractCanvas {
   }
 
   moveTo(p: Point) {
-    this.ctx.beginPath()
-    this.ctx.moveTo(p.x, p.y)
+    this.lastPoint = p
   }
+
   drawTo(p: Point, pressure = 0.5) {
     const lineW = 10 * pressure
     this.ctx.lineWidth = lineW
+    this.ctx.beginPath()
+    this.ctx.moveTo(this.lastPoint.x, this.lastPoint.y)
     this.ctx.lineTo(p.x, p.y)
     this.ctx.stroke()
+    this.lastPoint = p
   }
 
   output(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
