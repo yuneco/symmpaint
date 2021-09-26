@@ -62,6 +62,6 @@ window.addEventListener('keydown', (ev) => {
 })
 
 // iOSのスクロール無効化
-window.addEventListener('touchmove', function(event) {
+elMain.addEventListener('touchmove', function(event) {
   event.preventDefault();
 });
