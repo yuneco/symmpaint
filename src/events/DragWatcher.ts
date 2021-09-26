@@ -1,30 +1,43 @@
 import { PaintEvent } from "./PaintEvent"
-import { Point } from "./Point"
+import { Point } from "../coords/Point"
 
+/** 監視可能な操作 */
 type DragAction = 'dragmove' | 'dragrotate'
 
+/** 指定の要素の中央を返します */
 const elementCenter = (el: HTMLElement): Point => {
   return new Point(el.offsetWidth / 2, el.offsetHeight / 2)
 }
 
+/** 角AOBを求めます */
 const pointsAngle = (pO: Point, pA: Point, pB: Point): number => {
   const angleA = pA.sub(pO).angle
   const angleB = pB.sub(pO).angle
   return angleB - angleA
 }
 
+/** ドラッグ操作の監視を行います */
 export class DragWatcher {
   private readonly el: HTMLElement
+  /** ドラッグ開始点 */
   private startPoint: Point = new Point()
+  /** 直近のドラッグ地点 */
   private lastPoint: Point = new Point()
+  /** ドラッグ監視中か？ */
   private isMoveWatching = false
 
   private readonly onMoved = new PaintEvent<{dStart: Point, dLast: Point}>()
   private readonly onRotated = new PaintEvent<{dStart: number, dLast: number}>()
+  /** イベントハンドラ解除関数 */
   private readonly _removeEvents: () => void
 
+  /** 監視対象の操作：ドラッグで行う操作をドラッグの開始前に設定・変更します */
   watchingAction: DragAction | undefined = undefined
 
+  /** 
+   * 要素を指定して監視を初期化します。
+   * 特定の操作を監視するには初期化後にwatchingActionを設定してください
+   */
   constructor(el: HTMLElement) {
     this.el = el
 
@@ -44,6 +57,7 @@ export class DragWatcher {
     }
   }
 
+  /** マウス押下時の処理 */
   private onDown(p: Point): boolean {
     if (this.watchingAction === 'dragmove') {
       this.startPoint = p
@@ -58,6 +72,7 @@ export class DragWatcher {
     return false
   }
 
+  /** マウスドラッグ時の処理 */
   private onDrag(p: Point) {
     if (this.watchingAction === 'dragmove') {
       const dStart = this.startPoint.sub(p)
@@ -74,15 +89,38 @@ export class DragWatcher {
     }
   }
 
+  /**
+   * ドラッグで移動が成立した際に繰り返し呼ばれるイベントハンドラーを登録します
+   * @param params ドラッグにより移動が発生した際のコールバック。
+   * コールバックは次のオブジェクトを引数に取ります： 
+   * {
+   *   dStart: ドラッグ開始時からの相対移動量(Point)
+   *   dLast: 前回イベント発生時からの相対移動量(Point)
+   * }
+   */
   listenMove(...params: Parameters<typeof this.onMoved.listen>) {
     this.onMoved.listen(...params)
   }
-  listenRotate(...params: Parameters<typeof this.onRotated.listen>) {
+
+  /**
+   * ドラッグで回転が成立した際に繰り返し呼ばれるイベントハンドラーを登録します
+   * @param params ドラッグにより移動が発生した際のコールバック。
+   * コールバックは次のオブジェクトを引数に取ります： 
+   * {
+   *   dStart: ドラッグ開始時からの相対回転量
+   *   dLast: 前回イベント発生時からの相対回転量
+   * }
+   */
+   listenRotate(...params: Parameters<typeof this.onRotated.listen>) {
     this.onRotated.listen(...params)
   }
 
+  /**
+   * 監視を終了して全てのイベントハンドラーをクリアします
+   */
   destroy() {
     this._removeEvents()
     this.onMoved.clear()
+    this.onRotated.clear()
   }
 }

@@ -1,3 +1,6 @@
+/**
+ * XY座標を保持するイミュータブルなクラスです
+ */
 export class Point {
   readonly x: number
   readonly y: number

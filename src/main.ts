@@ -1,14 +1,18 @@
-import { PaintCanvas } from './PaintCanvas'
-import { PaintPalette } from './controls/PaintPalette'
 import './style.css'
+import { PaintCanvas } from './canvas/PaintCanvas'
+import { SettingPalette } from './controls/SettingPalette'
 import { getNextZoom } from './controls/zoomTable'
 
+// 配置先DOM要素を取得
 const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
 
-const setting = new PaintPalette(elPalette)
+/** 設定パレット */
+const setting = new SettingPalette(elPalette)
+/** メインキャンバス */
 const canvas = new PaintCanvas(elMain)
 
+// 設定変更をリッスン
 setting.onScaleChange.listen((scale) => {
   canvas.coord = canvas.coord.clone({ scale })
 })
@@ -18,25 +22,24 @@ setting.onAngleChange.listen((angle) => {
 setting.onScrollChange.listen((scroll) => {
   canvas.coord = canvas.coord.clone({ scroll })
 })
-
-canvas.coord = canvas.coord.clone({
-  scroll: setting.scroll,
-  scale: setting.scale,
-  angle: setting.angle,
-})
-
 setting.onPenCountChange.listen((count) => {
   canvas.penCount = count
 })
 setting.onPenWidthChange.listen((width) => {
   canvas.penWidth = width
 })
-
 setting.onClear.listen(() => {
   canvas.clear()
 })
 
-// キャンバスからの変更要求
+// 初期設定の座標系をパレットから取得してキャンバスに反映
+canvas.coord = canvas.coord.clone({
+  scroll: setting.scroll,
+  scale: setting.scale,
+  angle: setting.angle,
+})
+
+// キャンバスからの変更要求を受け取りパレットの設定を変更
 canvas.listenRequestZoom((isUp) => {
   setting.scale = getNextZoom(setting.scale, isUp)
 })

@@ -1,6 +1,6 @@
-import { Coordinate } from './Coordinate'
+import { Coordinate } from '../coords/Coordinate'
 import { Pen } from './Pen'
-import { Point } from './Point'
+import { Point } from '../coords/Point'
 
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement

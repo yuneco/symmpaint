@@ -1,11 +1,18 @@
 import { PaintEvent } from "./PaintEvent"
 
+/**
+ * キーの押下状態を監視・保持します
+ */
 export class KeyPressWatcher {
   private readonly target: HTMLElement
   private readonly _keys: { [k: string]: true } = {}
   private readonly _removeEvents: () => void
   private readonly onChange = new PaintEvent<{key: string, isDown: boolean}>()
 
+  /**
+   * キー操作の監視インスタンス話生成
+   * @param el イベント監視対象の要素。省略時はbody
+   */
   constructor(el?: HTMLElement) {
     this.target = el ?? document.body
 
@@ -27,19 +34,26 @@ export class KeyPressWatcher {
     }
   }
 
+  /**
+   * キー押下状態の変更を受け取るリスナーを追加します
+   * @param params リスナー
+   */
   listen(...params: Parameters<typeof this.onChange['listen']>) {
     this.onChange.listen(...params)
   }
 
+  /** 監視を終了します */
   destroy() {
     this._removeEvents()
     this.onChange.clear()
   }
 
+  /** 指定したキーが押されているか判定します */
   key(name: string): boolean {
     return !!this._keys[name]
   }
 
+  /** 貸されているキーの一覧を返します */
   get keys(): string[] {
     return Object.keys(this._keys)
   }

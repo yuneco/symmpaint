@@ -1,6 +1,11 @@
-import { Coordinate } from './Coordinate'
-import { Point } from './Point'
+import { Coordinate } from '../coords/Coordinate'
+import { Point } from '../coords/Point'
 
+/**
+ * キャンバスに線を描画するためのペンです。
+ * 色・線は馬頭の一般的なプロパティに加え、独自の座標型を保持しています。
+ * また、再帰的に子要素（子ペン）を持つことができます。子要素は親の座標系を継承します。
+ */
 export class Pen {
   private readonly ctx: CanvasRenderingContext2D
   private readonly outWidth: number
@@ -35,7 +40,11 @@ export class Pen {
     return this.children.length
   }
 
-  addChildPen(coord?: Coordinate) {
+  /**
+   * 子ペンを追加します
+   * @param coord 子ペンの座標型。省略時は親と同じ
+   */
+  addChildPen(coord?: Coordinate): Pen {
     const pen = new Pen(this.ctx, this.outWidth, this.outHeight)
     pen.lineWidth = this.lineWidth
     pen.color = this.color
@@ -43,12 +52,18 @@ export class Pen {
       pen.coord = coord
     }
     this.children.push(pen)
+    return pen
   }
 
   clearChildren() {
     this.children.length = 0
   }
 
+  /**
+   * ペン幅を変更します
+   * @param v ペン幅
+   * @param shouldApplyChildren 子ペンにも変更を適用するか？
+   */
   changeLineWidth(v: number, shouldApplyChildren = true) {
     this.lineWidth = v
     if (shouldApplyChildren) {
@@ -56,6 +71,7 @@ export class Pen {
     }
   }
 
+  /** 描画先に座標型を適用します。save/restoreは行いません */
   private applyCoord() {
     const c: Coordinate = this._coord
     this.ctx.translate(-c.scroll.x, -c.scroll.y)
@@ -65,10 +81,13 @@ export class Pen {
     this.ctx.translate(-c.anchor.x, -c.anchor.y)
   }
 
+  /** ペンを移動します */
   moveTo(p: Point) {
     this.position = p
     this.children.forEach(pen => pen.moveTo(p))
   }
+
+  /** 指定の座標まで線を引きます */
   drawTo(p: Point, pressure = 0.5) {
     this.ctx.save()
     this.applyCoord()

@@ -7,6 +7,9 @@ type CoordinateData = {
   angle: number;
 }
 
+/**
+ * 座標型を保持するイミュータブルなクラスです。
+ */
 export class Coordinate {
   readonly anchor: Point
   readonly scroll: Point

@@ -1,6 +1,10 @@
 import { AbstractCanvas } from "./AbstractCanvas";
-import { Point } from "./Point";
+import { Point } from "../coords/Point";
 
+/**
+ * キャンバスをクリアします
+ * @param canvas 
+ */
 export const  clearCanvas = (canvas: AbstractCanvas): void => {
   canvas.ctx.save()
   canvas.ctx.resetTransform()
@@ -8,6 +12,10 @@ export const  clearCanvas = (canvas: AbstractCanvas): void => {
   canvas.ctx.restore()
 }
 
+/**
+ * 
+ * @param canvas キャンバスに外枠を描きます
+ */
 export const paintOutBorder = (canvas: AbstractCanvas): void => {
   canvas.ctx.save()
   canvas.ctx.resetTransform()
@@ -16,6 +24,11 @@ export const paintOutBorder = (canvas: AbstractCanvas): void => {
   canvas.ctx.restore()
 }
 
+/**
+ * 対称描画時の補助線を描画します
+ * @param canvas 
+ * @param count 対称数
+ */
 export const paintKaraidGrid = (canvas: AbstractCanvas, count: number): void => {
   const center = new Point(canvas.width / 2, canvas.height / 2)
   canvas.ctx.save()

@@ -1,9 +1,9 @@
-import { PaintEvent } from '../PaintEvent'
-import { Point } from '../Point'
+import { PaintEvent } from '../events/PaintEvent'
+import { Point } from '../coords/Point'
 import { Button } from '../ui/Bitton'
 import { Slider } from '../ui/Slider'
 
-export class PaintPalette {
+export class SettingPalette {
   private readonly slScale: Slider
   private readonly slAngle: Slider
   private readonly slX: Slider
