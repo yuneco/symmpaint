@@ -2,6 +2,7 @@ import { PaintCanvas } from './PaintCanvas'
 import { PaintPalette } from './controls/PaintPalette'
 import './style.css'
 import { getNextZoom } from './controls/zoomTable'
+import { KeyPressWatcher } from './KeyPressWatcher'
 
 const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
@@ -46,4 +47,14 @@ canvas.listenRequestScrollTo((pos) => {
 })
 canvas.listenRequestRotateTo((angle) => {
   setting.angle = angle
+})
+
+// キー操作でツール設定を変更
+window.addEventListener('keydown', (ev) => {
+  if(ev.key === 'ArrowUp'){
+    setting.penCount++
+  }
+  if(ev.key === 'ArrowDown'){
+    setting.penCount--
+  }
 })
