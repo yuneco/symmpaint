@@ -11,7 +11,6 @@ import {
   PointerAction,
 } from '../events/pointerAction'
 import { normalizeAngle } from '../coords/CoordUtil'
-import { StrokeRecord } from './StrokeRecord'
 import { CanvasHistory } from './CanvasHistory'
 
 // TODO: サイズは可変にする
@@ -153,7 +152,8 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
-      this.history.push(new StrokeRecord(this.coord, this.canvas.pen.state))
+      this.history.start(this.coord, this.canvas.pen.state)
+      this.history.commit()
     }
     this.canvas.clear()
     paintOutBorder(this.canvas)
@@ -162,6 +162,7 @@ export class PaintCanvas {
 
   /** 最後のストロークを取り消します */
   undo() {
+    if (!this.history.undoable) return
     this.clear(false)
     this.history.undo(this.canvas)
     this.rePaint()
@@ -202,6 +203,7 @@ export class PaintCanvas {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
       this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+      this.history.commit()
     }
     this.eventStatus.isWatchMove = false
     this.eventStatus.activeEvent = undefined
@@ -209,9 +211,8 @@ export class PaintCanvas {
   }
 
   private moveTo(p: Point) {
-    const stroke = new StrokeRecord(this.coord, this.canvas.pen.state)
-    this.history.push(stroke)
-    stroke.addPoint(p, 0.5)
+    this.history.start(this.coord, this.canvas.pen.state)
+    this.history.current?.addPoint(p, 0.5)
     this.canvas.moveTo(p)
   }
   private drawTo(p: Point, pressure = 0.5) {

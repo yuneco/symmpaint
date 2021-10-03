@@ -32,8 +32,8 @@ export class LimittedStack<T> {
     return this.items.pop()
   }
 
-  peek(): T | undefined {
-    return this.items[this.items.length - 1]
+  peek(offset = 0): T | undefined {
+    return this.items[this.items.length - 1 + offset]
   }
 
   getItems(): T[] {
