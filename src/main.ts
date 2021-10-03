@@ -31,6 +31,9 @@ setting.onPenWidthChange.listen((width) => {
 setting.onClear.listen(() => {
   canvas.clear()
 })
+setting.onUndo.listen(() => {
+  canvas.undo()
+})
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
 canvas.coord = canvas.coord.clone({

@@ -17,6 +17,7 @@ export class SettingPalette {
   readonly onPenCountChange = new PaintEvent<number>()
   readonly onPenWidthChange = new PaintEvent<number>()
   readonly onClear = new PaintEvent<void>()
+  readonly onUndo = new PaintEvent<void>()
 
   get scale() {
     return this.slScale.value
@@ -82,6 +83,7 @@ export class SettingPalette {
     const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 12, 1))
     const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 1, 40, 10))
     const btnClear = new Button('Clear All')
+    const btnUndo = new Button('Undo')
 
     parent.appendChild(slScale.el)
     parent.appendChild(slAngle.el)
@@ -90,6 +92,7 @@ export class SettingPalette {
     parent.appendChild(slPenCount.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
+    parent.appendChild(btnUndo.el)
 
     slScale.addEventListener('input', () => {
       this.onScaleChange.fire(slScale.value)
@@ -111,6 +114,9 @@ export class SettingPalette {
     })
     btnClear.addEventListener('click', () => {
       this.onClear.fire()
+    })
+    btnUndo.addEventListener('click', () => {
+      this.onUndo.fire()
     })
   }
 }

@@ -11,6 +11,9 @@ import {
   PointerAction,
 } from '../events/pointerAction'
 import { normalizeAngle } from '../coords/CoordUtil'
+import { LimittedStack } from '../misc/LimittedStack'
+import { StrokeRecord } from './StrokeRecord'
+import { replayStrokes } from './replayStrokes'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
@@ -42,6 +45,9 @@ export class PaintCanvas {
     activeEvent: undefined,
     startCoord: new Coordinate(),
   }
+  /** 履歴 */
+  private readonly history = new LimittedStack<StrokeRecord>()
+  private readonly snapshot: AbstractCanvas
 
   // 変更通知イベント
 
@@ -57,6 +63,7 @@ export class PaintCanvas {
     // 描画先・表示先を生成
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.snapshot = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
@@ -82,7 +89,12 @@ export class PaintCanvas {
       this.requestRotateTo.fire(angle)
     })
 
-    this.clear()
+    // 履歴がフローした際の処理
+    this.history.listenOverflow(stroke => {
+      replayStrokes(this.snapshot, [stroke])
+    })
+
+    this.clear(false)
   }
 
   private registerEventHandlers() {
@@ -147,9 +159,21 @@ export class PaintCanvas {
   }
 
   /** キャンバスをクリアします */
-  clear() {
+  clear(isSaveHistory = true) {
+    if (isSaveHistory) {
+      this.history.push(new StrokeRecord(this.coord, this.canvas.pen.state))
+    }
     this.canvas.clear()
     paintOutBorder(this.canvas)
+    this.rePaint()
+  }
+
+  /** 最後のストロークを取り消します */
+  undo() {
+    this.clear(false)
+    this.canvas.ctx.drawImage(this.snapshot.el, 0, 0)
+    this.history.pop() // 最後の一つを捨てる
+    replayStrokes(this.canvas, this.history.getItems())
     this.rePaint()
   }
 
@@ -195,9 +219,13 @@ export class PaintCanvas {
   }
 
   private moveTo(p: Point) {
+    const stroke = new StrokeRecord(this.coord, this.canvas.pen.state)
+    this.history.push(stroke)
+    stroke.addPoint(p, 0.5)
     this.canvas.moveTo(p)
   }
   private drawTo(p: Point, pressure = 0.5) {
+    this.history.peek()?.addPoint(p, pressure)
     this.canvas.drawTo(p, pressure)
     this.rePaint()
   }

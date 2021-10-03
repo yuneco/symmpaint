@@ -1,6 +1,15 @@
 import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 
+export type PenState = Readonly<{
+  position: Point
+  coord: Coordinate
+  color: string
+  lineWidth: number
+  isDrawSelf: boolean
+  children: PenState[]
+}>
+
 /**
  * キャンバスに線を描画するためのペンです。
  * 色・線は馬頭の一般的なプロパティに加え、独自の座標型を保持しています。
@@ -28,6 +37,10 @@ export class Pen {
     })
   }
 
+  get coord() {
+    return this._coord
+  }
+
   set coord(c: Coordinate) {
     this._coord = this._coord.clone({
       scale: c.scale,
@@ -38,6 +51,37 @@ export class Pen {
 
   get childCount() {
     return this.children.length
+  }
+
+  /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて取得します */
+  get state(): PenState {
+    return {
+      position: this.position,
+      coord: this.coord,
+      color: this.color,
+      lineWidth: this.lineWidth,
+      isDrawSelf: this.isDrawSelf,
+      children: this.children.map((ch) => ch.state),
+    }
+  }
+
+  /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて復元します */
+  set state(st: PenState) {
+    this.position = st.position
+    this.coord = st.coord
+    this.color = st.color
+    this.lineWidth = st.lineWidth
+    this.isDrawSelf = st.isDrawSelf
+    if (this.children.length > st.children.length) {
+      // 不要なペンを削除
+      this.children.length = st.children.length
+    }
+    while (this.children.length < st.children.length) {
+      this.addChildPen()
+    }
+    st.children.forEach((ch, index) => {
+      this.children[index].state = ch
+    })
   }
 
   /**
@@ -67,7 +111,7 @@ export class Pen {
   changeLineWidth(v: number, shouldApplyChildren = true) {
     this.lineWidth = v
     if (shouldApplyChildren) {
-      this.children.forEach(p => p.changeLineWidth(v))
+      this.children.forEach((p) => p.changeLineWidth(v))
     }
   }
 
@@ -84,7 +128,7 @@ export class Pen {
   /** ペンを移動します */
   moveTo(p: Point) {
     this.position = p
-    this.children.forEach(pen => pen.moveTo(p))
+    this.children.forEach((pen) => pen.moveTo(p))
   }
 
   /** 指定の座標まで線を引きます */
@@ -99,7 +143,7 @@ export class Pen {
       this.ctx.lineTo(p.x, p.y)
       this.ctx.stroke()
     }
-    this.children.forEach(pen => pen.drawTo(p, pressure))
+    this.children.forEach((pen) => pen.drawTo(p, pressure))
     this.ctx.restore()
     this.position = p
   }
