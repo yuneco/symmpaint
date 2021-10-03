@@ -62,6 +62,9 @@ window.addEventListener('keydown', (ev) => {
   if (ev.key === 'ArrowDown') {
     setting.penCount--
   }
+  if (ev.key === 'z' && ev.metaKey) {
+    setting.onUndo.fire()
+  }
 })
 
 // iOSのスクロール無効化
