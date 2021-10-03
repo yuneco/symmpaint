@@ -11,9 +11,8 @@ import {
   PointerAction,
 } from '../events/pointerAction'
 import { normalizeAngle } from '../coords/CoordUtil'
-import { LimittedStack } from '../misc/LimittedStack'
 import { StrokeRecord } from './StrokeRecord'
-import { replayStrokes } from './replayStrokes'
+import { CanvasHistory } from './CanvasHistory'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
@@ -46,9 +45,7 @@ export class PaintCanvas {
     startCoord: new Coordinate(),
   }
   /** 履歴 */
-  private readonly history = new LimittedStack<StrokeRecord>()
-  private readonly snapshot: AbstractCanvas
-
+  private readonly history: CanvasHistory
   // 変更通知イベント
 
   private readonly requestChangeZoom = new PaintEvent<boolean>()
@@ -63,7 +60,7 @@ export class PaintCanvas {
     // 描画先・表示先を生成
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
-    this.snapshot = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.history = new CanvasHistory(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
@@ -87,11 +84,6 @@ export class PaintCanvas {
     this.dragWatcher.listenRotate(({ dStart }) => {
       const angle = normalizeAngle(this.eventStatus.startCoord.angle + dStart)
       this.requestRotateTo.fire(angle)
-    })
-
-    // 履歴がフローした際の処理
-    this.history.listenOverflow(stroke => {
-      replayStrokes(this.snapshot, [stroke])
     })
 
     this.clear(false)
@@ -171,9 +163,7 @@ export class PaintCanvas {
   /** 最後のストロークを取り消します */
   undo() {
     this.clear(false)
-    this.canvas.ctx.drawImage(this.snapshot.el, 0, 0)
-    this.history.pop() // 最後の一つを捨てる
-    replayStrokes(this.canvas, this.history.getItems())
+    this.history.undo(this.canvas)
     this.rePaint()
   }
 
@@ -225,7 +215,7 @@ export class PaintCanvas {
     this.canvas.moveTo(p)
   }
   private drawTo(p: Point, pressure = 0.5) {
-    this.history.peek()?.addPoint(p, pressure)
+    this.history.current?.addPoint(p, pressure)
     this.canvas.drawTo(p, pressure)
     this.rePaint()
   }

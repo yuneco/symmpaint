@@ -13,6 +13,10 @@ export class LimittedStack<T> {
     this.maxItems = max
   }
 
+  get length() {
+    return this.items.length
+  }
+
   clear() {
     this.items.length = 0
   }
