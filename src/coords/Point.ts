@@ -26,6 +26,10 @@ export class Point {
     return Math.atan2(this.y, this.x) / Math.PI * 180
   }
 
+  get length() {
+    return Math.sqrt(this.x ** 2 + this.y ** 2)
+  }
+
   rotate(angle: number): Point {
     const rad = (angle / 180) * Math.PI
     const cos = Math.cos(rad)

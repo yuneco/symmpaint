@@ -44,6 +44,10 @@ export class AbstractCanvas {
     return this._coord
   }
 
+  get pos() {
+    return this.pen.pos
+  }
+
   moveTo(p: Point) {
     this.pen.moveTo(p)
   }

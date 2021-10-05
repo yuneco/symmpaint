@@ -53,6 +53,10 @@ export class Pen {
     return this.children.length
   }
 
+  get pos() {
+    return this.position
+  }
+
   /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて取得します */
   get state(): PenState {
     return {

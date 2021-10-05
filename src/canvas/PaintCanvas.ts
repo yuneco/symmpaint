@@ -3,7 +3,12 @@ import { Coordinate } from '../coords/Coordinate'
 import { DragWatcher } from '../events/DragWatcher'
 import { KeyPressWatcher } from '../events/KeyPressWatcher'
 import { PaintEvent } from '../events/PaintEvent'
-import { clearCanvas, fillCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
+import {
+  clearCanvas,
+  fillCanvas,
+  paintKaraidGrid,
+  paintOutBorder,
+} from './paintGrid'
 import { Point } from '../coords/Point'
 import {
   actionCursor,
@@ -12,12 +17,16 @@ import {
 } from '../events/pointerAction'
 import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
+import { getStrokeEndPressure } from './getStrokePressure'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
 const HEIGHT = 800
 // TODO: Retina対応
 const RESOLUTION = 1 //window.devicePixelRatio
+
+/** カーソル移動を検出する最低距離(px) */
+const MIN_CURSOR_MOVE = 3.0
 
 type EventStatus = {
   /** ドラッグ操作を監視中か？ */
@@ -26,19 +35,20 @@ type EventStatus = {
   isUseStrokeCanvas: boolean
   /** 現在のストロークで実行中の操作 */
   activeEvent: PointerAction | undefined
-  /** 現在のストローク開始時の座標型（スクロールや回転で使用） */
+  /** 現在のストローク開始時の座標系（スクロールや回転で使用） */
   startCoord: Coordinate
+  /** 現在のストローク開始時の座標 */
+  startPoint: Point
 }
 
 export class PaintCanvas {
   /** 描画バッファCanvas */
   private readonly canvas: AbstractCanvas
-
   /** 描画中のストロークを保持するバッファCanvas */
   private readonly strokeCanvas: AbstractCanvas
-
   /** 表示用Canvas */
   private readonly view: AbstractCanvas
+
   /** キー操作監視 */
   private readonly keyWatcher: KeyPressWatcher
   /** ドラッグ操作監視 */
@@ -49,6 +59,7 @@ export class PaintCanvas {
     isUseStrokeCanvas: false,
     activeEvent: undefined,
     startCoord: new Coordinate(),
+    startPoint: new Point(),
   }
   /** 履歴 */
   private readonly history: CanvasHistory
@@ -65,7 +76,10 @@ export class PaintCanvas {
   constructor(parent: HTMLElement) {
     // 描画先・表示先を生成
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
-    this.strokeCanvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.strokeCanvas = new AbstractCanvas(
+      WIDTH * RESOLUTION,
+      HEIGHT * RESOLUTION
+    )
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.history = new CanvasHistory(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
 
@@ -96,13 +110,26 @@ export class PaintCanvas {
     this.clear(false)
   }
 
+  /** 入力キャンバスに対するイベントハンドラを初期化します */
   private registerEventHandlers() {
     const inp = this.view.el
-    inp.addEventListener('pointerdown', (ev: PointerEvent) => this.onDown(ev))
-    inp.addEventListener(
-      'pointermove',
-      (ev: PointerEvent) => this.eventStatus.isWatchMove && this.onMove(ev)
-    )
+    let lastRawPoint = new Point()
+  
+    inp.addEventListener('pointerdown', (ev: PointerEvent) => {
+      lastRawPoint = new Point(ev.screenX, ev.screenY)
+      this.onDown(ev)
+    })
+
+    // カーソルドラッグ： ドラッグ監視中かつ一定量以上の移動があった場合にonMoveを実行
+    inp.addEventListener('pointermove', (ev: PointerEvent) => {
+      if (!this.eventStatus.isWatchMove) return
+      const p = new Point(ev.screenX, ev.screenY)
+      if (p.sub(lastRawPoint).length < MIN_CURSOR_MOVE) return
+      this.onMove(ev)
+      lastRawPoint = p
+    })
+
+    // ドラッグ終了： ドラッグ監視中の場合にonMoveを実行
     inp.addEventListener(
       'pointerup',
       (ev: PointerEvent) => this.eventStatus.isWatchMove && this.onUp(ev)
@@ -184,10 +211,11 @@ export class PaintCanvas {
     const action = keysAction(this.keyWatcher.keys)
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
+    this.eventStatus.startPoint = this.event2canvasPoint(ev)
 
-    if (action === 'draw') {
+    if (action === 'draw' || action === 'draw:line') {
       this.eventStatus.isWatchMove = true
-      this.moveTo(this.event2canvasPoint(ev))
+      this.startStroke(this.eventStatus.startPoint)
     }
     if (action === 'zoomup') this.requestChangeZoom.fire(true)
     if (action === 'zoomdown') this.requestChangeZoom.fire(false)
@@ -203,19 +231,38 @@ export class PaintCanvas {
   private onMove(ev: PointerEvent) {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
-      this.drawTo(this.event2canvasPoint(ev), ev.pressure || 0.5)
+      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
+    }
+    if (action === 'draw:line') {
+      clearCanvas(this.strokeCanvas)
+      this.strokeCanvas.moveTo(this.eventStatus.startPoint)
+      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
     }
     ev.preventDefault()
   }
   private onUp(ev: PointerEvent) {
     const action = this.eventStatus.activeEvent
+    const hasPaint = action === 'draw' || action === 'draw:line'
     if (action === 'draw') {
-      this.drawTo(this.event2canvasPoint(ev), ev.pressure)
+      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0)
     }
-    this.commitStroke()
+    if (action === 'draw:line') {
+      clearCanvas(this.strokeCanvas)
+      this.strokeCanvas.moveTo(this.eventStatus.startPoint)
+      this.continueStroke(
+        this.event2canvasPoint(ev),
+        this.history.current ? getStrokeEndPressure(this.history.current) : 0.5
+      )
+      this.history.current?.clearPoints(true, true) // ストローク履歴の中間を捨てる
+    }
+    this.endStroke(hasPaint)
   }
 
-  private moveTo(p: Point) {
+  /**
+   * ストロークを開始します。
+   * 一時キャンバスを有効にし、新規ストロークの記録を開始します。
+   */
+  private startStroke(p: Point) {
     // 一時キャンバスを有効にしてに座標系を同期
     this.eventStatus.isUseStrokeCanvas = true
     this.strokeCanvas.coord = this.canvas.coord
@@ -227,18 +274,29 @@ export class PaintCanvas {
     this.strokeCanvas.moveTo(p)
   }
 
-  private drawTo(p: Point, pressure = 0.5) {
+  /**
+   * 現在のストロークに座標を入力してストロークを継続します。
+   * スクロークは一時キャンバスを経由して描画されます。
+   * 履歴に座標を追加します。
+   */
+  private continueStroke(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
     this.strokeCanvas.drawTo(p, pressure)
     this.rePaint()
   }
 
-  private commitStroke() {
-    const action = this.eventStatus.activeEvent
-    if (action === 'draw') {
+  /**
+   * 現在のストロークを終了します。
+   * @param commitStroke ストロークを確定するか？確定しない場合、現在のストロークは破棄されます。
+   */
+  private endStroke(commitStroke: boolean) {
+    if (commitStroke) {
       this.history.commit()
       // 一時キャンバスの内容をキャンバスに転送
       this.strokeCanvas.copy(this.canvas.ctx)
+      clearCanvas(this.strokeCanvas)
+    } else {
+      this.history.rollback()
       clearCanvas(this.strokeCanvas)
     }
     this.eventStatus.isWatchMove = false

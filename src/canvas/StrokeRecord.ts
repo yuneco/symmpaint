@@ -48,4 +48,17 @@ export class StrokeRecord{
     this.inputs.push({point, pressure})
   }
 
+  /**
+   * 　記録した座標をクリアします
+   * @param shouldKeepFirst 最初の要素を保持するか？
+   * @param shouldKeepLast 最後の要素を保持するか？
+   */
+  clearPoints(shouldKeepFirst = false, shouldKeepLast = false) {
+    const first = shouldKeepFirst ? this.inputs.shift() : undefined
+    const last = shouldKeepLast ? this.inputs.pop() : undefined
+    this.inputs.length = 0
+    if (first) this.inputs.push(first)
+    if (last) this.inputs.push(last)
+  }
+
 }

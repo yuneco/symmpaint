@@ -67,6 +67,9 @@ export class CanvasHistory {
     return stroke
   }
 
+  /**
+   * 現在のストロークを確定します
+   */
   commit() {
     if (!this.currentStroke) return
     this.history.push(this.currentStroke)
@@ -76,6 +79,15 @@ export class CanvasHistory {
       console.log('new snapshot', this.snapshots.length)
       this.addSnapshot()
     }
+    this.currentStroke = undefined
+  }
+
+  /**
+   * 現在のストロークをキャンセルし、なかったことにします
+   */
+  rollback() {
+    if (!this.currentStroke) return
+    console.log('stroke rollbacked')
     this.currentStroke = undefined
   }
 
