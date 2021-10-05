@@ -12,6 +12,10 @@ html, body {
   grid-template-columns: 1fr 800px;
   grid-template-rows: 1fr 1fr;
   grid-template-areas: "palette main" "instruction main";
+  max-width: 1300px;
+  gap: 20px;
+  margin: auto;
+  justify-content: space-around;
 }
 
 #palette {
