@@ -72,4 +72,11 @@ export class AbstractCanvas {
     ctx.drawImage(this.el, 0, 0)
     ctx.restore()
   }
+
+  copy(ctx: CanvasRenderingContext2D) {
+    ctx.save()
+    ctx.resetTransform()
+    ctx.drawImage(this.el, 0, 0)
+    ctx.restore()
+  }
 }

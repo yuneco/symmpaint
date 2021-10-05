@@ -3,7 +3,7 @@ import { Coordinate } from '../coords/Coordinate'
 import { DragWatcher } from '../events/DragWatcher'
 import { KeyPressWatcher } from '../events/KeyPressWatcher'
 import { PaintEvent } from '../events/PaintEvent'
-import { fillCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
+import { clearCanvas, fillCanvas, paintKaraidGrid, paintOutBorder } from './paintGrid'
 import { Point } from '../coords/Point'
 import {
   actionCursor,
@@ -22,6 +22,8 @@ const RESOLUTION = 1 //window.devicePixelRatio
 type EventStatus = {
   /** ドラッグ操作を監視中か？ */
   isWatchMove: boolean
+  /** ストローク用の一時キャンバスが有効か？ */
+  isUseStrokeCanvas: boolean
   /** 現在のストロークで実行中の操作 */
   activeEvent: PointerAction | undefined
   /** 現在のストローク開始時の座標型（スクロールや回転で使用） */
@@ -31,6 +33,10 @@ type EventStatus = {
 export class PaintCanvas {
   /** 描画バッファCanvas */
   private readonly canvas: AbstractCanvas
+
+  /** 描画中のストロークを保持するバッファCanvas */
+  private readonly strokeCanvas: AbstractCanvas
+
   /** 表示用Canvas */
   private readonly view: AbstractCanvas
   /** キー操作監視 */
@@ -40,6 +46,7 @@ export class PaintCanvas {
   /** 現在実行中のストロークイベントの状態 */
   private readonly eventStatus: EventStatus = {
     isWatchMove: false,
+    isUseStrokeCanvas: false,
     activeEvent: undefined,
     startCoord: new Coordinate(),
   }
@@ -58,6 +65,7 @@ export class PaintCanvas {
   constructor(parent: HTMLElement) {
     // 描画先・表示先を生成
     this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.strokeCanvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
     this.history = new CanvasHistory(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
 
@@ -203,27 +211,48 @@ export class PaintCanvas {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
       this.drawTo(this.event2canvasPoint(ev), ev.pressure)
-      this.history.commit()
     }
-    this.eventStatus.isWatchMove = false
-    this.eventStatus.activeEvent = undefined
-    this.dragWatcher.watchingAction = undefined
+    this.commitStroke()
   }
 
   private moveTo(p: Point) {
+    // 一時キャンバスを有効にしてに座標系を同期
+    this.eventStatus.isUseStrokeCanvas = true
+    this.strokeCanvas.coord = this.canvas.coord
+    this.strokeCanvas.pen.state = this.canvas.pen.state
+    // ストロークの記録を開始
     this.history.start(this.coord, this.canvas.pen.state)
     this.history.current?.addPoint(p, 0.5)
-    this.canvas.moveTo(p)
+    // 一時キャンバス上でストロークを開始
+    this.strokeCanvas.moveTo(p)
   }
+
   private drawTo(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
-    this.canvas.drawTo(p, pressure)
+    this.strokeCanvas.drawTo(p, pressure)
     this.rePaint()
+  }
+
+  private commitStroke() {
+    const action = this.eventStatus.activeEvent
+    if (action === 'draw') {
+      this.history.commit()
+      // 一時キャンバスの内容をキャンバスに転送
+      this.strokeCanvas.copy(this.canvas.ctx)
+      clearCanvas(this.strokeCanvas)
+    }
+    this.eventStatus.isWatchMove = false
+    this.eventStatus.isUseStrokeCanvas = false
+    this.eventStatus.activeEvent = undefined
+    this.dragWatcher.watchingAction = undefined
   }
 
   private rePaint() {
     fillCanvas(this.view, '#cccccc')
     this.canvas.output(this.view.ctx)
+    if (this.eventStatus.isUseStrokeCanvas) {
+      this.strokeCanvas.output(this.view.ctx)
+    }
     if (this.penCount >= 2) {
       paintKaraidGrid(this.view, this.penCount)
     }
