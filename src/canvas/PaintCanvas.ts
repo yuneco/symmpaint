@@ -152,7 +152,7 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
-      this.history.start(this.coord, this.canvas.pen.state)
+      this.history.start(this.coord, this.canvas.pen.state, 'clearAll')
       this.history.commit()
     }
     this.canvas.clear()

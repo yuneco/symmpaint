@@ -3,7 +3,7 @@ import { LimittedStack } from '../misc/LimittedStack'
 import { AbstractCanvas } from './AbstractCanvas'
 import { PenState } from './Pen'
 import { replayStrokes } from './replayStrokes'
-import { StrokeRecord } from './StrokeRecord'
+import { StrokeRecord, StrokeTool } from './StrokeRecord'
 
 const MAXSTROKE = 110
 const STROKES_PER_SNAPSHOT = 10
@@ -61,8 +61,8 @@ export class CanvasHistory {
     this.lastSnapshotIndex = this.history.length - 1
   }
 
-  start(canvasCoord: Coordinate, penState: PenState): StrokeRecord {
-    const stroke = new StrokeRecord(canvasCoord, penState)
+  start(canvasCoord: Coordinate, penState: PenState, tool?: StrokeTool): StrokeRecord {
+    const stroke = new StrokeRecord(canvasCoord, penState, tool)
     this.currentStroke = stroke
     return stroke
   }
