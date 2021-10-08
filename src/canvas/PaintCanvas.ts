@@ -18,6 +18,7 @@ import {
 import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './getStrokePressure'
+import { Pen } from './Pen'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
@@ -68,6 +69,8 @@ export class PaintCanvas {
   private readonly requestChangeZoom = new PaintEvent<boolean>()
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
+
+  private pen = new Pen()
 
   /**
    * キャンバスを生成します
@@ -147,11 +150,11 @@ export class PaintCanvas {
   }
 
   get penCount() {
-    return this.canvas.pen.childCount + 1
+    return this.pen.childCount + 1
   }
   set penCount(n: number) {
     if (n === this.penCount) return
-    const pen = this.canvas.pen
+    const pen = this.pen
     // 子ペンを一度クリアして再設定
     pen.clearChildren()
     if (n <= 1) return
@@ -162,7 +165,7 @@ export class PaintCanvas {
   }
 
   set penWidth(v: number) {
-    this.canvas.pen.changeLineWidth(v)
+    this.pen.changeLineWidth(v)
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
@@ -187,7 +190,7 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
-      this.history.start(this.coord, this.canvas.pen.state, 'clearAll')
+      this.history.start(this.coord, this.pen.state, 'clearAll')
       this.history.commit()
     }
     this.canvas.clear()
@@ -235,7 +238,7 @@ export class PaintCanvas {
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.strokeCanvas.moveTo(this.eventStatus.startPoint)
+      this.pen.moveTo(this.eventStatus.startPoint)
       this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
     }
     ev.preventDefault()
@@ -248,7 +251,7 @@ export class PaintCanvas {
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.strokeCanvas.moveTo(this.eventStatus.startPoint)
+      this.pen.moveTo(this.eventStatus.startPoint)
       this.continueStroke(
         this.event2canvasPoint(ev),
         this.history.current ? getStrokeEndPressure(this.history.current) : 0.5
@@ -266,12 +269,11 @@ export class PaintCanvas {
     // 一時キャンバスを有効にしてに座標系を同期
     this.eventStatus.isUseStrokeCanvas = true
     this.strokeCanvas.coord = this.canvas.coord
-    this.strokeCanvas.pen.state = this.canvas.pen.state
     // ストロークの記録を開始
-    this.history.start(this.coord, this.canvas.pen.state)
+    this.history.start(this.coord, this.pen.state)
     this.history.current?.addPoint(p, 0.5)
     // 一時キャンバス上でストロークを開始
-    this.strokeCanvas.moveTo(p)
+    this.pen.moveTo(p)
   }
 
   /**
@@ -281,7 +283,7 @@ export class PaintCanvas {
    */
   private continueStroke(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
-    this.strokeCanvas.drawTo(p, pressure)
+    this.pen.drawTo(this.strokeCanvas, p, pressure)
     this.rePaint()
   }
 

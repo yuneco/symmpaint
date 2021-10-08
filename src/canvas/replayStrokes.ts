@@ -1,14 +1,16 @@
 import { AbstractCanvas } from "./AbstractCanvas";
+import { Pen } from "./Pen";
 import { StrokeRecord } from "./StrokeRecord";
 
 const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord) => {
   canvas.coord = stroke.canvasCoord
-  canvas.pen.state = stroke.penState
+  const pen = new Pen()
+  pen.state = stroke.penState
   const [first, ...lests] = stroke.inputs
   if (!first) return
-  canvas.moveTo(first.point)
+  pen.moveTo(first.point)
   lests.forEach(inp => {
-    canvas.drawTo(inp.point, inp.pressure)
+    pen.drawTo(canvas, inp.point, inp.pressure)
   })
 }
 

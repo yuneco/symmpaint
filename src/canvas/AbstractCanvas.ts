@@ -1,6 +1,4 @@
 import { Coordinate } from '../coords/Coordinate'
-import { Pen } from './Pen'
-import { Point } from '../coords/Point'
 
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
@@ -8,7 +6,6 @@ export class AbstractCanvas {
   readonly width: number
   readonly height: number
   private _coord: Coordinate
-  private _pen: Pen
 
   constructor(w: number, h: number) {
     const canvas = document.createElement('canvas')
@@ -23,7 +20,6 @@ export class AbstractCanvas {
     this.el = canvas
     this.ctx = ctx
     this._coord = new Coordinate()
-    this._pen = new Pen(ctx, w, h)
   }
 
   set coord(c: Coordinate) {
@@ -36,24 +32,8 @@ export class AbstractCanvas {
     this.ctx.translate(c.scroll.x, c.scroll.y)
   }
 
-  get pen() {
-    return this._pen
-  }
-
   get coord() {
     return this._coord
-  }
-
-  get pos() {
-    return this.pen.pos
-  }
-
-  moveTo(p: Point) {
-    this.pen.moveTo(p)
-  }
-
-  drawTo(p: Point, pressure = 0.5) {
-    this.pen.drawTo(p, pressure)
   }
 
   clear() {
