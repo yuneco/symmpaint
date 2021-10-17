@@ -70,7 +70,7 @@ export class PaintCanvas {
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
 
-  private pen = new Pen()
+  private pen: Pen
 
   /**
    * キャンバスを生成します
@@ -88,6 +88,7 @@ export class PaintCanvas {
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
+    parent.appendChild(this.strokeCanvas.el)
 
     // キャンバス上のマウスイベントを初期化
     this.registerEventHandlers()
@@ -110,6 +111,9 @@ export class PaintCanvas {
       this.requestRotateTo.fire(angle)
     })
 
+    this.pen = new Pen()
+    //this.pen.coord = new Coordinate({scroll: new Point(400, 400)})
+
     this.clear(false)
   }
 
@@ -117,7 +121,7 @@ export class PaintCanvas {
   private registerEventHandlers() {
     const inp = this.view.el
     let lastRawPoint = new Point()
-  
+
     inp.addEventListener('pointerdown', (ev: PointerEvent) => {
       lastRawPoint = new Point(ev.screenX, ev.screenY)
       this.onDown(ev)
@@ -145,20 +149,19 @@ export class PaintCanvas {
 
   set coord(c: Coordinate) {
     // anchor(回転軸)のみ画面中央に調整してセット
-    this.canvas.coord = c.clone({ anchor: new Point(-WIDTH / 2, -HEIGHT / 2) })
+    this.canvas.coord = c.clone({})
     this.rePaint()
   }
 
   get penCount() {
-    return this.pen.childCount + 1
+    return this.pen.childCount
   }
   set penCount(n: number) {
     if (n === this.penCount) return
     const pen = this.pen
     // 子ペンを一度クリアして再設定
     pen.clearChildren()
-    if (n <= 1) return
-    for (let penNo = 1; penNo < n; penNo++) {
+    for (let penNo = 0; penNo < n; penNo++) {
       pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n }))
     }
     this.rePaint()
@@ -207,7 +210,10 @@ export class PaintCanvas {
   }
 
   private event2canvasPoint(ev: PointerEvent): Point {
-    return new Point(ev.offsetX * RESOLUTION, ev.offsetY * RESOLUTION)
+    return new Point(
+      ev.offsetX * RESOLUTION - WIDTH / 2,
+      ev.offsetY * RESOLUTION - HEIGHT / 2
+    )
   }
 
   private onDown(ev: PointerEvent) {
@@ -283,7 +289,7 @@ export class PaintCanvas {
    */
   private continueStroke(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
-    this.pen.drawTo(this.strokeCanvas, p, pressure)
+    this.pen.drawTo(this.strokeCanvas, new DOMMatrix(), p, pressure)
     this.rePaint()
   }
 

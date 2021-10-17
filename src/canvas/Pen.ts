@@ -7,7 +7,6 @@ export type PenState = Readonly<{
   coord: Coordinate
   color: string
   lineWidth: number
-  isDrawSelf: boolean
   children: PenState[]
 }>
 
@@ -23,7 +22,6 @@ export class Pen {
 
   color: string = '#000000'
   lineWidth: number = 10
-  isDrawSelf: boolean = true
 
   constructor() {
     this._coord = new Coordinate()
@@ -56,7 +54,6 @@ export class Pen {
       coord: this.coord,
       color: this.color,
       lineWidth: this.lineWidth,
-      isDrawSelf: this.isDrawSelf,
       children: this.children.map((ch) => ch.state),
     }
   }
@@ -67,7 +64,6 @@ export class Pen {
     this.coord = st.coord
     this.color = st.color
     this.lineWidth = st.lineWidth
-    this.isDrawSelf = st.isDrawSelf
     if (this.children.length > st.children.length) {
       // 不要なペンを削除
       this.children.length = st.children.length
@@ -111,16 +107,6 @@ export class Pen {
     }
   }
 
-  /** 描画先に座標型を適用します。save/restoreは行いません */
-  private applyCoord(ctx: CanvasRenderingContext2D, anchor: Point) {
-    const c: Coordinate = this._coord
-    ctx.translate(-c.scroll.x, -c.scroll.y)
-    ctx.translate(anchor.x, anchor.y)
-    ctx.rotate((c.angle / 180) * Math.PI)
-    ctx.scale(c.scale, c.scale)
-    ctx.translate(-anchor.x, -anchor.y)
-  }
-
   /** ペンを移動します */
   moveTo(p: Point) {
     this.position = p
@@ -128,20 +114,24 @@ export class Pen {
   }
 
   /** 指定の座標まで線を引きます */
-  drawTo(canvas: AbstractCanvas, p: Point, pressure = 0.5) {
+  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p: Point, pressure = 0.5, logName = '') {
     const ctx = canvas.ctx
-    ctx.save()
-    this.applyCoord(ctx, new Point(canvas.width / 2, canvas.height / 2))
-    if (this.isDrawSelf) {
+    if (logName) console.group(logName)
+    
+    const mx = matrix.multiply(this.coord.matrix)
+    if (this.childCount === 0) {
+      const lp1 = mx.transformPoint(this.position)
+      const lp2 = mx.transformPoint(p)
       ctx.lineWidth = this.lineWidth * pressure
       ctx.strokeStyle = this.color
       ctx.beginPath()
-      ctx.moveTo(this.position.x, this.position.y)
-      ctx.lineTo(p.x, p.y)
+      ctx.moveTo(lp1.x, lp1.y)
+      ctx.lineTo(lp2.x, lp2.y)
+      if (logName) console.log(`${lp1.x} ${lp1.y}, ${lp2.x} ${lp2.y}`)
       ctx.stroke()
     }
-    this.children.forEach((pen) => pen.drawTo(canvas, p, pressure))
-    ctx.restore()
+    this.children.forEach((pen, index) => pen.drawTo(canvas, mx,p, pressure, logName ? `${logName}-${index}`: ''))
     this.position = p
+    if (logName) console.groupEnd()
   }
 }

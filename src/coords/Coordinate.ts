@@ -1,32 +1,45 @@
 import { Point } from './Point'
 
 type CoordinateData = {
-  anchor: Point;
+  // anchor: Point;
   scroll: Point;
   scale: number;
   angle: number;
 }
 
 /**
- * 座標型を保持するイミュータブルなクラスです。
+ * 座標系を保持するイミュータブルなクラスです。
  */
 export class Coordinate {
-  readonly anchor: Point
+  /**
+   * 親座標系からの平行移動量
+   */
   readonly scroll: Point
+  /**
+   * 親座標系からの拡大縮小量
+   */
   readonly scale: number
+  /**
+   * 親座標系からの回転量(deg)
+   */
   readonly angle: number
+
+  /** この座標系のDOMMatrix */
+  private readonly _matrix: DOMMatrix
 
   constructor(data?: Partial<CoordinateData>
   ) {
-    this.anchor = data?.anchor ?? new Point()
     this.scroll = data?.scroll ?? new Point()
     this.scale = data?.scale ?? 1
     this.angle = data?.angle ?? 0
+    this._matrix = new DOMMatrix()
+      .translateSelf(this.scroll.x, this.scroll.y)
+      .scaleSelf(this.scale)
+      .rotateSelf(this.angle)
   }
 
   toData(): CoordinateData {
     return {
-      anchor: this.anchor,
       scroll: this.scroll,
       scale: this.scale,
       angle: this.angle,
@@ -38,14 +51,8 @@ export class Coordinate {
     return new Coordinate({...base, ...data})
   }
 
-  // toLocal(gp: Point): Point {
-  //   return gp.rotate(this.angle).scale(this.scale).move(this.anchor)
-  // }
+  get matrix() {
+    return this._matrix.translate()
+  }
 
-  // toGlobal(lp: Point): Point {
-  //   return lp
-  //     .move(this.anchor.scale(-1))
-  //     .scale(1 / this.scale)
-  //     .rotate(-this.angle)
-  // }
 }

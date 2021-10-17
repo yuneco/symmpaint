@@ -1,4 +1,5 @@
 import { Coordinate } from '../coords/Coordinate'
+import { Point } from '../coords/Point'
 
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
@@ -22,13 +23,18 @@ export class AbstractCanvas {
     this._coord = new Coordinate()
   }
 
+  get centor() {
+    return new Point(this.width / 2, this.height / 2)
+  }
+
   set coord(c: Coordinate) {
+    const centor = this.centor
     this._coord = c
     this.ctx.resetTransform()
-    this.ctx.translate(-c.anchor.x, -c.anchor.y)
+    this.ctx.translate(centor.x, centor.y)
     this.ctx.scale(1 / c.scale, 1 / c.scale)
     this.ctx.rotate((-c.angle / 180) * Math.PI)
-    this.ctx.translate(c.anchor.x, c.anchor.y)
+    //this.ctx.translate(-centor.x, -centor.y)
     this.ctx.translate(c.scroll.x, c.scroll.y)
   }
 
@@ -45,14 +51,15 @@ export class AbstractCanvas {
   }
 
   output(ctx: CanvasRenderingContext2D) {
+    const centor = this.centor
     ctx.save()
     const c = this.coord
     ctx.resetTransform()
     ctx.translate(-c.scroll.x, -c.scroll.y)
-    ctx.translate(-c.anchor.x, -c.anchor.y)
+    ctx.translate(centor.x, centor.y)
     ctx.rotate((c.angle / 180) * Math.PI)
     ctx.scale(c.scale, c.scale)
-    ctx.translate(c.anchor.x, c.anchor.y)
+    ctx.translate(-centor.x, -centor.y)
     ctx.drawImage(this.el, 0, 0)
     ctx.restore()
   }

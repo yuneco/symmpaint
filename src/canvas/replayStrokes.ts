@@ -4,13 +4,14 @@ import { StrokeRecord } from "./StrokeRecord";
 
 const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord) => {
   canvas.coord = stroke.canvasCoord
+  console.log('rep stroke', stroke)
   const pen = new Pen()
   pen.state = stroke.penState
   const [first, ...lests] = stroke.inputs
   if (!first) return
   pen.moveTo(first.point)
   lests.forEach(inp => {
-    pen.drawTo(canvas, inp.point, inp.pressure)
+    pen.drawTo(canvas, new  DOMMatrix(), inp.point, inp.pressure)
   })
 }
 
