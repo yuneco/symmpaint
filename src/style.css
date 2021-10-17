@@ -10,8 +10,8 @@ html, body {
   color: #2c3e50;
   display: grid;
   grid-template-columns: 1fr 800px;
-  grid-template-rows: 1fr 1fr;
-  grid-template-areas: "palette main" "instruction main";
+  grid-template-rows: 400px 400px 1fr;
+  grid-template-areas: "palette main" "instruction main" "debug debug";
   max-width: 1300px;
   gap: 20px;
   margin: auto;
@@ -31,4 +31,11 @@ html, body {
 #instruction {
   grid-area: instruction;
   text-align: left;
+}
+
+#debug {
+  grid-area: debug;
+}
+#debug .blocks {
+  display: flex;
 }

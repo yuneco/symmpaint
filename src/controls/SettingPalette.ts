@@ -85,10 +85,11 @@ export class SettingPalette {
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
 
-    parent.appendChild(slScale.el)
-    parent.appendChild(slAngle.el)
-    parent.appendChild(slX.el)
-    parent.appendChild(slY.el)
+    // 使わないコントロールは表示しない
+    // parent.appendChild(slScale.el)
+    // parent.appendChild(slAngle.el)
+    // parent.appendChild(slX.el)
+    // parent.appendChild(slY.el)    
     parent.appendChild(slPenCount.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)

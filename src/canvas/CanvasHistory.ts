@@ -2,7 +2,7 @@ import { Coordinate } from '../coords/Coordinate'
 import { LimittedStack } from '../misc/LimittedStack'
 import { AbstractCanvas } from './AbstractCanvas'
 import { PenState } from './Pen'
-import { replayStrokes } from './replayStrokes'
+import { replayStrokes } from './strokeFuncs/replayStrokes'
 import { StrokeRecord, StrokeTool } from './StrokeRecord'
 import { StrokeStyle } from './StrokeStyle'
 
@@ -120,13 +120,6 @@ export class CanvasHistory {
       console.log('back prev snap', this.snapshots.length)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
     }
-
-    // console.log({
-    //   snapshots: this.snapshots.length,
-    //   hists: this.lastHistories,
-    //   oldestSnapshotIndex: this.oldestSnapshotIndex,
-    //   lastSnapshotIndex: this.lastSnapshotIndex,
-    // })
     return true
   }
 }

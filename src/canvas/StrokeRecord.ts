@@ -2,6 +2,7 @@ import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 import { Pen, PenState } from './Pen'
 import { PenInput } from './PenInput'
+import { joinStrokes } from './strokeFuncs/joinStrokes'
 import { StrokeStyle } from './StrokeStyle'
 /**
  * ストロークによって実行される機能を示します。
@@ -64,12 +65,7 @@ export class StrokeRecord{
     const pen = new Pen()
     pen.state = this.penState
     const strokes = pen.drayRun(new  DOMMatrix(), this.inputs)
-    const joinedStroke = strokes.flatMap(stroke =>  {
-      if (!stroke.length) return stroke
-      const first = stroke[0]
-      const last = stroke[stroke.length - 1]
-      return [{point: first.point, pressure: 0} ,...stroke, {point: last.point, pressure: 0}]
-    })
+    const joinedStroke = joinStrokes(strokes)
     pen.clearChildren()
     const rec = new StrokeRecord(this.canvasCoord, pen.state, this.style, this.tool)
     rec.inputs.push(...joinedStroke)
