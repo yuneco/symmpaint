@@ -18,6 +18,7 @@ export class SettingPalette {
   readonly onPenWidthChange = new PaintEvent<number>()
   readonly onClear = new PaintEvent<void>()
   readonly onUndo = new PaintEvent<void>()
+  readonly onCopy = new PaintEvent<void>()
 
   get scale() {
     return this.slScale.value
@@ -84,6 +85,7 @@ export class SettingPalette {
     const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 1, 40, 10))
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
+    const btnCopy = new Button('Copy Image')
 
     // 使わないコントロールは表示しない
     // parent.appendChild(slScale.el)
@@ -94,6 +96,7 @@ export class SettingPalette {
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
     parent.appendChild(btnUndo.el)
+    parent.appendChild(btnCopy.el)
 
     slScale.addEventListener('input', () => {
       this.onScaleChange.fire(slScale.value)
@@ -118,6 +121,9 @@ export class SettingPalette {
     })
     btnUndo.addEventListener('click', () => {
       this.onUndo.fire()
+    })
+    btnCopy.addEventListener('click', () => {
+      this.onCopy.fire()
     })
   }
 }

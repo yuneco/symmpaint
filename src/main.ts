@@ -34,6 +34,12 @@ setting.onClear.listen(() => {
 setting.onUndo.listen(() => {
   canvas.undo()
 })
+setting.onCopy.listen(async () => {
+  const blob = await canvas.toImgBlob()
+  // see: https://stackoverflow.com/questions/61187374/how-to-fix-the-cannot-find-name-clipboarditem-error
+  const item = new ClipboardItem({ 'image/png': blob as unknown as ClipboardItemData})
+  await navigator.clipboard.write([item])
+})
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
 canvas.coord = canvas.coord.clone({
@@ -65,17 +71,24 @@ window.addEventListener('keydown', (ev) => {
   if (ev.key === 'z' && ev.metaKey) {
     setting.onUndo.fire()
   }
+  if (ev.key === 'z' && ev.metaKey) {
+    setting.onCopy.fire()
+  }
 })
 
 // パレットの初期値設定
 setting.penCount = 5
 
 // iOSのスクロール無効化
-elMain.addEventListener('touchmove', function(event) {
-  event.preventDefault();
-});
+elMain.addEventListener('touchmove', function (event) {
+  event.preventDefault()
+})
 
 // 説明文の言語切り替え
 const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
-document.querySelectorAll<HTMLElement>('.lang').forEach(el => el.style.display = 'none')
-document.querySelectorAll<HTMLElement>(`.lang.${uaLang}`).forEach(el => el.style.display = '')
+document
+  .querySelectorAll<HTMLElement>('.lang')
+  .forEach((el) => (el.style.display = 'none'))
+document
+  .querySelectorAll<HTMLElement>(`.lang.${uaLang}`)
+  .forEach((el) => (el.style.display = ''))

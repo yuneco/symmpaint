@@ -228,6 +228,12 @@ export class PaintCanvas {
     this.rePaint()
   }
 
+  async toImgBlob() {
+    return new Promise<Blob>((resolve, reject) => {
+      this.canvas.el.toBlob(blob => blob ? resolve(blob) : reject())
+    })
+  }
+
   private event2canvasPoint(ev: PointerEvent): Point {
     return new Point(
       ev.offsetX * RESOLUTION - WIDTH / 2,
