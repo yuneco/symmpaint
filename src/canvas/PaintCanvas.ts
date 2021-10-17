@@ -337,7 +337,9 @@ export class PaintCanvas {
     this.strokeCanvas.coord = this.canvas.coord
     this.strokeCanvas.ctx.lineWidth =
       this.style.penSize * this.canvas.coord.scale
-    // ストロークの記録を開始
+      this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing ? '#0044aa' : '#000000'
+
+      // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
     this.history.current?.addPoint(p, 0.5)
     // 一時キャンバス上でストロークを開始
