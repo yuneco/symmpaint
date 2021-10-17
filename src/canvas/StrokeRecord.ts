@@ -1,6 +1,7 @@
 import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 import { PenState } from './Pen'
+import { StrokeStyle } from './StrokeStyle'
 
 type PenInput = {
   point: Point
@@ -24,6 +25,8 @@ export class StrokeRecord{
   readonly inputs: PenInput[] = []
   /** ストローク記録時のペンの状態 */
   readonly penState: PenState
+  /** 線のスタイル */
+  readonly style: StrokeStyle
   /** ストローク記録時のキャンバスの座標系 */
   readonly canvasCoord: Coordinate
   /** このストロークで実現される機能 */
@@ -35,9 +38,10 @@ export class StrokeRecord{
    * @param penState ペンの状態
    * @param tool このストロークの機能
    */
-  constructor(canvasCoord: Coordinate, penState: PenState, tool: StrokeTool = 'pen') {
+  constructor(canvasCoord: Coordinate, penState: PenState, style: StrokeStyle, tool: StrokeTool = 'pen') {
     this.canvasCoord = canvasCoord
     this.penState = penState
+    this.style = style
     this.tool = tool
   }
 

@@ -4,7 +4,7 @@ import { StrokeRecord } from "./StrokeRecord";
 
 const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord) => {
   canvas.coord = stroke.canvasCoord
-  console.log('rep stroke', stroke)
+  canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
   const pen = new Pen()
   pen.state = stroke.penState
   const [first, ...lests] = stroke.inputs

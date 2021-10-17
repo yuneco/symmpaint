@@ -19,6 +19,7 @@ import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './getStrokePressure'
 import { Pen } from './Pen'
+import { StrokeStyle } from './StrokeStyle'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
@@ -70,7 +71,8 @@ export class PaintCanvas {
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
 
-  private pen: Pen
+  private readonly pen: Pen
+  private style: StrokeStyle = new StrokeStyle()
 
   /**
    * キャンバスを生成します
@@ -88,8 +90,7 @@ export class PaintCanvas {
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
-    parent.appendChild(this.strokeCanvas.el)
-
+ 
     // キャンバス上のマウスイベントを初期化
     this.registerEventHandlers()
 
@@ -168,7 +169,7 @@ export class PaintCanvas {
   }
 
   set penWidth(v: number) {
-    this.pen.changeLineWidth(v)
+    this.style = new StrokeStyle(this.style.color, v)
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
@@ -193,7 +194,7 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
-      this.history.start(this.coord, this.pen.state, 'clearAll')
+      this.history.start(this.coord, this.pen.state, this.style, 'clearAll')
       this.history.commit()
     }
     this.canvas.clear()
@@ -275,8 +276,9 @@ export class PaintCanvas {
     // 一時キャンバスを有効にしてに座標系を同期
     this.eventStatus.isUseStrokeCanvas = true
     this.strokeCanvas.coord = this.canvas.coord
+    this.strokeCanvas.ctx.lineWidth = this.style.penSize * this.canvas.coord.scale
     // ストロークの記録を開始
-    this.history.start(this.coord, this.pen.state)
+    this.history.start(this.coord, this.pen.state, this.style)
     this.history.current?.addPoint(p, 0.5)
     // 一時キャンバス上でストロークを開始
     this.pen.moveTo(p)

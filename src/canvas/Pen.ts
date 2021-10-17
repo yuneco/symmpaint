@@ -5,8 +5,6 @@ import { AbstractCanvas } from './AbstractCanvas'
 export type PenState = Readonly<{
   position: Point
   coord: Coordinate
-  color: string
-  lineWidth: number
   children: PenState[]
 }>
 
@@ -19,9 +17,6 @@ export class Pen {
   private position: Point = new Point()
   private _coord: Coordinate
   private children: Pen[] = []
-
-  color: string = '#000000'
-  lineWidth: number = 10
 
   constructor() {
     this._coord = new Coordinate()
@@ -52,8 +47,6 @@ export class Pen {
     return {
       position: this.position,
       coord: this.coord,
-      color: this.color,
-      lineWidth: this.lineWidth,
       children: this.children.map((ch) => ch.state),
     }
   }
@@ -62,8 +55,6 @@ export class Pen {
   set state(st: PenState) {
     this.position = st.position
     this.coord = st.coord
-    this.color = st.color
-    this.lineWidth = st.lineWidth
     if (this.children.length > st.children.length) {
       // 不要なペンを削除
       this.children.length = st.children.length
@@ -82,8 +73,6 @@ export class Pen {
    */
   addChildPen(coord?: Coordinate): Pen {
     const pen = new Pen()
-    pen.lineWidth = this.lineWidth
-    pen.color = this.color
     if (coord) {
       pen.coord = coord
     }
@@ -93,18 +82,6 @@ export class Pen {
 
   clearChildren() {
     this.children.length = 0
-  }
-
-  /**
-   * ペン幅を変更します
-   * @param v ペン幅
-   * @param shouldApplyChildren 子ペンにも変更を適用するか？
-   */
-  changeLineWidth(v: number, shouldApplyChildren = true) {
-    this.lineWidth = v
-    if (shouldApplyChildren) {
-      this.children.forEach((p) => p.changeLineWidth(v))
-    }
   }
 
   /** ペンを移動します */
@@ -122,8 +99,6 @@ export class Pen {
     if (this.childCount === 0) {
       const lp1 = mx.transformPoint(this.position)
       const lp2 = mx.transformPoint(p)
-      ctx.lineWidth = this.lineWidth * pressure
-      ctx.strokeStyle = this.color
       ctx.beginPath()
       ctx.moveTo(lp1.x, lp1.y)
       ctx.lineTo(lp2.x, lp2.y)
