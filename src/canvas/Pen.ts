@@ -1,6 +1,7 @@
 import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 import { AbstractCanvas } from './AbstractCanvas'
+import { PenInput } from './PenInput'
 
 export type PenState = Readonly<{
   position: Point
@@ -108,5 +109,17 @@ export class Pen {
     this.children.forEach((pen, index) => pen.drawTo(canvas, mx,p, pressure, logName ? `${logName}-${index}`: ''))
     this.position = p
     if (logName) console.groupEnd()
+  }
+
+  drayRun(matrix: DOMMatrixReadOnly, inputs: PenInput[]): PenInput[][] {
+    const mx = matrix.multiply(this.coord.matrix)
+    if (this.childCount === 0) {
+      return [inputs.map(inp => {
+        const lp = mx.transformPoint(inp.point)
+        const out: PenInput = {point: new Point(lp.x, lp.y), pressure: inp.pressure}
+        return out
+      })]
+    }
+    return this.children.flatMap(ch => ch.drayRun(mx, inputs))
   }
 }

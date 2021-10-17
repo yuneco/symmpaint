@@ -301,6 +301,8 @@ export class PaintCanvas {
    */
   private endStroke(commitStroke: boolean) {
     if (commitStroke) {
+      const flatStroke = this.history.current?.flatten
+      console.log(flatStroke)
       this.history.commit()
       // 一時キャンバスの内容をキャンバスに転送
       this.strokeCanvas.copy(this.canvas.ctx)
