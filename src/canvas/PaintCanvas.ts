@@ -20,6 +20,8 @@ import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './getStrokePressure'
 import { Pen } from './Pen'
 import { StrokeStyle } from './StrokeStyle'
+import { StrokeRecord } from './StrokeRecord'
+import { replayPenStroke } from './replayStrokes'
 
 // TODO: サイズは可変にする
 const WIDTH = 800
@@ -74,6 +76,8 @@ export class PaintCanvas {
   private readonly pen: Pen
   private style: StrokeStyle = new StrokeStyle()
 
+  private stamp?: StrokeRecord
+
   /**
    * キャンバスを生成します
    * @param parent キャンバス挿入先
@@ -90,6 +94,7 @@ export class PaintCanvas {
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
+    parent.appendChild(this.strokeCanvas.el)
  
     // キャンバス上のマウスイベントを初期化
     this.registerEventHandlers()
@@ -223,7 +228,11 @@ export class PaintCanvas {
     this.eventStatus.startCoord = this.coord
     this.eventStatus.startPoint = this.event2canvasPoint(ev)
 
-    if (action === 'draw' || action === 'draw:line') {
+    if (action === 'draw:stamp' && this.stamp) {
+      this.startStroke(this.eventStatus.startPoint)
+    }
+
+    if (action === 'draw' || action === 'draw:line' || action === 'draw:stamp') {
       this.eventStatus.isWatchMove = true
       this.startStroke(this.eventStatus.startPoint)
     }
@@ -248,11 +257,16 @@ export class PaintCanvas {
       this.pen.moveTo(this.eventStatus.startPoint)
       this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
     }
+    if (action === 'draw:stamp' && this.stamp) {
+      clearCanvas(this.strokeCanvas)
+      this.putStroke(this.stamp, this.event2canvasPoint(ev), 0.5)
+    }
+
     ev.preventDefault()
   }
   private onUp(ev: PointerEvent) {
     const action = this.eventStatus.activeEvent
-    const hasPaint = action === 'draw' || action === 'draw:line'
+    const hasPaint = action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
     if (action === 'draw') {
       this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0)
     }
@@ -265,7 +279,22 @@ export class PaintCanvas {
       )
       this.history.current?.clearPoints(true, true) // ストローク履歴の中間を捨てる
     }
+    if (action === 'draw:stamp' && this.stamp) {
+      clearCanvas(this.strokeCanvas)
+      this.putStroke(this.stamp, this.event2canvasPoint(ev))
+    }
+
+
+    if (action === 'draw' && ev.altKey) { 
+      this.stamp = this.history.current?.flatten;
+      console.log('capture stamp', this.stamp)
+      this.endStroke(false)
+      this.rePaint()
+      return
+    }
+
     this.endStroke(hasPaint)
+
   }
 
   /**
@@ -301,8 +330,6 @@ export class PaintCanvas {
    */
   private endStroke(commitStroke: boolean) {
     if (commitStroke) {
-      const flatStroke = this.history.current?.flatten
-      console.log(flatStroke)
       this.history.commit()
       // 一時キャンバスの内容をキャンバスに転送
       this.strokeCanvas.copy(this.canvas.ctx)
@@ -315,6 +342,27 @@ export class PaintCanvas {
     this.eventStatus.isUseStrokeCanvas = false
     this.eventStatus.activeEvent = undefined
     this.dragWatcher.watchingAction = undefined
+  }
+
+  private putStroke(rec: StrokeRecord, p: Point, pressure = 0) {
+
+    const pen = new Pen()
+    pen.state = this.pen.state
+    const recPen = new Pen()
+    recPen.state = rec.penState
+    recPen.coord = recPen.coord.clone({scroll: p})
+    pen.leafs.forEach(leaf => leaf.addChildPen())
+    pen.leafs.forEach(leaf => leaf.state = recPen.state)
+    const stampRec = new StrokeRecord(rec.canvasCoord, pen.state, this.style, rec.tool)
+    stampRec.inputs.push(...rec.inputs)
+    replayPenStroke(this.strokeCanvas, stampRec, pressure)
+    this.rePaint()
+
+    const his =  this.history.current
+    if (his) {
+      his.inputs.length = 0
+      his.inputs.push(...rec.inputs)  
+    }
   }
 
   private rePaint() {

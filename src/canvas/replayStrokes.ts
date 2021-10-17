@@ -2,20 +2,25 @@ import { AbstractCanvas } from "./AbstractCanvas";
 import { Pen } from "./Pen";
 import { StrokeRecord } from "./StrokeRecord";
 
-const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord) => {
+export const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord, overridePressure: number | undefined = undefined) => {
   canvas.coord = stroke.canvasCoord
   canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
   const pen = new Pen()
   pen.state = stroke.penState
-  const [first, ...lests] = stroke.inputs
-  if (!first) return
-  pen.moveTo(first.point)
-  lests.forEach(inp => {
-    pen.drawTo(canvas, new  DOMMatrix(), inp.point, inp.pressure)
-  })
+
+  if (overridePressure) {
+    pen.drawLines(canvas, new  DOMMatrix(), stroke.inputs.map(inp => inp.point), overridePressure)
+  } else {
+    const [first, ...lests] = stroke.inputs
+    if (!first) return
+    pen.moveTo(first.point)
+    lests.forEach(inp => {
+      pen.drawTo(canvas, new  DOMMatrix(), inp.point, inp.pressure)
+    })  
+  }
 }
 
-const replayCelarAllStroke = (canvas: AbstractCanvas) => {
+export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
   canvas.clear()
 }
 
@@ -25,7 +30,7 @@ export const replayStrokes = (canvas: AbstractCanvas, strokes: StrokeRecord[]) =
       replayPenStroke(canvas, stroke)
     }
     if (stroke.tool === 'clearAll') {
-      replayCelarAllStroke(canvas)
+      replayCelarAllStroke(canvas )
     }
   })
 }

@@ -68,6 +68,12 @@ export class Pen {
     })
   }
 
+  /** 末端の（描画を行う）ペンを配列として返します */
+  get leafs(): Pen[] {
+    if (!this.childCount) return [this]
+    return this.children.flatMap(ch => ch.leafs)
+  }
+
   /**
    * 子ペンを追加します
    * @param coord 子ペンの座標型。省略時は親と同じ
@@ -100,15 +106,39 @@ export class Pen {
     if (this.childCount === 0) {
       const lp1 = mx.transformPoint(this.position)
       const lp2 = mx.transformPoint(p)
+      const baseWidth = ctx.lineWidth
       ctx.beginPath()
+      ctx.lineWidth = baseWidth * pressure
       ctx.moveTo(lp1.x, lp1.y)
       ctx.lineTo(lp2.x, lp2.y)
       if (logName) console.log(`${lp1.x} ${lp1.y}, ${lp2.x} ${lp2.y}`)
       ctx.stroke()
+      ctx.lineWidth = baseWidth
     }
     this.children.forEach((pen, index) => pen.drawTo(canvas, mx,p, pressure, logName ? `${logName}-${index}`: ''))
     this.position = p
     if (logName) console.groupEnd()
+  }
+
+  drawLines(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, points: Point[], pressure = 0.5) {
+    if (points.length < 2) return
+    const ctx = canvas.ctx
+    const mx = matrix.multiply(this.coord.matrix)
+    if (this.childCount === 0) {
+      const [firstP, ...lestPs] = points
+      const baseWidth = ctx.lineWidth
+      ctx.lineWidth = baseWidth * pressure
+      ctx.beginPath()
+      const p0 = mx.transformPoint(firstP)
+      ctx.moveTo(p0.x, p0.y)
+      lestPs.forEach(p => {
+        const p1 = mx.transformPoint(p)
+        ctx.lineTo(p1.x, p1.y)
+      })
+      ctx.stroke()
+      ctx.lineWidth = baseWidth
+    }
+    this.children.forEach((pen) => pen.drawLines(canvas, mx, points, pressure))
   }
 
   drayRun(matrix: DOMMatrixReadOnly, inputs: PenInput[]): PenInput[][] {

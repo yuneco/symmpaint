@@ -1,5 +1,5 @@
 /** キャンバス上で行うことのできる操作 */
-export type PointerAction = 'draw' | 'scroll' | 'zoomup' | 'zoomdown' | 'rotate' | 'draw:line'
+export type PointerAction = 'draw' | 'scroll' | 'zoomup' | 'zoomdown' | 'rotate' | 'draw:line' | 'draw:stamp'
 
 /** 操作に対応するCSSカーソルを返します */
 export const actionCursor = (action: PointerAction) => {
@@ -11,6 +11,7 @@ export const actionCursor = (action: PointerAction) => {
       zoomdown: 'zoom-out',
       rotate: 'grab',
       'draw:line': 'crosshair',
+      'draw:stamp': 'crosshair',
     }[action] ?? 'default'
   )
 }
@@ -26,5 +27,6 @@ export const keysAction = (keys: string[]): PointerAction => {
   if (keySp && keyOpt) return 'rotate'
   if (keySp) return 'scroll'
   if (keyShift) return 'draw:line'
+  if (keyOpt) return 'draw:stamp'
   return 'draw'
 }
