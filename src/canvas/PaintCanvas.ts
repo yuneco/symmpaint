@@ -101,10 +101,10 @@ export class PaintCanvas {
     // デバッグ用に表示
     const debugBox = document.getElementById('debug')
     if (debugBox) {
-      this.canvas.el.style.width = `${WIDTH * 0.4}px`
-      this.canvas.el.style.height = `${WIDTH * 0.4}px`
-      this.strokeCanvas.el.style.width = `${WIDTH * 0.4}px`
-      this.strokeCanvas.el.style.height = `${WIDTH * 0.4}px`
+      this.canvas.el.style.width = `${WIDTH * 0.25}px`
+      this.canvas.el.style.height = `${WIDTH * 0.25}px`
+      this.strokeCanvas.el.style.width = `${WIDTH * 0.25}px`
+      this.strokeCanvas.el.style.height = `${WIDTH * 0.25}px`
       debugBox.querySelector('.canvas')?.appendChild(this.canvas.el)
       debugBox.querySelector('.stroke')?.appendChild(this.strokeCanvas.el)
     }

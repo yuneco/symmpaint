@@ -1,4 +1,4 @@
-import './style.css'
+import './style.scss'
 import { PaintCanvas } from './canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
 import { getNextZoom } from './controls/zoomTable'
@@ -67,7 +67,15 @@ window.addEventListener('keydown', (ev) => {
   }
 })
 
+// パレットの初期値設定
+setting.penCount = 5
+
 // iOSのスクロール無効化
 elMain.addEventListener('touchmove', function(event) {
   event.preventDefault();
 });
+
+// 説明文の言語切り替え
+const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
+document.querySelectorAll<HTMLElement>('.lang').forEach(el => el.style.display = 'none')
+document.querySelectorAll<HTMLElement>(`.lang.${uaLang}`).forEach(el => el.style.display = '')

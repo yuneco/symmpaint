@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
   overflow: hidden;
 }
 
@@ -9,33 +10,41 @@ html, body {
   text-align: center;
   color: #2c3e50;
   display: grid;
-  grid-template-columns: 1fr 800px;
-  grid-template-rows: 400px 400px 1fr;
-  grid-template-areas: "palette main" "instruction main" "debug debug";
+  grid-template-columns: 400px 800px;
+  grid-template-rows: 100vh;
+  grid-template-areas: 'side main';
   max-width: 1300px;
   gap: 20px;
   margin: auto;
   justify-content: space-around;
 }
 
-#palette {
-  width: 400px;
-  text-align: left;
-  grid-area: palette;
-}
-
 #main {
   grid-area: main;
 }
 
-#instruction {
-  grid-area: instruction;
+#side {
+  grid-area: side;
+}
+
+#palette {
   text-align: left;
 }
 
-#debug {
-  grid-area: debug;
+#instruction {
+  text-align: left;
+  font-size: 12px;
 }
-#debug .blocks {
-  display: flex;
+
+#debug {
+  padding-top: 16px;
+  h2 {
+    font-size: 16px;
+  }
+  h3 {
+    font-size: 13px;
+  }
+  .blocks {
+    display: flex;
+  }
 }
