@@ -7,7 +7,6 @@ import {
   clearCanvas,
   fillCanvas,
   paintKaraidGrid,
-  paintOutBorder,
 } from './paintGrid'
 import { Point } from '../coords/Point'
 import {
@@ -122,7 +121,7 @@ export class PaintCanvas {
     // ドラッグ操作の状態監視
     this.dragWatcher = new DragWatcher(this.view.el)
     this.dragWatcher.listenMove(({ dStart }) => {
-      const scroll = this.eventStatus.startCoord.scroll.move(dStart)
+      const scroll = this.eventStatus.startCoord.scroll.move(dStart.scale(1 / this.coord.scale).rotate(-this.coord.angle))
       this.requestScrollTo.fire(scroll)
     })
     this.dragWatcher.listenRotate(({ dStart }) => {
