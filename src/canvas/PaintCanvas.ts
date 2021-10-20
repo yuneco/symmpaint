@@ -248,6 +248,8 @@ export class PaintCanvas {
     this.eventStatus.startPoint = this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
 
+    console.log({canvasP: this.event2canvasPoint(ev), rawP: {x: ev.offsetX, y: ev.offsetY}, coord: this.canvas.coord})
+
     if (
       action === 'draw' ||
       action === 'draw:line' ||

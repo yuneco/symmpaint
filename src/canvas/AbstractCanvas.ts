@@ -32,10 +32,10 @@ export class AbstractCanvas {
     this._coord = c
     this.ctx.resetTransform()
     this.ctx.translate(centor.x, centor.y)
-    this.ctx.scale(1 / c.scale, 1 / c.scale)
     this.ctx.rotate((-c.angle / 180) * Math.PI)
-    //this.ctx.translate(-centor.x, -centor.y)
     this.ctx.translate(c.scroll.x, c.scroll.y)
+    this.ctx.scale(1 / c.scale, 1 / c.scale)
+    //this.ctx.translate(-centor.x, -centor.y)
   }
 
   get coord() {
@@ -55,10 +55,10 @@ export class AbstractCanvas {
     ctx.save()
     const c = this.coord
     ctx.resetTransform()
-    ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.translate(centor.x, centor.y)
-    ctx.rotate((c.angle / 180) * Math.PI)
     ctx.scale(c.scale, c.scale)
+    ctx.translate(-c.scroll.x, -c.scroll.y)
+    ctx.rotate((c.angle / 180) * Math.PI)
     ctx.translate(-centor.x, -centor.y)
     ctx.drawImage(this.el, 0, 0)
     ctx.restore()

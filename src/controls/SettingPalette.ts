@@ -20,6 +20,9 @@ export class SettingPalette {
   readonly onUndo = new PaintEvent<void>()
   readonly onCopy = new PaintEvent<void>()
 
+  private canvasWidth = 800
+  private canvasHeight = 800
+
   get scale() {
     return this.slScale.value
   }
@@ -44,6 +47,7 @@ export class SettingPalette {
     if (this.scale === v) return
     this.slScale.value = v
     this.onScaleChange.fire(this.slScale.value)
+    this.updateScrollRange()
   }
 
   set angle(v: number) {
@@ -76,22 +80,31 @@ export class SettingPalette {
     this.onPenWidthChange.fire(this.slPenWidth.value)
   }
 
+  private updateScrollRange() {
+    const x = this.canvasWidth / 2 * this.scale
+    const y = this.canvasHeight / 2 * this.scale
+    this.slX.elSlider.min = String(-x)
+    this.slX.elSlider.max = String(x)
+    this.slY.elSlider.min = String(-y)
+    this.slY.elSlider.max = String(y)
+  }
+
   constructor(parent: HTMLElement) {
     const slScale = (this.slScale = new Slider('Scale', 50, 300, 100, true))
     const slAngle = (this.slAngle = new Slider('Angle', -360, 360, 0))
-    const slX = (this.slX = new Slider('Scroll X', -400, 400, 0))
-    const slY = (this.slY = new Slider('Scroll Y', -400, 400, 0))
-    const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 12, 1))
+    const slX = (this.slX = new Slider('Scroll X', -this.canvasWidth/2, this.canvasWidth/2, 0))
+    const slY = (this.slY = new Slider('Scroll Y', -this.canvasHeight/2, this.canvasHeight/2, 0))
+    const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 32, 1))
     const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 1, 40, 10))
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
     const btnCopy = new Button('Copy Image')
 
     // 使わないコントロールは表示しない
-    // parent.appendChild(slScale.el)
+    parent.appendChild(slScale.el)
     // parent.appendChild(slAngle.el)
-    // parent.appendChild(slX.el)
-    // parent.appendChild(slY.el)    
+    parent.appendChild(slX.el)
+    parent.appendChild(slY.el)    
     parent.appendChild(slPenCount.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
