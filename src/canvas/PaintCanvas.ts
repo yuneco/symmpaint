@@ -216,7 +216,6 @@ export class PaintCanvas {
       this.history.commit()
     }
     this.canvas.clear()
-    paintOutBorder(this.canvas)
     this.rePaint()
   }
 
@@ -247,8 +246,6 @@ export class PaintCanvas {
     this.eventStatus.startCoord = this.coord
     this.eventStatus.startPoint = this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
-
-    console.log({canvasP: this.event2canvasPoint(ev), rawP: {x: ev.offsetX, y: ev.offsetY}, coord: this.canvas.coord})
 
     if (
       action === 'draw' ||
