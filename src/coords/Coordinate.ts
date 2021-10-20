@@ -5,6 +5,7 @@ type CoordinateData = {
   scroll: Point;
   scale: number;
   angle: number;
+  flipY: boolean;
 }
 
 /**
@@ -23,6 +24,10 @@ export class Coordinate {
    * 親座標系からの回転量(deg)
    */
   readonly angle: number
+  /**
+   * Y軸の反転
+   */
+  readonly flipY: boolean
 
   /** この座標系のDOMMatrix */
   private readonly _matrix: DOMMatrix
@@ -32,17 +37,20 @@ export class Coordinate {
     this.scroll = data?.scroll ?? new Point()
     this.scale = data?.scale ?? 1
     this.angle = data?.angle ?? 0
-    this._matrix = new DOMMatrix()
+    this.flipY = data?.flipY ?? false
+
+  this._matrix = new DOMMatrix()
       .translateSelf(this.scroll.x, this.scroll.y)
-      .scaleSelf(this.scale)
+      .scaleSelf(this.scale, this.scale * (this.flipY ? -1 : 1))
       .rotateSelf(this.angle)
-  }
+    }
 
   toData(): CoordinateData {
     return {
       scroll: this.scroll,
       scale: this.scale,
       angle: this.angle,
+      flipY: this.flipY
     }
   }
 
@@ -52,7 +60,7 @@ export class Coordinate {
   }
 
   get matrix() {
-    return this._matrix.translate()
+    return this._matrix.translate(0)
   }
 
 }

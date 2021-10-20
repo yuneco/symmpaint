@@ -1,5 +1,6 @@
 import { AbstractCanvas } from "./AbstractCanvas";
 import { Point } from "../coords/Point";
+import { a2r } from "../coords/CoordUtil";
 
 /**
  * キャンバスをクリアします
@@ -42,14 +43,18 @@ export const paintOutBorder = (canvas: AbstractCanvas): void => {
  * @param canvas 
  * @param count 対称数
  */
-export const paintKaraidGrid = (canvas: AbstractCanvas, count: number): void => {
+export const paintKaraidGrid = (canvas: AbstractCanvas, count: number, isKaleido: boolean): void => {
+  const colMain = '#91bcccbb';
+  const colSub = isKaleido ? '#c5e4ebbb' : colMain;
+
   const center = new Point(canvas.width / 2, canvas.height / 2)
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.translate(center.x, center.y)
   canvas.ctx.lineWidth = 1
-  canvas.ctx.strokeStyle = '#aaccccbb';
+  canvas.ctx.rotate(a2r(-90 +(360 / count)/2)) 
   for(let index = 0; index < count; index++) {
+    canvas.ctx.strokeStyle = index % 2 === 0 ? colMain : colSub;
     canvas.ctx.beginPath()
     canvas.ctx.moveTo(0, 0)
     canvas.ctx.lineTo(0, canvas.height)

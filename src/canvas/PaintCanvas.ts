@@ -80,6 +80,8 @@ export class PaintCanvas {
 
   private stamp?: StrokeRecord
 
+  private _isKaleido = false
+
   /**
    * キャンバスを生成します
    * @param parent キャンバス挿入先
@@ -171,6 +173,21 @@ export class PaintCanvas {
     this.rePaint()
   }
 
+  get isKaleido() {
+    return this._isKaleido
+  }
+
+  set isKaleido(v) {
+    if (v === this._isKaleido) return
+    this._isKaleido = v
+    if (v) {
+      const c = this.penCount
+      this.penCount = 1
+      this.penCount = c
+    }
+    this.rePaint()
+  }
+
   get penCount() {
     return this.pen.childCount
   }
@@ -180,7 +197,8 @@ export class PaintCanvas {
     // 子ペンを一度クリアして再設定
     pen.clearChildren()
     for (let penNo = 0; penNo < n; penNo++) {
-      pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n }))
+      const isFlip = this._isKaleido && (penNo % 2 !== 0)
+      pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n , flipY: isFlip}))
     }
     this.rePaint()
   }
@@ -433,7 +451,7 @@ export class PaintCanvas {
       this.strokeCanvas.output(this.view.ctx)
     }
     if (this.penCount >= 2) {
-      paintKaraidGrid(this.view, this.penCount)
+      paintKaraidGrid(this.view, this.penCount, this.isKaleido)
     }
   }
 }

@@ -37,8 +37,13 @@ setting.onUndo.listen(() => {
 setting.onCopy.listen(async () => {
   const blob = await canvas.toImgBlob()
   // see: https://stackoverflow.com/questions/61187374/how-to-fix-the-cannot-find-name-clipboarditem-error
-  const item = new ClipboardItem({ 'image/png': blob as unknown as ClipboardItemData})
+  const item = new ClipboardItem({
+    'image/png': blob as unknown as ClipboardItemData,
+  })
   await navigator.clipboard.write([item])
+})
+setting.onKaleidoChange.listen((isKaleido) => {
+  canvas.isKaleido = isKaleido
 })
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
@@ -63,10 +68,10 @@ canvas.listenRequestRotateTo((angle) => {
 // キー操作でツール設定を変更
 window.addEventListener('keydown', (ev) => {
   if (ev.key === 'ArrowUp') {
-    setting.penCount++
+    setting.penCountUp()
   }
   if (ev.key === 'ArrowDown') {
-    setting.penCount--
+    setting.penCountDown()
   }
   if (ev.key === 'z' && ev.metaKey) {
     setting.onUndo.fire()
@@ -77,7 +82,8 @@ window.addEventListener('keydown', (ev) => {
 })
 
 // パレットの初期値設定
-setting.penCount = 5
+setting.kaleidoscope = true
+setting.penCount = 6
 
 // iOSのスクロール無効化
 elMain.addEventListener('touchmove', function (event) {

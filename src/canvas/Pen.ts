@@ -32,6 +32,7 @@ export class Pen {
       scale: c.scale,
       scroll: c.scroll,
       angle: c.angle,
+      flipY: c.flipY,
     })
   }
 
