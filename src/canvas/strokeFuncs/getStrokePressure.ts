@@ -20,5 +20,6 @@ export const getStrokeEndPressure = (inputs: PenInput[]) => {
  */
  export const getStrokeAvrPressure = (inputs: PenInput[]) => {
   if(!inputs.length) return 0;
-  return avr(inputs.map(inp => inp.pressure))
+  // 筆圧0以外のエントリの平均
+  return avr(inputs.map(inp => inp.pressure).filter(pr => pr > 0))
 }
