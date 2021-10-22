@@ -45,6 +45,9 @@ setting.onCopy.listen(async () => {
 setting.onKaleidoChange.listen((isKaleido) => {
   canvas.isKaleido = isKaleido
 })
+setting.onDrawingColorChange.listen((color) => {
+  canvas.penColor = color
+})
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
 canvas.coord = canvas.coord.clone({

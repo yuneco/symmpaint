@@ -207,6 +207,10 @@ export class PaintCanvas {
     this.style = new StrokeStyle(this.style.color, v)
   }
 
+  set penColor(v: string) {
+    this.style = new StrokeStyle(v, this.style.penSize)
+  }
+
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
   listenRequestZoom(
     ...params: Parameters<typeof this.requestChangeZoom.listen>
@@ -359,7 +363,7 @@ export class PaintCanvas {
     this.strokeCanvas.coord = this.canvas.coord
     this.strokeCanvas.ctx.lineWidth =
       this.style.penSize * this.canvas.coord.scale
-      this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing ? '#0044aa' : '#000000'
+      this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing ? '#0044aa' : this.style.color
 
       // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)

@@ -3,6 +3,7 @@ import { Point } from '../coords/Point'
 import { Button } from '../ui/Bitton'
 import { Slider } from '../ui/Slider'
 import { Checkbox } from '../ui/Checkbox'
+import { colorSelector } from '../ui/ColorSelector'
 
 export class SettingPalette {
   private readonly slScale: Slider
@@ -12,6 +13,7 @@ export class SettingPalette {
   private readonly slPenCount: Slider
   private readonly slPenWidth: Slider
   private readonly cbKaleido: Checkbox
+  private readonly csDrawingColor: colorSelector
 
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
@@ -22,6 +24,7 @@ export class SettingPalette {
   readonly onUndo = new PaintEvent<void>()
   readonly onCopy = new PaintEvent<void>()
   readonly onKaleidoChange = new PaintEvent<boolean>()
+  readonly onDrawingColorChange = new PaintEvent<string>()
 
   private canvasWidth = 800
   private canvasHeight = 800
@@ -48,6 +51,10 @@ export class SettingPalette {
 
   get kaleidoscope() {
     return this.cbKaleido.value
+  }
+
+  get drawingColor() {
+    return this.drawingColor
   }
 
   set scale(v: number) {
@@ -98,6 +105,12 @@ export class SettingPalette {
     this.onKaleidoChange.fire(this.cbKaleido.value)
   }
 
+  set drawingColor(v: string) {
+    if (this.drawingColor === v) return
+    this.csDrawingColor.value = v
+    this.onDrawingColorChange.fire(this.csDrawingColor.value)
+  }
+
   penCountUp() {
     this.penCount += this.kaleidoscope ? 2 : 1
   }
@@ -135,6 +148,7 @@ export class SettingPalette {
     const btnUndo = new Button('Undo')
     const btnCopy = new Button('Copy Image')
     const cbKaleido = (this.cbKaleido = new Checkbox('Kalaidoscope'))
+    const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
 
     // 使わないコントロールは表示しない
     // parent.appendChild(slScale.el)
@@ -143,6 +157,7 @@ export class SettingPalette {
     // parent.appendChild(slY.el)
     parent.appendChild(slPenCount.el)
     parent.appendChild(cbKaleido.el)
+    parent.appendChild(csDrawingColor.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
     parent.appendChild(btnUndo.el)
@@ -177,6 +192,9 @@ export class SettingPalette {
     })
     cbKaleido.addEventListener('change', () => {
       this.onKaleidoChange.fire(cbKaleido.value)
+    })
+    csDrawingColor.addEventListener('input', () => {
+      this.onDrawingColorChange.fire(csDrawingColor.value)
     })
   }
 }

@@ -11,6 +11,7 @@ export const replayPenStroke = (
 ) => {
   const defaultMatrix = new DOMMatrix()
   canvas.coord = stroke.canvasCoord
+  canvas.ctx.strokeStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
   const pen = new Pen()
   pen.state = stroke.penState
