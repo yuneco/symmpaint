@@ -204,11 +204,15 @@ export class PaintCanvas {
   }
 
   set penWidth(v: number) {
-    this.style = new StrokeStyle(this.style.color, v)
+    this.style = this.style.clone({penSize: v})
   }
 
   set penColor(v: string) {
-    this.style = new StrokeStyle(v, this.style.penSize)
+    this.style = this.style.clone({color: v})
+  }
+
+  set penAlpha(v: number) {
+    this.style = this.style.clone({alpha: v})
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
@@ -244,7 +248,7 @@ export class PaintCanvas {
   undo() {
     if (!this.history.undoable) return
     this.clear(false)
-    this.history.undo(this.canvas)
+    this.history.undo(this.canvas, this.strokeCanvas)
     this.rePaint()
   }
 
@@ -389,9 +393,9 @@ export class PaintCanvas {
    */
   private endStroke(commitStroke: boolean) {
     if (commitStroke) {
-      this.history.commit()
+      this.history.commit(this.strokeCanvas)
       // 一時キャンバスの内容をキャンバスに転送
-      this.strokeCanvas.copy(this.canvas.ctx)
+      this.strokeCanvas.copy(this.canvas.ctx, {alpha: this.style.alpha})
       clearCanvas(this.strokeCanvas)
     } else {
       this.history.rollback()
@@ -452,7 +456,7 @@ export class PaintCanvas {
     fillCanvas(this.view, '#cccccc')
     this.canvas.output(this.view.ctx)
     if (this.eventStatus.isUseStrokeCanvas) {
-      this.strokeCanvas.output(this.view.ctx)
+      this.strokeCanvas.output(this.view.ctx, {alpha: this.style.alpha})
     }
     if (this.penCount >= 2) {
       paintKaraidGrid(this.view, this.penCount, this.isKaleido)

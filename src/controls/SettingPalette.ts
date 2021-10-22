@@ -14,6 +14,7 @@ export class SettingPalette {
   private readonly slPenWidth: Slider
   private readonly cbKaleido: Checkbox
   private readonly csDrawingColor: colorSelector
+  private readonly slDrawingAlpha: Slider
 
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
@@ -25,6 +26,7 @@ export class SettingPalette {
   readonly onCopy = new PaintEvent<void>()
   readonly onKaleidoChange = new PaintEvent<boolean>()
   readonly onDrawingColorChange = new PaintEvent<string>()
+  readonly onDrawingAlphaChange = new PaintEvent<number>()
 
   private canvasWidth = 800
   private canvasHeight = 800
@@ -54,7 +56,11 @@ export class SettingPalette {
   }
 
   get drawingColor() {
-    return this.drawingColor
+    return this.csDrawingColor.value
+  }
+
+  get drawingAlpha() {
+    return this.slDrawingAlpha.value
   }
 
   set scale(v: number) {
@@ -111,6 +117,12 @@ export class SettingPalette {
     this.onDrawingColorChange.fire(this.csDrawingColor.value)
   }
 
+  set drawingAlpa(v: number) {
+    if (this.drawingAlpa === v) return
+    this.slDrawingAlpha.value = v
+    this.onDrawingAlphaChange.fire(this.slDrawingAlpha.value)
+  }
+
   penCountUp() {
     this.penCount += this.kaleidoscope ? 2 : 1
   }
@@ -149,6 +161,7 @@ export class SettingPalette {
     const btnCopy = new Button('Copy Image')
     const cbKaleido = (this.cbKaleido = new Checkbox('Kalaidoscope'))
     const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
+    const slDrawingAlpha = this.slDrawingAlpha = new Slider('Pen Alpha', 1, 100, 100, true)
 
     // 使わないコントロールは表示しない
     // parent.appendChild(slScale.el)
@@ -158,6 +171,7 @@ export class SettingPalette {
     parent.appendChild(slPenCount.el)
     parent.appendChild(cbKaleido.el)
     parent.appendChild(csDrawingColor.el)
+    parent.appendChild(slDrawingAlpha.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
     parent.appendChild(btnUndo.el)
@@ -195,6 +209,9 @@ export class SettingPalette {
     })
     csDrawingColor.addEventListener('input', () => {
       this.onDrawingColorChange.fire(csDrawingColor.value)
+    })
+    slDrawingAlpha.addEventListener('input', () => {
+      this.onDrawingAlphaChange.fire(slDrawingAlpha.value)
     })
   }
 }

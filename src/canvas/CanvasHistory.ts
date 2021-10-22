@@ -71,10 +71,13 @@ export class CanvasHistory {
   /**
    * 現在のストロークを確定します
    */
-  commit() {
+  commit(strokeCanvas?: AbstractCanvas) {
     if (!this.currentStroke) return
     this.history.push(this.currentStroke)
-    replayStrokes(this.snapshot, [this.currentStroke])
+    if (strokeCanvas) {
+      strokeCanvas.copy(this.snapshot.ctx, {alpha: this.currentStroke.style.alpha})
+    } 
+    //replayStrokes(this.snapshot, [this.currentStroke])
     const currentStackLength = this.history.length - this.lastSnapshotIndex - 1
     if (currentStackLength === STROKES_PER_SNAPSHOT) {
       console.log('new snapshot', this.snapshots.length)
@@ -100,7 +103,7 @@ export class CanvasHistory {
     return this.history.length > this.oldestSnapshotIndex
   }
 
-  undo(output: AbstractCanvas): boolean {
+  undo(output: AbstractCanvas, strokeCanvas: AbstractCanvas): boolean {
     if (!this.undoable) {
       console.log('no more history')
       return false
@@ -113,7 +116,7 @@ export class CanvasHistory {
     }
 
     this.history.pop() // 最後の一つを捨てる
-    replayStrokes(output, this.lastHistories)
+    replayStrokes(output, strokeCanvas, this.lastHistories)
 
     if (!this.lastHistories.length && this.snapshots.length > 1) {
       this.snapshots.pop()

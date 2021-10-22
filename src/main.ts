@@ -48,6 +48,10 @@ setting.onKaleidoChange.listen((isKaleido) => {
 setting.onDrawingColorChange.listen((color) => {
   canvas.penColor = color
 })
+setting.onDrawingAlphaChange.listen((alpha) => {
+  canvas.penAlpha = alpha
+})
+
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
 canvas.coord = canvas.coord.clone({

@@ -1,4 +1,5 @@
 import { AbstractCanvas } from '../AbstractCanvas'
+import { clearCanvas } from '../paintGrid'
 import { Pen } from '../Pen'
 import { StrokeRecord } from '../StrokeRecord'
 import { getStrokeAvrPressure } from './getStrokePressure'
@@ -43,17 +44,28 @@ export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
   canvas.clear()
 }
 
+/**
+ * 記録したストロークを再生します
+ * @param canvas 出力先
+ * @param strokeCanvas 一時作業用キャンパス
+ * @param strokes 再生するストローク履歴
+ * @param isPreview プレビューモード（高速）を使用するか？
+ */
 export const replayStrokes = (
   canvas: AbstractCanvas,
+  strokeCanvas: AbstractCanvas,
   strokes: StrokeRecord[],
   isPreview = false
 ) => {
   strokes.forEach((stroke) => {
     if (stroke.tool === 'pen') {
-      replayPenStroke(canvas, stroke, isPreview)
+      clearCanvas(strokeCanvas)
+      replayPenStroke(strokeCanvas, stroke, isPreview)
+      strokeCanvas.copy(canvas.ctx, {alpha: stroke.style.alpha})
     }
     if (stroke.tool === 'clearAll') {
       replayCelarAllStroke(canvas)
     }
   })
+  strokeCanvas.clear()
 }
