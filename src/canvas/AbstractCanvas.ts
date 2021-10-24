@@ -45,14 +45,6 @@ export class AbstractCanvas {
     return this._coord
   }
 
-  clear() {
-    this.ctx.save()
-    this.ctx.resetTransform()
-    this.ctx.fillStyle = '#ffffff'
-    this.ctx.fillRect(0, 0, this.width, this.height)
-    this.ctx.restore()
-  }
-
   output(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
     const centor = this.centor
     ctx.save()

@@ -1,6 +1,6 @@
-import { AbstractCanvas } from "./AbstractCanvas";
-import { Point } from "../coords/Point";
-import { a2r } from "../coords/CoordUtil";
+import { AbstractCanvas } from "../AbstractCanvas";
+import { Point } from "../../coords/Point";
+import { a2r } from "../../coords/CoordUtil";
 
 /**
  * キャンバスをクリアします

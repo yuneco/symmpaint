@@ -100,6 +100,7 @@ export class Pen {
 
   /** 指定の座標まで線を引きます */
   drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p: Point, pressure = 0.5, logName = '') {
+    if (pressure <= 0) return
     const ctx = canvas.ctx
     if (logName) console.group(logName)
     

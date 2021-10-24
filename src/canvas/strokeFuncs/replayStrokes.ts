@@ -1,5 +1,5 @@
 import { AbstractCanvas } from '../AbstractCanvas'
-import { clearCanvas } from '../paintGrid'
+import { clearCanvas } from './canvasPaintFuncs'
 import { Pen } from '../Pen'
 import { StrokeRecord } from '../StrokeRecord'
 import { getStrokeAvrPressure } from './getStrokePressure'
@@ -41,7 +41,7 @@ export const replayPenStroke = (
 }
 
 export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
-  canvas.clear()
+  clearCanvas(canvas)
 }
 
 /**
@@ -67,5 +67,5 @@ export const replayStrokes = (
       replayCelarAllStroke(canvas)
     }
   })
-  strokeCanvas.clear()
+  clearCanvas(strokeCanvas)
 }

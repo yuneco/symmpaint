@@ -7,7 +7,7 @@ import {
   clearCanvas,
   fillCanvas,
   paintKaraidGrid,
-} from './paintGrid'
+} from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
 import {
   actionCursor,
@@ -240,7 +240,7 @@ export class PaintCanvas {
       this.history.start(this.coord, this.pen.state, this.style, 'clearAll')
       this.history.commit()
     }
-    this.canvas.clear()
+    fillCanvas(this.canvas, '#ffffff')
     this.rePaint()
   }
 
