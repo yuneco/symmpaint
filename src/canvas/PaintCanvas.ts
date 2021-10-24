@@ -22,8 +22,8 @@ import { StrokeStyle } from './StrokeStyle'
 import { StrokeRecord } from './StrokeRecord'
 import { replayPenStroke } from './strokeFuncs/replayStrokes'
 
-// TODO: Retina対応
-const RESOLUTION = 1 //window.devicePixelRatio
+// Retina対応: 固定でx2
+const RESOLUTION = 2 //window.devicePixelRatio
 
 /** カーソル移動を検出する最低距離(px) */
 const MIN_CURSOR_MOVE = 3.0
@@ -99,6 +99,8 @@ export class PaintCanvas {
     this.history = new CanvasHistory(this.width * RESOLUTION, this.height * RESOLUTION)
 
     // canvas要素をDOMに挿入
+    this.view.el.style.width = `${width}px`
+    this.view.el.style.height = `${height}px`
     parent.appendChild(this.view.el)
 
     // デバッグ用に表示
@@ -126,7 +128,7 @@ export class PaintCanvas {
     // ドラッグ操作の状態監視
     this.dragWatcher = new DragWatcher(this.view.el)
     this.dragWatcher.listenMove(({ dStart }) => {
-      const scroll = this.eventStatus.startCoord.scroll.move(dStart.scale(1 / this.coord.scale).rotate(-this.coord.angle))
+      const scroll = this.eventStatus.startCoord.scroll.move(dStart.scale(1 / this.coord.scale * RESOLUTION).rotate(-this.coord.angle))
       this.requestScrollTo.fire(scroll)
     })
     this.dragWatcher.listenRotate(({ dStart }) => {
@@ -263,8 +265,8 @@ export class PaintCanvas {
 
   private event2canvasPoint(ev: PointerEvent): Point {
     return new Point(
-      ev.offsetX * RESOLUTION - this.width / 2,
-      ev.offsetY * RESOLUTION - this.height / 2
+      (ev.offsetX - this.width / 2) * RESOLUTION,
+      (ev.offsetY - this.height / 2) * RESOLUTION
     )
   }
 

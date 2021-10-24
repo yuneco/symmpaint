@@ -157,7 +157,7 @@ export class SettingPalette {
       0
     ))
     const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 32, 1))
-    const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 1, 40, 10))
+    const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 2, 100, 20))
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
     const btnCopy = new Button('Copy Image')
