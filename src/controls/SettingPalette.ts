@@ -28,8 +28,8 @@ export class SettingPalette {
   readonly onDrawingColorChange = new PaintEvent<string>()
   readonly onDrawingAlphaChange = new PaintEvent<number>()
 
-  private canvasWidth = 800
-  private canvasHeight = 800
+  private canvasWidth: number
+  private canvasHeight: number
 
   get scale() {
     return this.slScale.value
@@ -139,7 +139,9 @@ export class SettingPalette {
     this.slY.elSlider.max = String(y)
   }
 
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, canvasSetting: {width: number, height: number}) {
+    this.canvasWidth = canvasSetting.height
+    this.canvasHeight = canvasSetting.height
     const slScale = (this.slScale = new Slider('Scale', 50, 300, 100, true))
     const slAngle = (this.slAngle = new Slider('Angle', -360, 360, 0))
     const slX = (this.slX = new Slider(

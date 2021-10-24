@@ -14,8 +14,8 @@ export class colorSelector {
     elLabel.appendChild(elColor)
     elLabel.appendChild(elLabelText)
 
+    elOuter.className = 'ColorSelector'
     elColor.type = 'color'
-    elColor.className = 'ColorSelect'
     elColor.checked = value
     elLabelText.textContent = label
    }

@@ -14,8 +14,8 @@ export class Checkbox {
     elLabel.appendChild(elCheck)
     elLabel.appendChild(elLabelText)
 
+    elOuter.className = 'Checkbox'
     elCheck.type = 'checkbox'
-    elCheck.className = 'Checkbox'
     elCheck.checked = value
     elLabelText.textContent = label
    }

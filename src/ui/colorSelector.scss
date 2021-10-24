@@ -1,5 +1,9 @@
-input.Checkbox[type='color'] {
+.ColorSelector {
+  display: inline-block;
+  margin-right: 10px;
+  input[type='color'] {
     height: 32px;
     width: 64px;
     margin: 10px 10px 10px 0;
+  }
 }

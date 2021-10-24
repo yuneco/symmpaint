@@ -19,7 +19,6 @@ export class AbstractCanvas {
     this.height = h
     canvas.width = w
     canvas.height = h
-    canvas.style.border = '1px solid #aaa'
     ctx.lineCap = 'round'
     this.el = canvas
     this.ctx = ctx

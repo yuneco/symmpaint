@@ -1,5 +1,9 @@
-input.Checkbox[type='checkbox'] {
+.Checkbox {
+  display: inline-block;
+  margin-right: 10px;
+  input[type='checkbox'] {
     height: 32px;
     width: 32px;
     margin: 10px 10px 10px 0;
+  }
 }

@@ -22,9 +22,6 @@ import { StrokeStyle } from './StrokeStyle'
 import { StrokeRecord } from './StrokeRecord'
 import { replayPenStroke } from './strokeFuncs/replayStrokes'
 
-// TODO: サイズは可変にする
-const WIDTH = 800
-const HEIGHT = 800
 // TODO: Retina対応
 const RESOLUTION = 1 //window.devicePixelRatio
 
@@ -47,6 +44,9 @@ type EventStatus = {
 }
 
 export class PaintCanvas {
+  private readonly width: number
+  private readonly height: number
+
   /** 描画バッファCanvas */
   private readonly canvas: AbstractCanvas
   /** 描画中のストロークを保持するバッファCanvas */
@@ -86,15 +86,17 @@ export class PaintCanvas {
    * キャンバスを生成します
    * @param parent キャンバス挿入先
    */
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, width: number, height: number) {
+    this.width = width
+    this.height = height
     // 描画先・表示先を生成
-    this.canvas = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.canvas = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
     this.strokeCanvas = new AbstractCanvas(
-      WIDTH * RESOLUTION,
-      HEIGHT * RESOLUTION
+      this.width * RESOLUTION,
+      this.height * RESOLUTION
     )
-    this.view = new AbstractCanvas(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
-    this.history = new CanvasHistory(WIDTH * RESOLUTION, HEIGHT * RESOLUTION)
+    this.view = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
+    this.history = new CanvasHistory(this.width * RESOLUTION, this.height * RESOLUTION)
 
     // canvas要素をDOMに挿入
     parent.appendChild(this.view.el)
@@ -102,10 +104,11 @@ export class PaintCanvas {
     // デバッグ用に表示
     const debugBox = document.getElementById('debug')
     if (debugBox) {
-      this.canvas.el.style.width = `${WIDTH * 0.25}px`
-      this.canvas.el.style.height = `${WIDTH * 0.25}px`
-      this.strokeCanvas.el.style.width = `${WIDTH * 0.25}px`
-      this.strokeCanvas.el.style.height = `${WIDTH * 0.25}px`
+      const debugScale = 200 / Math.max(width, height)
+      this.canvas.el.style.width = width * debugScale + 'px'
+      this.canvas.el.style.height = height * debugScale + 'px'
+      this.strokeCanvas.el.style.width = width * debugScale + 'px'
+      this.strokeCanvas.el.style.height = height * debugScale + 'px'
       debugBox.querySelector('.canvas')?.appendChild(this.canvas.el)
       debugBox.querySelector('.stroke')?.appendChild(this.strokeCanvas.el)
     }
@@ -260,8 +263,8 @@ export class PaintCanvas {
 
   private event2canvasPoint(ev: PointerEvent): Point {
     return new Point(
-      ev.offsetX * RESOLUTION - WIDTH / 2,
-      ev.offsetY * RESOLUTION - HEIGHT / 2
+      ev.offsetX * RESOLUTION - this.width / 2,
+      ev.offsetY * RESOLUTION - this.height / 2
     )
   }
 

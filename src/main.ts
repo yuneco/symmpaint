@@ -2,15 +2,21 @@ import './style.scss'
 import { PaintCanvas } from './canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
 import { getNextZoom } from './controls/zoomTable'
+import { Point } from './coords/Point'
 
 // 配置先DOM要素を取得
 const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
 
+const size = new Point(
+  elMain.offsetWidth,
+  elMain.offsetHeight
+)
+
 /** 設定パレット */
-const setting = new SettingPalette(elPalette)
+const setting = new SettingPalette(elPalette, {width: size.x, height: size.y})
 /** メインキャンバス */
-const canvas = new PaintCanvas(elMain)
+const canvas = new PaintCanvas(elMain, size.x, size.y)
 
 // 設定変更をリッスン
 setting.onScaleChange.listen((scale) => {

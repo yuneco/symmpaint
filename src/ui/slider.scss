@@ -10,23 +10,21 @@ input.Slider[type='range'] {
     width: 100%;
     height: 32px;
     cursor: pointer;
-    box-shadow: 0px 0px 0px #000000;
-    background: #eee;
-    border-radius: 0px;
-    border: 1px solid #000000;
+    background: rgb(58, 58, 58);
+    border: 0px solid #ffffff6c;
   }
   &::-webkit-slider-thumb {
-    box-shadow: 0px 0px 0px #000000;
-    border: 1px solid #000000;
+    border: 1px solid #ffffff6c;
     height: 32px;
     width: 32px;
     border-radius: 0px;
     background: #1b5c88;
+    border: 1px solid rgb(58, 58, 58);
     cursor: pointer;
     -webkit-appearance: none;
-    margin-top: -1px;
+    margin-top: 0px;
   }
   &:focus::-webkit-slider-runnable-track {
-    background: #ddd;
+    background: transparent;
   }
 }
