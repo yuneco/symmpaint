@@ -108,8 +108,10 @@ export class CanvasHistory {
       console.log('no more history')
       return false
     }
+    output.ctx.save()
     const snap = this.prevSnapshot ?? this.oldestSnapshot
     if (snap) {
+      output.ctx.resetTransform()
       output.ctx.drawImage(snap.el, 0, 0)
     } else {
       console.log('no prev')
@@ -123,6 +125,7 @@ export class CanvasHistory {
       console.log('back prev snap', this.snapshots.length)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
     }
+    output.ctx.restore()
     return true
   }
 }
