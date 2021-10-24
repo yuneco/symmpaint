@@ -271,6 +271,7 @@ export class PaintCanvas {
   }
 
   private onDown(ev: PointerEvent) {
+    console.log(ev)
     const action = keysAction(this.keyWatcher.keys)
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
