@@ -56,14 +56,23 @@ export class CanvasHistory {
       snap.ctx.drawImage(prev.el, 0, 0)
     }
 
-    snap.el.style.width = '150px'
-    snap.el.style.height = '100px'
-    snap.el.style.border = '1px solid red'
-    document.getElementById('debug')?.appendChild(snap.el)
+    const debugBox = document.querySelector('#debug .history .snaps')
+    if (debugBox) {
+      const scale = 120 / Math.max(snap.el.width, snap.el.height)
+      snap.el.style.width = snap.el.width * scale + 'px'
+      snap.el.style.height = snap.el.height * scale + 'px'
+      debugBox.appendChild(snap.el)
+      snap.el.scrollIntoView()
+    }
     this.lastSnapshotIndex = this.history.length - 1
   }
 
-  start(canvasCoord: Coordinate, penState: PenState, style: StrokeStyle, tool?: StrokeTool): StrokeRecord {
+  start(
+    canvasCoord: Coordinate,
+    penState: PenState,
+    style: StrokeStyle,
+    tool?: StrokeTool
+  ): StrokeRecord {
     const stroke = new StrokeRecord(canvasCoord, penState, style, tool)
     this.currentStroke = stroke
     return stroke
@@ -80,10 +89,10 @@ export class CanvasHistory {
     const currentStackLength = this.history.length - this.lastSnapshotIndex - 1
     if (currentStackLength === STROKES_PER_SNAPSHOT) {
       this.addSnapshot()
-      canvas.copy(this.snapshot.ctx, {alpha: this.currentStroke.style.alpha})
+      canvas.copy(this.snapshot.ctx, { alpha: this.currentStroke.style.alpha })
       console.log('new snapshot', this.snapshots.length)
     }
-  
+
     this.currentStroke = undefined
   }
 

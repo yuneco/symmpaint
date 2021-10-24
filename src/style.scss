@@ -73,4 +73,17 @@ body {
   .blocks {
     display: flex;
   }
+  .history {
+    .snaps {
+      display: flex;
+      overflow-x: scroll;
+      gap: 1px;
+      :last-child {
+        border:1px solid rgb(40, 45, 53);
+      }
+      canvas {
+        box-shadow: 0 0 16px #2c3e5080;
+      }
+    }
+  }
 }
