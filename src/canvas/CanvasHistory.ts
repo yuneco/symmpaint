@@ -21,15 +21,12 @@ export class CanvasHistory {
 
   private lastSnapshotIndex = 0
   private oldestSnapshotIndex = 0
-  private oldestSnapshot?: AbstractCanvas
 
   constructor(canvasWidth: number, canvasHeight: number) {
     this.canvasWidth = canvasWidth
     this.canvasHeight = canvasHeight
-    this.addSnapshot()
-    this.snapshots.listenOverflow(snap => {
+    this.snapshots.listenOverflow(() => {
       this.oldestSnapshotIndex += STROKES_PER_SNAPSHOT
-      this.oldestSnapshot = snap
       console.log(`oldestSnapshotIndex: ${this.oldestSnapshotIndex}`)
     })
   }
@@ -48,7 +45,7 @@ export class CanvasHistory {
 
   get lastHistories() {
     const items = this.history.getItems()
-    return items.slice(this.lastSnapshotIndex + 1)
+    return items.slice(this.lastSnapshotIndex)
   }
 
   addSnapshot() {
@@ -59,6 +56,10 @@ export class CanvasHistory {
       snap.ctx.drawImage(prev.el, 0, 0)
     }
 
+    snap.el.style.width = '150px'
+    snap.el.style.height = '100px'
+    snap.el.style.border = '1px solid red'
+    document.getElementById('debug')?.appendChild(snap.el)
     this.lastSnapshotIndex = this.history.length - 1
   }
 
@@ -70,19 +71,19 @@ export class CanvasHistory {
 
   /**
    * 現在のストロークを確定します
+   * @param canvas 現在のストロークを描画する「前」のキャンバス。スナップショットを作成する必要がある場合に内容を読み取って保存します。
    */
-  commit(strokeCanvas?: AbstractCanvas) {
+  commit(canvas: AbstractCanvas) {
     if (!this.currentStroke) return
     this.history.push(this.currentStroke)
-    if (strokeCanvas) {
-      strokeCanvas.copy(this.snapshot.ctx, {alpha: this.currentStroke.style.alpha})
-    } 
-    //replayStrokes(this.snapshot, [this.currentStroke])
+
     const currentStackLength = this.history.length - this.lastSnapshotIndex - 1
     if (currentStackLength === STROKES_PER_SNAPSHOT) {
-      console.log('new snapshot', this.snapshots.length)
       this.addSnapshot()
+      canvas.copy(this.snapshot.ctx, {alpha: this.currentStroke.style.alpha})
+      console.log('new snapshot', this.snapshots.length)
     }
+  
     this.currentStroke = undefined
   }
 
@@ -109,7 +110,7 @@ export class CanvasHistory {
       return false
     }
     output.ctx.save()
-    const snap = this.prevSnapshot ?? this.oldestSnapshot
+    const snap = this.snapshot
     if (snap) {
       output.ctx.resetTransform()
       output.ctx.drawImage(snap.el, 0, 0)
@@ -120,10 +121,11 @@ export class CanvasHistory {
     this.history.pop() // 最後の一つを捨てる
     replayStrokes(output, strokeCanvas, this.lastHistories)
 
-    if (!this.lastHistories.length && this.snapshots.length > 1) {
-      this.snapshots.pop()
-      console.log('back prev snap', this.snapshots.length)
+    if (!this.lastHistories.length && this.snapshots.length >= 1) {
+      const sp = this.snapshots.pop()
+      sp && document.getElementById('debug')?.removeChild(sp.el)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
+      console.log('back prev snap', this.snapshots.length, this.snapshots)
     }
     output.ctx.restore()
     return true

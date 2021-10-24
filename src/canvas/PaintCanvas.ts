@@ -243,7 +243,7 @@ export class PaintCanvas {
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
       this.history.start(this.coord, this.pen.state, this.style, 'clearAll')
-      this.history.commit()
+      this.history.commit(this.canvas)
     }
     fillCanvas(this.canvas, '#ffffff')
     this.rePaint()
@@ -398,7 +398,7 @@ export class PaintCanvas {
    */
   private endStroke(commitStroke: boolean) {
     if (commitStroke) {
-      this.history.commit(this.strokeCanvas)
+      this.history.commit(this.canvas)
       // 一時キャンバスの内容をキャンバスに転送
       this.strokeCanvas.copy(this.canvas.ctx, {alpha: this.style.alpha})
       clearCanvas(this.strokeCanvas)
