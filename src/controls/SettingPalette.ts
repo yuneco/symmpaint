@@ -103,12 +103,8 @@ export class SettingPalette {
   set kaleidoscope(v: boolean) {
     if (this.kaleidoscope === v) return
     this.cbKaleido.value = v
-    if (v) {
-      this.penCount += this.penCount % 2
-    }
-    this.slPenCount.elSlider.min = v ? '2' : '1'
-    this.slPenCount.elSlider.step = v ? '2' : '1'
     this.onKaleidoChange.fire(this.cbKaleido.value)
+    this.updateKareido2PenCount()
   }
 
   set drawingColor(v: string) {
@@ -128,6 +124,15 @@ export class SettingPalette {
   }
   penCountDown() {
     this.penCount -= this.kaleidoscope ? 2 : 1
+  }
+
+  private updateKareido2PenCount() {
+    const v = this.cbKaleido.value
+    if (v) {
+      this.penCount += this.penCount % 2
+    }
+    this.slPenCount.elSlider.min = v ? '2' : '1'
+    this.slPenCount.elSlider.step = v ? '2' : '1'
   }
 
   private updateScrollRange() {
@@ -208,6 +213,7 @@ export class SettingPalette {
     })
     cbKaleido.addEventListener('change', () => {
       this.onKaleidoChange.fire(cbKaleido.value)
+      this.updateKareido2PenCount()
     })
     csDrawingColor.addEventListener('input', () => {
       this.onDrawingColorChange.fire(csDrawingColor.value)
