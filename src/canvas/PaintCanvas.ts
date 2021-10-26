@@ -1,7 +1,6 @@
 import { AbstractCanvas } from './AbstractCanvas'
 import { Coordinate } from '../coords/Coordinate'
 import { DragWatcher } from '../events/DragWatcher'
-import { KeyPressWatcher } from '../events/KeyPressWatcher'
 import { PaintEvent } from '../events/PaintEvent'
 import {
   clearCanvas,
@@ -10,10 +9,8 @@ import {
 } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
 import {
-  actionCursor,
-  keysAction,
-  PointerAction,
-} from '../events/pointerAction'
+  CanvasToolName,
+} from '../controls/CanvasToolName'
 import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './strokeFuncs/getStrokePressure'
@@ -21,6 +18,7 @@ import { Pen } from './Pen'
 import { StrokeStyle } from './StrokeStyle'
 import { StrokeRecord } from './StrokeRecord'
 import { replayPenStroke } from './strokeFuncs/replayStrokes'
+import { cursorForTool } from '../events/cursorForTool'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -34,7 +32,7 @@ type EventStatus = {
   /** ストローク用の一時キャンバスが有効か？ */
   isUseStrokeCanvas: boolean
   /** 現在のストロークで実行中の操作 */
-  activeEvent: PointerAction | undefined
+  activeEvent: CanvasToolName | undefined
   /** 現在のストローク開始時の座標系（スクロールや回転で使用） */
   startCoord: Coordinate
   /** 現在のストローク開始時の座標 */
@@ -53,9 +51,6 @@ export class PaintCanvas {
   private readonly strokeCanvas: AbstractCanvas
   /** 表示用Canvas */
   private readonly view: AbstractCanvas
-
-  /** キー操作監視 */
-  private readonly keyWatcher: KeyPressWatcher
   /** ドラッグ操作監視 */
   private readonly dragWatcher: DragWatcher
   /** 現在実行中のストロークイベントの状態 */
@@ -80,6 +75,7 @@ export class PaintCanvas {
 
   private stamp?: StrokeRecord
 
+  private _tool: CanvasToolName = 'draw'
   private _isKaleido = false
 
   /**
@@ -118,13 +114,6 @@ export class PaintCanvas {
     // キャンバス上のマウスイベントを初期化
     this.registerEventHandlers()
 
-    // キー状態の変更監視
-    this.keyWatcher = new KeyPressWatcher()
-    this.keyWatcher.listen(() => {
-      // キー押下状態変更時にカーソルを更新
-      this.view.el.style.cursor = actionCursor(keysAction(this.keyWatcher.keys))
-    })
-
     // ドラッグ操作の状態監視
     this.dragWatcher = new DragWatcher(this.view.el)
     this.dragWatcher.listenMove(({ dStart }) => {
@@ -138,6 +127,8 @@ export class PaintCanvas {
 
     this.pen = new Pen()
     //this.pen.coord = new Coordinate({scroll: new Point(400, 400)})
+
+    this.tool = 'draw'
 
     this.clear(false)
   }
@@ -176,6 +167,15 @@ export class PaintCanvas {
     // anchor(回転軸)のみ画面中央に調整してセット
     this.canvas.coord = c.clone({})
     this.rePaint()
+  }
+
+  get tool() {
+    return this._tool
+  }
+
+  set tool(v) {
+    this._tool = v
+    this.view.el.style.cursor = cursorForTool(v)
   }
 
   get isKaleido() {
@@ -218,6 +218,10 @@ export class PaintCanvas {
 
   set penAlpha(v: number) {
     this.style = this.style.clone({alpha: v})
+  }
+
+  get hasStamp() {
+    return !!this.stamp
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
@@ -271,7 +275,7 @@ export class PaintCanvas {
   }
 
   private onDown(ev: PointerEvent) {
-    const action = keysAction(this.keyWatcher.keys)
+    const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
     this.eventStatus.startPoint = this.event2canvasPoint(ev)

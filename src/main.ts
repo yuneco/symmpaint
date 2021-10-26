@@ -3,15 +3,25 @@ import { PaintCanvas } from './canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
 import { getNextZoom } from './controls/zoomTable'
 import { Point } from './coords/Point'
+import { ToolKeyWatcher } from './events/ToolKeyWatcher'
 
 // 配置先DOM要素を取得
 const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
+const elToast = document.querySelector<HTMLDivElement>('#toast')!
 
 const size = new Point(
   elMain.offsetWidth,
   elMain.offsetHeight
 )
+
+const showToast = (msg: string) => {
+  elToast.textContent = msg
+  elToast.classList.add('visible')
+  setTimeout(() => {
+    elToast.classList.remove('visible')
+  }, 5000)
+}
 
 /** 設定パレット */
 const setting = new SettingPalette(elPalette, {width: size.x, height: size.y})
@@ -57,6 +67,16 @@ setting.onDrawingColorChange.listen((color) => {
 setting.onDrawingAlphaChange.listen((alpha) => {
   canvas.penAlpha = alpha
 })
+setting.onToolChange.listen((tool) => {
+  canvas.tool = tool
+  if (tool === 'draw:stamp' && !canvas.hasStamp) {
+    const msg = {
+      ja: 'スタンプを使用するには、先にCommand(Ctrl)を押しながら線を引いてスタンプを記録します',
+      en: 'Before using stamp, draw with Command(Ctrl) key for record a stroke.'
+    }[uaLang]
+    showToast(msg)
+  }
+})
 
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
@@ -93,6 +113,10 @@ window.addEventListener('keydown', (ev) => {
     setting.onCopy.fire()
   }
 })
+
+// キー操作でツール変更
+const toolKeyWatcher = new ToolKeyWatcher()
+toolKeyWatcher.listenChange(tool => setting.tool = tool)
 
 // パレットの初期値設定
 setting.kaleidoscope = true

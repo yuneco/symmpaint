@@ -17,6 +17,25 @@ body {
   justify-content: space-around;
 }
 
+#toast {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  background-color: #00000088;
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 4px;
+  max-width: 70%;
+  left: 50%;
+  font-size: 13px;
+  transform: translate(-50%, -100%);
+  transition: transform .5s;
+  &.visible {
+    transform: translate(-50%, 20px);
+  }
+}
+
 #main {
   position: absolute;
   top: 0;

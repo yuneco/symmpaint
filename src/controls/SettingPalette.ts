@@ -4,7 +4,20 @@ import { Button } from '../ui/Bitton'
 import { Slider } from '../ui/Slider'
 import { Checkbox } from '../ui/Checkbox'
 import { colorSelector } from '../ui/ColorSelector'
+import { CanvasToolName } from './CanvasToolName'
+import { RadioGroup } from '../ui/RadioGroup'
 
+const TOOL_NAMES: {[k in CanvasToolName]: string} = {
+  draw: 'Draw',
+  'draw:line': 'Line',
+  'draw:stamp': 'Stamp',
+  scroll: 'Move',
+  rotate: 'Rotate',
+  zoomup: '+',
+  zoomdown: '-'
+} as const
+
+const toolList = ['draw', 'draw:line', 'draw:stamp', 'scroll', 'zoomup', 'zoomdown', 'rotate'] as const
 export class SettingPalette {
   private readonly slScale: Slider
   private readonly slAngle: Slider
@@ -15,6 +28,8 @@ export class SettingPalette {
   private readonly cbKaleido: Checkbox
   private readonly csDrawingColor: colorSelector
   private readonly slDrawingAlpha: Slider
+
+  private readonly cbTools: RadioGroup<typeof toolList>
 
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
@@ -27,6 +42,7 @@ export class SettingPalette {
   readonly onKaleidoChange = new PaintEvent<boolean>()
   readonly onDrawingColorChange = new PaintEvent<string>()
   readonly onDrawingAlphaChange = new PaintEvent<number>()
+  readonly onToolChange = new PaintEvent<CanvasToolName>()
 
   private canvasWidth: number
   private canvasHeight: number
@@ -61,6 +77,10 @@ export class SettingPalette {
 
   get drawingAlpha() {
     return this.slDrawingAlpha.value
+  }
+
+  get tool() {
+    return this.cbTools.value
   }
 
   set scale(v: number) {
@@ -119,6 +139,10 @@ export class SettingPalette {
     this.onDrawingAlphaChange.fire(this.slDrawingAlpha.value)
   }
 
+  set tool(v: CanvasToolName) {
+    this.cbTools.value = v
+  }
+
   penCountUp() {
     this.penCount += this.kaleidoscope ? 2 : 1
   }
@@ -170,11 +194,14 @@ export class SettingPalette {
     const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
     const slDrawingAlpha = this.slDrawingAlpha = new Slider('Pen Alpha', 1, 100, 100, true)
 
+    const cbTools = this.cbTools = new RadioGroup(TOOL_NAMES, 'draw')
+
     // 使わないコントロールは表示しない
     // parent.appendChild(slScale.el)
     // parent.appendChild(slAngle.el)
     // parent.appendChild(slX.el)
     // parent.appendChild(slY.el)
+    parent.appendChild(cbTools.el)
     parent.appendChild(slPenCount.el)
     parent.appendChild(cbKaleido.el)
     parent.appendChild(csDrawingColor.el)
@@ -221,5 +248,6 @@ export class SettingPalette {
     slDrawingAlpha.addEventListener('input', () => {
       this.onDrawingAlphaChange.fire(slDrawingAlpha.value)
     })
+    cbTools.listenChange((tool) => this.onToolChange.fire(tool))
   }
 }
