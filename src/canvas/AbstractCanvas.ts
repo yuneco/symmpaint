@@ -2,7 +2,8 @@ import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 
 type ImageTransferOption = {
-  alpha: number
+  alpha: number,
+  background: string
 }
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
@@ -47,7 +48,6 @@ export class AbstractCanvas {
   output(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
     const centor = this.centor
     ctx.save()
-    ctx.globalAlpha = option?.alpha ?? 1
     const c = this.coord
     ctx.resetTransform()
     ctx.translate(centor.x, centor.y)
@@ -55,15 +55,23 @@ export class AbstractCanvas {
     ctx.rotate((c.angle / 180) * Math.PI)
     ctx.translate(-c.scroll.x, -c.scroll.y)
     ctx.translate(-centor.x, -centor.y)
-    ctx.drawImage(this.el, 0, 0)
+    this.transferImageTo(ctx, option)
     ctx.restore()
   }
 
   copy(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
     ctx.save()
-    ctx.globalAlpha = option?.alpha ?? 1
     ctx.resetTransform()
-    ctx.drawImage(this.el, 0, 0)
+    this.transferImageTo(ctx, option)
     ctx.restore()
+  }
+
+  private transferImageTo(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
+    ctx.globalAlpha = option?.alpha ?? 1
+    if (option?.background) {
+      ctx.fillStyle = option.background
+      ctx.fillRect(0, 0, this.width, this.height)
+    }
+    ctx.drawImage(this.el, 0, 0)
   }
 }

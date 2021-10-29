@@ -77,6 +77,8 @@ export class PaintCanvas {
 
   private _tool: CanvasToolName = 'draw'
   private _isKaleido = false
+  
+  private _backgroundColor: string = '#ffffff'
 
   /**
    * キャンバスを生成します
@@ -224,6 +226,16 @@ export class PaintCanvas {
     return !!this.stamp
   }
 
+  get backgroundColor() {
+    return this._backgroundColor
+  }
+
+  set backgroundColor(v) {
+    if (this._backgroundColor === v) return
+    this._backgroundColor = v
+    this.rePaint()
+  }
+
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
   listenRequestZoom(
     ...params: Parameters<typeof this.requestChangeZoom.listen>
@@ -249,7 +261,7 @@ export class PaintCanvas {
       this.history.start(this.coord, this.pen.state, this.style, 'clearAll')
       this.history.commit(this.canvas)
     }
-    fillCanvas(this.canvas, '#ffffff')
+    clearCanvas(this.canvas)
     this.rePaint()
   }
 
@@ -463,7 +475,7 @@ export class PaintCanvas {
 
   private rePaint() {
     fillCanvas(this.view, '#cccccc')
-    this.canvas.output(this.view.ctx)
+    this.canvas.output(this.view.ctx, {background: this.backgroundColor})
     if (this.eventStatus.isUseStrokeCanvas) {
       this.strokeCanvas.output(this.view.ctx, {alpha: this.style.alpha})
     }

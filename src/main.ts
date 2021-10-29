@@ -64,6 +64,9 @@ setting.onKaleidoChange.listen((isKaleido) => {
 setting.onDrawingColorChange.listen((color) => {
   canvas.penColor = color
 })
+setting.onCanvasColorChange.listen((color) => {
+  canvas.backgroundColor = color
+})
 setting.onDrawingAlphaChange.listen((alpha) => {
   canvas.penAlpha = alpha
 })
@@ -121,6 +124,7 @@ toolKeyWatcher.listenChange(tool => setting.tool = tool)
 // パレットの初期値設定
 setting.kaleidoscope = true
 setting.penCount = 6
+setting.canvasColor = '#ffffff'
 
 // iOSのスクロール無効化
 elMain.addEventListener('touchmove', function (event) {
