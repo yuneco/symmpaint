@@ -1,10 +1,10 @@
-import { PaintEvent } from '../events/PaintEvent'
-import { Point } from '../coords/Point'
+import { PaintEvent } from '../../core/events/PaintEvent'
+import { Point } from '../../core/coords/Point'
 import { Button } from '../ui/Bitton'
 import { Slider } from '../ui/Slider'
 import { Checkbox } from '../ui/Checkbox'
 import { colorSelector } from '../ui/ColorSelector'
-import { CanvasToolName } from '../canvas/CanvasToolName'
+import { CanvasToolName } from '../../core/canvas/CanvasToolName'
 import { RadioGroup } from '../ui/RadioGroup'
 
 const TOOL_NAMES: {[k in CanvasToolName]: string} = {

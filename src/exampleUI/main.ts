@@ -1,9 +1,9 @@
 import './style.scss'
-import { PaintCanvas } from './canvas/PaintCanvas'
+import { PaintCanvas } from '../core/canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
 import { getNextZoom } from './controls/zoomTable'
-import { Point } from './coords/Point'
-import { ToolKeyWatcher } from './events/ToolKeyWatcher'
+import { Point } from '../core/coords/Point'
+import { ToolKeyWatcher } from '../core/events/ToolKeyWatcher'
 
 // 配置先DOM要素を取得
 const elMain = document.querySelector<HTMLDivElement>('#main')!

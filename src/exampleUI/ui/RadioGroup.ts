@@ -1,4 +1,4 @@
-import { PaintEvent } from '../events/PaintEvent'
+import { PaintEvent } from '../../core/events/PaintEvent'
 import { Checkbox } from './Checkbox'
 import './radioGroup.scss'
 
