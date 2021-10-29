@@ -40,7 +40,7 @@ export class LimittedStack<T> {
     return [...this.items]
   }
 
-  listenOverflow(...params: Parameters<typeof this.onOverflow.listen>) {
+  listenOverflow(...params: Parameters<PaintEvent<T>['listen']>) {
     this.onOverflow.listen(...params)
   }
 }

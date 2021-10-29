@@ -204,19 +204,19 @@ export class PaintCanvas {
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
   listenRequestZoom(
-    ...params: Parameters<typeof this.requestChangeZoom.listen>
+    ...params: Parameters<PaintEvent<boolean>['listen']>
   ) {
     this.requestChangeZoom.listen(...params)
   }
   /** スクロール操作発生時のリスナーを登録します。スクロールを行うにはリスナー側で座標系(coord.scroll)を変更します */
   listenRequestScrollTo(
-    ...params: Parameters<typeof this.requestScrollTo.listen>
+    ...params: Parameters<PaintEvent<Point>['listen']>
   ) {
     this.requestScrollTo.listen(...params)
   }
   /** 回転操作発生時のリスナーを登録します。回転を行うにはリスナー側で座標系(coord.angle)を変更します */
   listenRequestRotateTo(
-    ...params: Parameters<typeof this.requestRotateTo.listen>
+    ...params: Parameters<PaintEvent<number>['listen']>
   ) {
     this.requestRotateTo.listen(...params)
   }
