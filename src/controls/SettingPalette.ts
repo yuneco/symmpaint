@@ -4,7 +4,7 @@ import { Button } from '../ui/Bitton'
 import { Slider } from '../ui/Slider'
 import { Checkbox } from '../ui/Checkbox'
 import { colorSelector } from '../ui/ColorSelector'
-import { CanvasToolName } from './CanvasToolName'
+import { CanvasToolName } from '../canvas/CanvasToolName'
 import { RadioGroup } from '../ui/RadioGroup'
 
 const TOOL_NAMES: {[k in CanvasToolName]: string} = {

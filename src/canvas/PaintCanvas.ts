@@ -1,6 +1,5 @@
 import { AbstractCanvas } from './AbstractCanvas'
 import { Coordinate } from '../coords/Coordinate'
-import { DragWatcher } from '../events/DragWatcher'
 import { PaintEvent } from '../events/PaintEvent'
 import {
   clearCanvas,
@@ -8,9 +7,7 @@ import {
   paintKaraidGrid,
 } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
-import {
-  CanvasToolName,
-} from '../controls/CanvasToolName'
+import { CanvasToolName } from './CanvasToolName'
 import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './strokeFuncs/getStrokePressure'
@@ -19,6 +16,8 @@ import { StrokeStyle } from './StrokeStyle'
 import { StrokeRecord } from './StrokeRecord'
 import { replayPenStroke } from './strokeFuncs/replayStrokes'
 import { cursorForTool } from '../events/cursorForTool'
+import { useDragEvent } from '../events/useDragEvent'
+import { PointsDist } from '../coords/PointsDist'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -27,8 +26,6 @@ const RESOLUTION = 2 //window.devicePixelRatio
 const MIN_CURSOR_MOVE = 3.0
 
 type EventStatus = {
-  /** ドラッグ操作を監視中か？ */
-  isWatchMove: boolean
   /** ストローク用の一時キャンバスが有効か？ */
   isUseStrokeCanvas: boolean
   /** 現在のストロークで実行中の操作 */
@@ -51,33 +48,27 @@ export class PaintCanvas {
   private readonly strokeCanvas: AbstractCanvas
   /** 表示用Canvas */
   private readonly view: AbstractCanvas
-  /** ドラッグ操作監視 */
-  private readonly dragWatcher: DragWatcher
   /** 現在実行中のストロークイベントの状態 */
   private readonly eventStatus: EventStatus = {
-    isWatchMove: false,
     isUseStrokeCanvas: false,
     activeEvent: undefined,
     startCoord: new Coordinate(),
     startPoint: new Point(),
-    isCapturing: false
+    isCapturing: false,
   }
   /** 履歴 */
   private readonly history: CanvasHistory
-  // 変更通知イベント
 
+  // 変更通知イベント
   private readonly requestChangeZoom = new PaintEvent<boolean>()
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
 
   private readonly pen: Pen
   private style: StrokeStyle = new StrokeStyle()
-
   private stamp?: StrokeRecord
-
   private _tool: CanvasToolName = 'draw'
   private _isKaleido = false
-  
   private _backgroundColor: string = '#ffffff'
 
   /**
@@ -88,13 +79,22 @@ export class PaintCanvas {
     this.width = width
     this.height = height
     // 描画先・表示先を生成
-    this.canvas = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
+    this.canvas = new AbstractCanvas(
+      this.width * RESOLUTION,
+      this.height * RESOLUTION
+    )
     this.strokeCanvas = new AbstractCanvas(
       this.width * RESOLUTION,
       this.height * RESOLUTION
     )
-    this.view = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
-    this.history = new CanvasHistory(this.width * RESOLUTION, this.height * RESOLUTION)
+    this.view = new AbstractCanvas(
+      this.width * RESOLUTION,
+      this.height * RESOLUTION
+    )
+    this.history = new CanvasHistory(
+      this.width * RESOLUTION,
+      this.height * RESOLUTION
+    )
 
     // canvas要素をDOMに挿入
     this.view.el.style.width = `${width}px`
@@ -114,51 +114,17 @@ export class PaintCanvas {
     }
 
     // キャンバス上のマウスイベントを初期化
-    this.registerEventHandlers()
-
-    // ドラッグ操作の状態監視
-    this.dragWatcher = new DragWatcher(this.view.el)
-    this.dragWatcher.listenMove(({ dStart }) => {
-      const scroll = this.eventStatus.startCoord.scroll.move(dStart.scale(1 / this.coord.scale * RESOLUTION).rotate(-this.coord.angle))
-      this.requestScrollTo.fire(scroll)
-    })
-    this.dragWatcher.listenRotate(({ dStart }) => {
-      const angle = normalizeAngle(this.eventStatus.startCoord.angle + dStart)
-      this.requestRotateTo.fire(angle)
-    })
+    useDragEvent(
+      this.view.el,
+      (ev) => this.onDown(ev),
+      (ev, dist) => this.onMove(ev, dist),
+      (ev, dist) => this.onUp(ev, dist),
+      MIN_CURSOR_MOVE
+    )
 
     this.pen = new Pen()
-    //this.pen.coord = new Coordinate({scroll: new Point(400, 400)})
-
     this.tool = 'draw'
-
     this.clear(false)
-  }
-
-  /** 入力キャンバスに対するイベントハンドラを初期化します */
-  private registerEventHandlers() {
-    const inp = this.view.el
-    let lastRawPoint = new Point()
-
-    inp.addEventListener('pointerdown', (ev: PointerEvent) => {
-      lastRawPoint = new Point(ev.screenX, ev.screenY)
-      this.onDown(ev)
-    })
-
-    // カーソルドラッグ： ドラッグ監視中かつ一定量以上の移動があった場合にonMoveを実行
-    inp.addEventListener('pointermove', (ev: PointerEvent) => {
-      if (!this.eventStatus.isWatchMove) return
-      const p = new Point(ev.screenX, ev.screenY)
-      if (p.sub(lastRawPoint).length < MIN_CURSOR_MOVE) return
-      this.onMove(ev)
-      lastRawPoint = p
-    })
-
-    // ドラッグ終了： ドラッグ監視中の場合にonMoveを実行
-    inp.addEventListener(
-      'pointerup',
-      (ev: PointerEvent) => this.eventStatus.isWatchMove && this.onUp(ev)
-    )
   }
 
   get coord() {
@@ -204,22 +170,24 @@ export class PaintCanvas {
     // 子ペンを一度クリアして再設定
     pen.clearChildren()
     for (let penNo = 0; penNo < n; penNo++) {
-      const isFlip = this._isKaleido && (penNo % 2 !== 0)
-      pen.addChildPen(new Coordinate({ angle: (penNo * 360) / n , flipY: isFlip}))
+      const isFlip = this._isKaleido && penNo % 2 !== 0
+      pen.addChildPen(
+        new Coordinate({ angle: (penNo * 360) / n, flipY: isFlip })
+      )
     }
     this.rePaint()
   }
 
   set penWidth(v: number) {
-    this.style = this.style.clone({penSize: v})
+    this.style = this.style.clone({ penSize: v })
   }
 
   set penColor(v: string) {
-    this.style = this.style.clone({color: v})
+    this.style = this.style.clone({ color: v })
   }
 
   set penAlpha(v: number) {
-    this.style = this.style.clone({alpha: v})
+    this.style = this.style.clone({ alpha: v })
   }
 
   get hasStamp() {
@@ -275,7 +243,7 @@ export class PaintCanvas {
 
   async toImgBlob() {
     return new Promise<Blob>((resolve, reject) => {
-      this.canvas.el.toBlob(blob => blob ? resolve(blob) : reject())
+      this.canvas.el.toBlob((blob) => (blob ? resolve(blob) : reject()))
     })
   }
 
@@ -286,33 +254,30 @@ export class PaintCanvas {
     )
   }
 
-  private onDown(ev: PointerEvent) {
+  private onDown(ev: PointerEvent): boolean {
     const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
     this.eventStatus.startPoint = this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
 
+    if (action === 'zoomup' || action === 'zoomdown') {
+      if (action === 'zoomup') this.requestChangeZoom.fire(true)
+      if (action === 'zoomdown') this.requestChangeZoom.fire(false)
+      return false
+    }
+
     if (
       action === 'draw' ||
       action === 'draw:line' ||
       action === 'draw:stamp'
     ) {
-      this.eventStatus.isWatchMove = true
       this.startStroke(this.eventStatus.startPoint)
     }
-    if (action === 'zoomup') this.requestChangeZoom.fire(true)
-    if (action === 'zoomdown') this.requestChangeZoom.fire(false)
-    if (action === 'scroll') {
-      this.eventStatus.isWatchMove = true
-      this.dragWatcher.watchingAction = 'dragmove'
-    }
-    if (action === 'rotate') {
-      this.eventStatus.isWatchMove = true
-      this.dragWatcher.watchingAction = 'dragrotate'
-    }
+
+    return true
   }
-  private onMove(ev: PointerEvent) {
+  private onMove(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
       this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
@@ -334,10 +299,16 @@ export class PaintCanvas {
         true
       )
     }
+    if (action === 'scroll') {
+      this.onScroll(dist)
+    }
+    if (action === 'rotate') {
+      this.onRotate(dist)
+    }
 
     ev.preventDefault()
   }
-  private onUp(ev: PointerEvent) {
+  private onUp(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     const hasPaint =
       action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
@@ -368,11 +339,21 @@ export class PaintCanvas {
       )
     }
 
-    if ((action === 'draw' || action === 'draw:line') && this.eventStatus.isCapturing) {
+    if (
+      (action === 'draw' || action === 'draw:line') &&
+      this.eventStatus.isCapturing
+    ) {
       this.stamp = this.history.current?.flatten
       this.endStroke(false)
       this.rePaint()
       return
+    }
+
+    if (action === 'scroll') {
+      this.onScroll(dist)
+    }
+    if (action === 'rotate') {
+      this.onRotate(dist)
     }
 
     this.endStroke(hasPaint)
@@ -388,9 +369,11 @@ export class PaintCanvas {
     this.strokeCanvas.coord = this.canvas.coord
     this.strokeCanvas.ctx.lineWidth =
       this.style.penSize * this.canvas.coord.scale
-      this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing ? '#0044aa' : this.style.color
+    this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing
+      ? '#0044aa'
+      : this.style.color
 
-      // ストロークの記録を開始
+    // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
     this.history.current?.addPoint(p, 0.5)
     // 一時キャンバス上でストロークを開始
@@ -416,16 +399,28 @@ export class PaintCanvas {
     if (commitStroke) {
       this.history.commit(this.canvas)
       // 一時キャンバスの内容をキャンバスに転送
-      this.strokeCanvas.copy(this.canvas.ctx, {alpha: this.style.alpha})
+      this.strokeCanvas.copy(this.canvas.ctx, { alpha: this.style.alpha })
       clearCanvas(this.strokeCanvas)
     } else {
       this.history.rollback()
       clearCanvas(this.strokeCanvas)
     }
-    this.eventStatus.isWatchMove = false
     this.eventStatus.isUseStrokeCanvas = false
     this.eventStatus.activeEvent = undefined
-    this.dragWatcher.watchingAction = undefined
+  }
+
+  private onScroll(dist: PointsDist) {
+    const scroll = this.eventStatus.startCoord.scroll.move(
+      dist.distance
+        .scale((-1 / this.coord.scale) * RESOLUTION)
+        .rotate(-this.coord.angle)
+    )
+    this.requestScrollTo.fire(scroll)
+  }
+
+  private onRotate(dist: PointsDist) {
+    const angle = this.eventStatus.startCoord.angle + dist.angle
+    this.requestRotateTo.fire(normalizeAngle(angle))
   }
 
   /**
@@ -475,9 +470,9 @@ export class PaintCanvas {
 
   private rePaint() {
     fillCanvas(this.view, '#cccccc')
-    this.canvas.output(this.view.ctx, {background: this.backgroundColor})
+    this.canvas.output(this.view.ctx, { background: this.backgroundColor })
     if (this.eventStatus.isUseStrokeCanvas) {
-      this.strokeCanvas.output(this.view.ctx, {alpha: this.style.alpha})
+      this.strokeCanvas.output(this.view.ctx, { alpha: this.style.alpha })
     }
     if (this.penCount >= 2) {
       paintKaraidGrid(this.view, this.penCount, this.isKaleido)

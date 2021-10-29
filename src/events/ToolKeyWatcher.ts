@@ -1,7 +1,7 @@
 import { KeyPressWatcher } from './KeyPressWatcher'
 import { PaintEvent } from './PaintEvent'
 import { toolForKeys } from './toolForKeys'
-import { CanvasToolName } from '../controls/CanvasToolName'
+import { CanvasToolName } from '../canvas/CanvasToolName'
 
 export class ToolKeyWatcher {
   private readonly keyWatcher: KeyPressWatcher

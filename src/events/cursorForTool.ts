@@ -1,4 +1,4 @@
-import { CanvasToolName } from "../controls/CanvasToolName"
+import { CanvasToolName } from "../canvas/CanvasToolName"
 
 /** 操作に対応するCSSカーソルを返します */
 export const cursorForTool = (tool: CanvasToolName) => {
