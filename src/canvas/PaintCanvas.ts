@@ -153,11 +153,9 @@ export class PaintCanvas {
   set isKaleido(v) {
     if (v === this._isKaleido) return
     this._isKaleido = v
-    if (v) {
-      const c = this.penCount
-      this.penCount = 1
-      this.penCount = c
-    }
+    const c = this.penCount
+    this.penCount = 1
+    this.penCount = c
     this.rePaint()
   }
 
