@@ -19,9 +19,13 @@ const pointsAngle = (pO: Point, pA: Point, pB: Point): number => {
   return angleB - angleA
 }
 
-const distForPoint = (el: HTMLElement, pStart: Point, pEnd: Point): PointsDist => ({
+const distForPoint = (
+  el: HTMLElement,
+  pStart: Point,
+  pEnd: Point
+): PointsDist => ({
   distance: pEnd.sub(pStart),
-  angle: pointsAngle(elementCenter(el), pStart, pEnd)
+  angle: pointsAngle(elementCenter(el), pStart, pEnd),
 })
 
 export const useDragEvent = (
@@ -37,13 +41,14 @@ export const useDragEvent = (
     isWatchMove: false,
   }
 
-
   const handlerDown = (ev: PointerEvent) => {
+    if (!ev.isPrimary) return
     state.startPoint = state.lastRawPoint = new Point(ev.clientX, ev.clientY)
     state.isWatchMove = ondown(ev)
   }
 
   const handlerMove = (ev: PointerEvent) => {
+    if (!ev.isPrimary) return
     if (!state.isWatchMove) return
     const p = new Point(ev.clientX, ev.clientY)
     if (p.sub(state.lastRawPoint).length < minDragMargin) return
@@ -52,6 +57,7 @@ export const useDragEvent = (
   }
 
   const handlerUp = (ev: PointerEvent) => {
+    if (!ev.isPrimary) return
     if (!state.isWatchMove) return
     const p = new Point(ev.clientX, ev.clientY)
     onup(ev, distForPoint(target, state.startPoint, p))
@@ -65,7 +71,7 @@ export const useDragEvent = (
   const canceler = () => {
     target.removeEventListener('pointerdown', handlerDown)
     target.removeEventListener('pointermove', handlerMove)
-    target.removeEventListener('pointerup', handlerUp)  
+    target.removeEventListener('pointerup', handlerUp)
   }
 
   return canceler

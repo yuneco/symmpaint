@@ -1,7 +1,6 @@
 import './style.scss'
 import { PaintCanvas } from '../core/canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
-import { getNextZoom } from './controls/zoomTable'
 import { Point } from '../core/coords/Point'
 import { ToolKeyWatcher } from '../core/events/ToolKeyWatcher'
 
@@ -90,16 +89,15 @@ canvas.coord = canvas.coord.clone({
 })
 
 // キャンバスからの変更要求を受け取りパレットの設定を変更
-canvas.listenRequestZoom((isUp) => {
-  setting.scale = getNextZoom(setting.scale, isUp)
+canvas.listenRequestZoom(scale => {
+  //setting.scale = scale
+  canvas.coord = canvas.coord.clone({ scale })
 })
 canvas.listenRequestScrollTo((pos) => {
-  setting.scrollX = pos.x
-  setting.scrollY = pos.y
+  canvas.coord = canvas.coord.clone({ scroll: pos })
 })
 canvas.listenRequestRotateTo((angle) => {
-  setting.angle = angle
-})
+  canvas.coord = canvas.coord.clone({ angle })})
 
 // キー操作でツール設定を変更
 window.addEventListener('keydown', (ev) => {

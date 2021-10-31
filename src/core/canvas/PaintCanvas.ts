@@ -8,7 +8,7 @@ import {
 } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
 import { CanvasToolName } from './CanvasToolName'
-import { normalizeAngle } from '../coords/CoordUtil'
+import { multiplyCoord, normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './strokeFuncs/getStrokePressure'
 import { Pen } from './Pen'
@@ -18,6 +18,8 @@ import { replayPenStroke } from './strokeFuncs/replayStrokes'
 import { cursorForTool } from '../events/cursorForTool'
 import { useDragEvent } from '../events/useDragEvent'
 import { PointsDist } from '../coords/PointsDist'
+import { TouchTransform, useTouchTransform } from '../events/useTouchTransform'
+import { getNextZoom } from '../events/zoomTable'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -36,6 +38,7 @@ type EventStatus = {
   startPoint: Point
   /** スタンプのキャプチャーモードか？ */
   isCapturing: boolean
+  isInMultiTouch: boolean
 }
 
 export class PaintCanvas {
@@ -55,15 +58,16 @@ export class PaintCanvas {
     startCoord: new Coordinate(),
     startPoint: new Point(),
     isCapturing: false,
+    isInMultiTouch: false,
   }
   /** 履歴 */
   private readonly history: CanvasHistory
 
   // 変更通知イベント
-  private readonly requestChangeZoom = new PaintEvent<boolean>()
+  private readonly requestChangeZoom = new PaintEvent<number>()
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
-
+ 
   private readonly pen: Pen
   private style: StrokeStyle = new StrokeStyle()
   private stamp?: StrokeRecord
@@ -113,12 +117,26 @@ export class PaintCanvas {
       debugBox.querySelector('.stroke')?.appendChild(this.strokeCanvas.el)
     }
 
+    // マルチタッチでのキャンバス操作を初期化
+    useTouchTransform(
+      this.view.el,
+      () => {
+        this.endStroke(false)
+        this.eventStatus.isInMultiTouch = true
+      },
+      (tr) => this.onTouchTramsform(tr),
+      () => {
+        this.eventStatus.isInMultiTouch = false
+      },
+      MIN_CURSOR_MOVE
+    )
+
     // キャンバス上のマウスイベントを初期化
     useDragEvent(
       this.view.el,
-      (ev) => this.onDown(ev),
-      (ev, dist) => this.onMove(ev, dist),
-      (ev, dist) => this.onUp(ev, dist),
+      (ev) => !this.eventStatus.isInMultiTouch && this.onDown(ev),
+      (ev, dist) => !this.eventStatus.isInMultiTouch && this.onDrag(ev, dist),
+      (ev, dist) => !this.eventStatus.isInMultiTouch && this.onUp(ev, dist),
       MIN_CURSOR_MOVE
     )
 
@@ -203,21 +221,15 @@ export class PaintCanvas {
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
-  listenRequestZoom(
-    ...params: Parameters<PaintEvent<boolean>['listen']>
-  ) {
+  listenRequestZoom(...params: Parameters<PaintEvent<number>['listen']>) {
     this.requestChangeZoom.listen(...params)
   }
   /** スクロール操作発生時のリスナーを登録します。スクロールを行うにはリスナー側で座標系(coord.scroll)を変更します */
-  listenRequestScrollTo(
-    ...params: Parameters<PaintEvent<Point>['listen']>
-  ) {
+  listenRequestScrollTo(...params: Parameters<PaintEvent<Point>['listen']>) {
     this.requestScrollTo.listen(...params)
   }
   /** 回転操作発生時のリスナーを登録します。回転を行うにはリスナー側で座標系(coord.angle)を変更します */
-  listenRequestRotateTo(
-    ...params: Parameters<PaintEvent<number>['listen']>
-  ) {
+  listenRequestRotateTo(...params: Parameters<PaintEvent<number>['listen']>) {
     this.requestRotateTo.listen(...params)
   }
 
@@ -260,8 +272,11 @@ export class PaintCanvas {
     this.eventStatus.isCapturing = ev.metaKey
 
     if (action === 'zoomup' || action === 'zoomdown') {
-      if (action === 'zoomup') this.requestChangeZoom.fire(true)
-      if (action === 'zoomdown') this.requestChangeZoom.fire(false)
+      const scale = this.coord.scale
+      if (action === 'zoomup')
+        this.requestChangeZoom.fire(getNextZoom(scale, true))
+      if (action === 'zoomdown')
+        this.requestChangeZoom.fire(getNextZoom(scale, false))
       return false
     }
 
@@ -275,7 +290,8 @@ export class PaintCanvas {
 
     return true
   }
-  private onMove(ev: PointerEvent, dist: PointsDist) {
+
+  private onDrag(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     if (action === 'draw') {
       this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
@@ -306,6 +322,7 @@ export class PaintCanvas {
 
     ev.preventDefault()
   }
+
   private onUp(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     const hasPaint =
@@ -419,6 +436,25 @@ export class PaintCanvas {
   private onRotate(dist: PointsDist) {
     const angle = this.eventStatus.startCoord.angle + dist.angle
     this.requestRotateTo.fire(normalizeAngle(angle))
+  }
+
+  private onTouchTramsform(transform: TouchTransform) {
+    const angle = transform.angle
+    const scale = transform.scale
+    const scroll = transform.scroll
+      .scale((-1 / this.eventStatus.startCoord.scale ** 2 / scale) * RESOLUTION)
+      .rotate(-this.eventStatus.startCoord.angle * 2 - angle)
+    const c = multiplyCoord(
+      this.eventStatus.startCoord,
+      new Coordinate({
+        scroll,
+        angle,
+        scale,
+      })
+    )
+    this.requestChangeZoom.fire(c.scale)
+    this.requestRotateTo.fire(c.angle)
+    this.requestScrollTo.fire(c.scroll)
   }
 
   /**
