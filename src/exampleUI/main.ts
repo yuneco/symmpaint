@@ -98,6 +98,9 @@ canvas.listenRequestScrollTo((pos) => {
 })
 canvas.listenRequestRotateTo((angle) => {
   canvas.coord = canvas.coord.clone({ angle })})
+canvas.listenRequestUndo(() => {
+  canvas.undo()
+})
 
 // キー操作でツール設定を変更
 window.addEventListener('keydown', (ev) => {

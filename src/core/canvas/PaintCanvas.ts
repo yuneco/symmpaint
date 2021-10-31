@@ -67,7 +67,8 @@ export class PaintCanvas {
   private readonly requestChangeZoom = new PaintEvent<number>()
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
- 
+  private readonly requestUndo = new PaintEvent<void>()
+
   private readonly pen: Pen
   private style: StrokeStyle = new StrokeStyle()
   private stamp?: StrokeRecord
@@ -120,13 +121,16 @@ export class PaintCanvas {
     // マルチタッチでのキャンバス操作を初期化
     useTouchTransform(
       this.view.el,
-      () => {
-        this.endStroke(false)
-        this.eventStatus.isInMultiTouch = true
-      },
-      (tr) => this.onTouchTramsform(tr),
-      () => {
-        this.eventStatus.isInMultiTouch = false
+      {
+        onStart: () => {
+          this.endStroke(false)
+          this.eventStatus.isInMultiTouch = true
+        },
+        onTransform: (tr) => this.onTouchTramsform(tr),
+        onEnd: () => {
+          this.eventStatus.isInMultiTouch = false
+        },
+        onTwoFingerTap: () => this.requestUndo.fire()
       },
       MIN_CURSOR_MOVE
     )
@@ -231,6 +235,10 @@ export class PaintCanvas {
   /** 回転操作発生時のリスナーを登録します。回転を行うにはリスナー側で座標系(coord.angle)を変更します */
   listenRequestRotateTo(...params: Parameters<PaintEvent<number>['listen']>) {
     this.requestRotateTo.listen(...params)
+  }
+  /** Undo操作発生時のリスナーを登録します。Undoを行うにはリスナー側でundoメソッドを呼び出します */
+  listenRequestUndo(...params: Parameters<PaintEvent<void>['listen']>) {
+    this.requestUndo.listen(...params)
   }
 
   /** キャンバスをクリアします */
