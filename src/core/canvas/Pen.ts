@@ -3,13 +3,9 @@ import { Point, toPoint } from '../coords/Point'
 import { AbstractCanvas } from './AbstractCanvas'
 import { PenInput } from './PenInput'
 
-type PenAnchor = {
-  position: Point
-  angle: number
-}
 export type PenState = Readonly<{
   coord: Coordinate
-  anchor: PenAnchor
+  anchor: Coordinate
   children: PenState[]
 }>
 
@@ -21,10 +17,7 @@ export type PenState = Readonly<{
 export class Pen {
   private _coord: Coordinate = new Coordinate()
   private children: Pen[] = []
-  private _anchor: PenAnchor = {
-    position: new Point(),
-    angle: 0,
-  }
+  anchor = new Coordinate()
 
   get coord() {
     return this._coord
@@ -32,15 +25,6 @@ export class Pen {
 
   set coord(c: Coordinate) {
     this._coord = this._coord.clone(c)
-  }
-
-  get anchor() {
-    return { ...this._anchor }
-  }
-
-  set anchor(v) {
-    this._anchor.position = v.position
-    this._anchor.angle = v.angle
   }
 
   get childCount() {
@@ -51,7 +35,7 @@ export class Pen {
   get state(): PenState {
     return {
       coord: this.coord,
-      anchor: this._anchor,
+      anchor: this.anchor,
       children: this.children.map((ch) => ch.state),
     }
   }
@@ -101,11 +85,11 @@ export class Pen {
     dir: 'add' | 'sub'
   ): PenInput[] {
     const mx = coord.matrixScrollAfter
-    const center = toPoint(mx.transformPoint(this._anchor.position.invert))
+    const center = toPoint(mx.transformPoint(this.anchor.scroll.invert))
     const transform =
       dir === 'sub'
-        ? (p: Point) => p.move(center).rotate(-coord.angle -this.anchor.angle)
-        : (p: Point) => p.rotate(coord.angle +this.anchor.angle).move(center.invert)
+        ? (p: Point) => p.move(center).rotate(-coord.angle - this.anchor.angle)
+        : (p: Point) => p.rotate(coord.angle + this.anchor.angle).move(center.invert)
     return inps.map((inp) => ({
       point: transform(inp.point),
       pressure: inp.pressure,

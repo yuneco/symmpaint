@@ -36,6 +36,8 @@ type EventStatus = {
   startCoord: Coordinate
   /** 現在のストローク開始時の座標 */
   startPoint: Point
+  /** 現在のストローク開始時のアンカー */
+  startAnchor: Coordinate
   /** 現在のストロークにおける直近の座標 */
   lastPoint: Point
   /** スタンプのキャプチャーモードか？ */
@@ -60,6 +62,7 @@ export class PaintCanvas {
     activeEvent: undefined,
     startCoord: new Coordinate(),
     startPoint: new Point(),
+    startAnchor: new Coordinate(),
     lastPoint: new Point(),
     isCapturing: false,
     isInMultiTouch: false,
@@ -72,6 +75,8 @@ export class PaintCanvas {
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
   private readonly requestUndo = new PaintEvent<void>()
+  private readonly requestAnchorMoveTo = new PaintEvent<Point>()
+  private readonly requestAnchorRotateTo = new PaintEvent<number>()
 
   private readonly pen: Pen = new Pen()
   private style: StrokeStyle = new StrokeStyle()
@@ -130,7 +135,7 @@ export class PaintCanvas {
           this.endStroke(false)
           this.eventStatus.isInMultiTouch = true
         },
-        onTransform: (tr) => this.onTouchTramsform(tr),
+        onTransform: (tr, count) => count >= 3 ? this.onTouchTramsformAnchor(tr) : this.onTouchTramsformCanvas(tr),
         onEnd: () => {
           this.eventStatus.isInMultiTouch = false
         },
@@ -148,8 +153,8 @@ export class PaintCanvas {
       MIN_CURSOR_MOVE
     )
 
-    this.pen.anchor = { position: new Point(0, 0), angle: 0 }
     this.tool = 'draw'
+    this.pen.anchor = new Coordinate({scroll: new Point(500, 0), angle: 45})
     this.clear(false)
   }
 
@@ -228,6 +233,15 @@ export class PaintCanvas {
     this.rePaint()
   }
 
+  get anchor(): Coordinate {
+    return this.pen.anchor
+  }
+
+  set anchor(v: Coordinate) {
+    this.pen.anchor = v
+    this.rePaint()
+  }
+
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
   listenRequestZoom(...params: Parameters<PaintEvent<number>['listen']>) {
     this.requestChangeZoom.listen(...params)
@@ -243,6 +257,14 @@ export class PaintCanvas {
   /** Undo操作発生時のリスナーを登録します。Undoを行うにはリスナー側でundoメソッドを呼び出します */
   listenRequestUndo(...params: Parameters<PaintEvent<void>['listen']>) {
     this.requestUndo.listen(...params)
+  }
+  /** アンカー移動操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
+  listenRequestAnchorMoveTo(...params: Parameters<PaintEvent<Point>['listen']>) {
+    this.requestAnchorMoveTo.listen(...params)
+  }
+  /** アンカー回転操作発生時のリスナーを登録します。アンカー回転を行うにはリスナー側でanchorプロパティを変更します */
+  listenRequestAnchorRotateTo(...params: Parameters<PaintEvent<number>['listen']>) {
+    this.requestAnchorRotateTo.listen(...params)
   }
 
   /** キャンバスをクリアします */
@@ -280,6 +302,7 @@ export class PaintCanvas {
     const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
+    this.eventStatus.startAnchor = this.anchor
     this.eventStatus.lastPoint = this.eventStatus.startPoint =
       this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
@@ -450,7 +473,7 @@ export class PaintCanvas {
     this.requestRotateTo.fire(normalizeAngle(angle))
   }
 
-  private onTouchTramsform(transform: TouchTransform) {
+  private onTouchTramsformCanvas(transform: TouchTransform) {
     const angle = transform.angle
     const scale = transform.scale
     const scroll = transform.scroll
@@ -467,6 +490,16 @@ export class PaintCanvas {
     this.requestChangeZoom.fire(c.scale)
     this.requestRotateTo.fire(c.angle)
     this.requestScrollTo.fire(c.scroll)
+  }
+  private onTouchTramsformAnchor(transform: TouchTransform) {
+    const angle = transform.angle + this.eventStatus.startAnchor.angle
+    const scroll = transform.scroll
+    .scale(1 / this.eventStatus.startCoord.scale * RESOLUTION)
+    .rotate(-this.eventStatus.startCoord.angle)
+    .move(this.eventStatus.startAnchor.scroll)
+
+    this.requestAnchorMoveTo.fire(scroll)
+    this.requestAnchorRotateTo.fire(angle)
   }
 
   /**
@@ -527,7 +560,7 @@ export class PaintCanvas {
         this.penCount,
         this.isKaleido,
         new Coordinate({
-          scroll: this.coord.scroll.invert.move(this.pen.anchor.position),
+          scroll: this.coord.scroll.invert.move(this.pen.anchor.scroll).scale(this.canvas.coord.scale).rotate(this.coord.angle),
           angle: this.coord.angle + this.pen.anchor.angle,
         })
       )

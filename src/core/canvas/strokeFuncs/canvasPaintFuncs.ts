@@ -54,11 +54,11 @@ export const paintKaraidGrid = (
   const colSub = isKaleido ? '#c5e4ebbb' : colMain
 
   const center = new Point(canvas.width / 2, canvas.height / 2)
+  const scroll = center.move(coord.scroll)
   canvas.ctx.save()
   canvas.ctx.resetTransform()
-  canvas.ctx.translate(center.x, center.y)
+  canvas.ctx.translate(scroll.x, scroll.y)
   canvas.ctx.rotate(a2r(coord.angle))
-  canvas.ctx.translate(coord.scroll.x, coord.scroll.y)
   canvas.ctx.lineWidth = 1
   canvas.ctx.rotate(a2r(-90 + 360 / count / 2))
   for (let index = 0; index < count; index++) {

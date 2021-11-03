@@ -32,7 +32,7 @@ export type TouchTransform = Pick<Coordinate, 'angle' | 'scale' | 'scroll'> & {
 }
 
 /** タッチ操作でスクロール・ズーム・回転を行った際のイベントハンドラ関数の型 */
-type TransformHandler = (tr: TouchTransform) => void
+type TransformHandler = (tr: TouchTransform, touchCount: number) => void
 type EventHandlers = {
   /** マルチタッチが開始された */
   onStart: () => void
@@ -191,7 +191,7 @@ export const useTouchTransform = (
       ]
       const transformAmount = diffSegments([s1, s2])
       maxMove = Math.max(maxMove, transformAmount.scroll.length)
-      handlers.onTransform?.(transformAmount)
+      handlers.onTransform?.(transformAmount, maxTouchCount)
     }
   }
 
