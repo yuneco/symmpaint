@@ -99,51 +99,52 @@ export class Pen {
   }
 
   /** 指定の座標まで線を引きます */
-  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p: Point, pressure = 0.5, logName = '') {
+  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p: Point, pressure = 0.5) {
     if (pressure <= 0) return
     const ctx = canvas.ctx
-    if (logName) console.group(logName)
-    
-    const mx = matrix.multiply(this.coord.matrix)
-    if (this.childCount === 0) {
-      const lp1 = mx.transformPoint(this.position)
-      const lp2 = mx.transformPoint(p)
-      const baseWidth = ctx.lineWidth
+
+    // 先にdryrunで全ての子ペンから描画座標を取得する
+    const segments = this.dryRun(matrix, [{point: this.position, pressure: 0}, {point: p, pressure}])
+    const baseWidth = ctx.lineWidth
+    segments.forEach(([start, end]) => {
+      if (!end) return
       ctx.beginPath()
-      ctx.lineWidth = baseWidth * pressure
-      ctx.moveTo(lp1.x, lp1.y)
-      ctx.lineTo(lp2.x, lp2.y)
-      if (logName) console.log(`${lp1.x} ${lp1.y}, ${lp2.x} ${lp2.y}`)
+      ctx.moveTo(start.point.x, start.point.y)
+      ctx.lineWidth = baseWidth * end.pressure
+      ctx.lineTo(end.point.x, end.point.y)
       ctx.stroke()
-      ctx.lineWidth = baseWidth
-    }
-    this.children.forEach((pen, index) => pen.drawTo(canvas, mx,p, pressure, logName ? `${logName}-${index}`: ''))
+    })
+    ctx.lineWidth = baseWidth
     this.position = p
-    if (logName) console.groupEnd()
   }
 
+  /**
+   * 入力点の配列を渡して折線を描画します。線の太さは一定です
+   */
   drawLines(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, points: Point[], pressure = 0.5) {
     if (points.length < 2) return
     const ctx = canvas.ctx
-    const mx = matrix.multiply(this.coord.matrix)
-    if (this.childCount === 0) {
-      const [firstP, ...lestPs] = points
-      const baseWidth = ctx.lineWidth
-      ctx.lineWidth = baseWidth * pressure
+
+    const inps = points.map(point => ({point, pressure}))
+    const segments = this.dryRun(matrix, inps)
+    const baseWidth = ctx.lineWidth
+    ctx.lineWidth = baseWidth * pressure
+    segments.forEach(seg => {
+      const [start, ...lests] = seg
       ctx.beginPath()
-      const p0 = mx.transformPoint(firstP)
-      ctx.moveTo(p0.x, p0.y)
-      lestPs.forEach(p => {
-        const p1 = mx.transformPoint(p)
-        ctx.lineTo(p1.x, p1.y)
+      ctx.moveTo(start.point.x, start.point.y)
+      lests.forEach(p => {
+        ctx.lineTo(p.point.x, p.point.y)
       })
       ctx.stroke()
-      ctx.lineWidth = baseWidth
-    }
-    this.children.forEach((pen) => pen.drawLines(canvas, mx, points, pressure))
+    })
+    ctx.lineWidth = baseWidth
   }
 
-  drayRun(matrix: DOMMatrixReadOnly, inputs: PenInput[]): PenInput[][] {
+  /**
+   * 入力点の配列を子ペンに展開し、実際の描画座標の配列として返します
+   */
+  dryRun(matrix: DOMMatrixReadOnly, inputs: PenInput[]): PenInput[][] {
     const mx = matrix.multiply(this.coord.matrix)
     if (this.childCount === 0) {
       return [inputs.map(inp => {
@@ -152,6 +153,6 @@ export class Pen {
         return out
       })]
     }
-    return this.children.flatMap(ch => ch.drayRun(mx, inputs))
+    return this.children.flatMap(ch => ch.dryRun(mx, inputs))
   }
 }

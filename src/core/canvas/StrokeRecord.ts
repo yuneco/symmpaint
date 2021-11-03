@@ -64,7 +64,7 @@ export class StrokeRecord{
   get flatten() {
     const pen = new Pen()
     pen.state = this.penState
-    const strokes = pen.drayRun(new  DOMMatrix(), this.inputs)
+    const strokes = pen.dryRun(new  DOMMatrix(), this.inputs)
     const joinedStroke = joinStrokes(strokes)
     pen.clearChildren()
     const rec = new StrokeRecord(this.canvasCoord, pen.state, this.style, this.tool)
