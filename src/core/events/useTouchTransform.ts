@@ -67,7 +67,7 @@ const diffSegments = (ss: [PointsSegment, PointsSegment]): TouchTransform => {
 /** TouchListをArrayに変換するユーティリティ */
 const touchList2Array = (list: TouchList): Touch[] => {
   const arr: Touch[] = []
-  for(let index = 0; index < list.length; index++) {
+  for (let index = 0; index < list.length; index++) {
     arr.push(list[index])
   }
   return arr
@@ -87,13 +87,13 @@ export const useTouchTransform = (
 ) => {
   let touches: TouchPoint[] = []
   let basePoints: [Point, Point] | undefined
-  let firstTouchMs: number = 0
-  let isInMultiTouch: boolean = false
-  let maxTouchCount: number = 0
-  let maxMove: number = 0
+  let firstTouchMs = 0
+  let isInMultiTouch = false
+  let maxTouchCount = 0
+  let maxMove = 0
 
   // 1点目のタッチ時に呼び出す
-  const onFirstTouch = () => {
+     const onFirstTouch = () => {
     firstTouchMs = Date.now()
     isInMultiTouch = false
     maxTouchCount = 0
@@ -112,15 +112,15 @@ export const useTouchTransform = (
 
   /** タッチリストから指定のタッチを削除します */
   const removeTouches = (list: TouchList) => {
-    const delIds = touchList2Array(list).map(t => t.identifier)
-    touches = touches.filter(t => !delIds.includes(t.identifier))
+    const delIds = touchList2Array(list).map((t) => t.identifier)
+    touches = touches.filter((t) => !delIds.includes(t.identifier))
   }
 
   /** タッチリストに指定のタッチを追加します */
   const addTouches = (list: TouchList) => {
     // 削除漏れがあるとID重複になるので、先に削除
     removeTouches(list)
-    const ts: TouchPoint[] = touchList2Array(list).map(t => ({
+    const ts: TouchPoint[] = touchList2Array(list).map((t) => ({
       identifier: t.identifier,
       pagePoint: new Point(t.pageX, t.pageY),
     }))
@@ -131,8 +131,8 @@ export const useTouchTransform = (
   const updateTouches = (list: TouchList): boolean => {
     const targets = touchList2Array(list)
     let hasChaned = false
-    targets.forEach(target => {
-      const touch = touches.find(t => t.identifier === target.identifier)
+    targets.forEach((target) => {
+      const touch = touches.find((t) => t.identifier === target.identifier)
       if (!touch) return
       const pNew = new Point(target.pageX, target.pageY)
       // 閾値未満なら無視する
@@ -142,7 +142,6 @@ export const useTouchTransform = (
     })
     return hasChaned
   }
-
 
   const ontouchstart = (ev: TouchEvent) => {
     const initialCount = touches.length
@@ -205,7 +204,7 @@ export const useTouchTransform = (
     el.removeEventListener('touchstart', ontouchstart)
     el.removeEventListener('touchend', ontouchend)
     el.removeEventListener('touchcancel', ontouchend)
-    el.removeEventListener('touchmove', ontouchmove)  
+    el.removeEventListener('touchmove', ontouchmove)
   }
 
   return canceler

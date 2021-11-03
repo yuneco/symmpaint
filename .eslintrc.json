@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "env": { "browser": true, "node": true, "es6": true },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "prettier"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "project": ["tsconfig.json"] ,
+    "sourceType": "module"
+  }
+}

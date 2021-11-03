@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import './style.scss'
 import { PaintCanvas } from '../core/canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
@@ -9,10 +10,7 @@ const elMain = document.querySelector<HTMLDivElement>('#main')!
 const elPalette = document.querySelector<HTMLDivElement>('#palette')!
 const elToast = document.querySelector<HTMLDivElement>('#toast')!
 
-const size = new Point(
-  elMain.offsetWidth,
-  elMain.offsetHeight
-)
+const size = new Point(elMain.offsetWidth, elMain.offsetHeight)
 
 const showToast = (msg: string) => {
   elToast.textContent = msg
@@ -23,7 +21,7 @@ const showToast = (msg: string) => {
 }
 
 /** 設定パレット */
-const setting = new SettingPalette(elPalette, {width: size.x, height: size.y})
+const setting = new SettingPalette(elPalette, { width: size.x, height: size.y })
 /** メインキャンバス */
 const canvas = new PaintCanvas(elMain, size.x, size.y)
 
@@ -49,13 +47,19 @@ setting.onClear.listen(() => {
 setting.onUndo.listen(() => {
   canvas.undo()
 })
-setting.onCopy.listen(async () => {
+const copyImg = async () => {
   const blob = await canvas.toImgBlob()
   // see: https://stackoverflow.com/questions/61187374/how-to-fix-the-cannot-find-name-clipboarditem-error
   const item = new ClipboardItem({
     'image/png': blob as unknown as ClipboardItemData,
   })
   await navigator.clipboard.write([item])
+}
+setting.onCopy.listen(() => {
+  copyImg().catch((err) => {
+    console.error(err)
+    alert('failed to copy img.')
+  })
 })
 setting.onKaleidoChange.listen((isKaleido) => {
   canvas.isKaleido = isKaleido
@@ -74,12 +78,11 @@ setting.onToolChange.listen((tool) => {
   if (tool === 'draw:stamp' && !canvas.hasStamp) {
     const msg = {
       ja: 'スタンプを使用するには、先にCommand(Ctrl)を押しながら線を引いてスタンプを記録します',
-      en: 'Before using stamp, draw with Command(Ctrl) key for record a stroke.'
+      en: 'Before using stamp, draw with Command(Ctrl) key for record a stroke.',
     }[uaLang]
     showToast(msg)
   }
 })
-
 
 // 初期設定の座標系をパレットから取得してキャンバスに反映
 canvas.coord = canvas.coord.clone({
@@ -89,7 +92,7 @@ canvas.coord = canvas.coord.clone({
 })
 
 // キャンバスからの変更要求を受け取りパレットの設定を変更
-canvas.listenRequestZoom(scale => {
+canvas.listenRequestZoom((scale) => {
   //setting.scale = scale
   canvas.coord = canvas.coord.clone({ scale })
 })
@@ -97,7 +100,8 @@ canvas.listenRequestScrollTo((pos) => {
   canvas.coord = canvas.coord.clone({ scroll: pos })
 })
 canvas.listenRequestRotateTo((angle) => {
-  canvas.coord = canvas.coord.clone({ angle })})
+  canvas.coord = canvas.coord.clone({ angle })
+})
 canvas.listenRequestUndo(() => {
   canvas.undo()
 })
@@ -120,7 +124,7 @@ window.addEventListener('keydown', (ev) => {
 
 // キー操作でツール変更
 const toolKeyWatcher = new ToolKeyWatcher()
-toolKeyWatcher.listenChange(tool => setting.tool = tool)
+toolKeyWatcher.listenChange((tool) => (setting.tool = tool))
 
 // パレットの初期値設定
 setting.kaleidoscope = true

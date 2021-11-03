@@ -78,7 +78,7 @@ export class PaintCanvas {
   private stamp?: StrokeRecord
   private _tool: CanvasToolName = 'draw'
   private _isKaleido = false
-  private _backgroundColor: string = '#ffffff'
+  private _backgroundColor = '#ffffff'
 
   /**
    * キャンバスを生成します
@@ -114,10 +114,10 @@ export class PaintCanvas {
     const debugBox = document.getElementById('debug')
     if (debugBox) {
       const debugScale = 200 / Math.max(width, height)
-      this.canvas.el.style.width = width * debugScale + 'px'
-      this.canvas.el.style.height = height * debugScale + 'px'
-      this.strokeCanvas.el.style.width = width * debugScale + 'px'
-      this.strokeCanvas.el.style.height = height * debugScale + 'px'
+      this.canvas.el.style.width = `${width * debugScale}px`
+      this.canvas.el.style.height = `${height * debugScale}px`
+      this.strokeCanvas.el.style.width = `${width * debugScale}px`
+      this.strokeCanvas.el.style.height = `${height * debugScale}px`
       debugBox.querySelector('.canvas')?.appendChild(this.canvas.el)
       debugBox.querySelector('.stroke')?.appendChild(this.strokeCanvas.el)
     }

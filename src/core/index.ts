@@ -1,2 +1,2 @@
-import { PaintCanvas } from "./canvas/PaintCanvas"
+import { PaintCanvas } from './canvas/PaintCanvas'
 export { PaintCanvas }
