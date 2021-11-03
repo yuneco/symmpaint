@@ -14,24 +14,15 @@ export type PenState = Readonly<{
  * また、再帰的に子要素（子ペン）を持つことができます。子要素は親の座標系を継承します。
  */
 export class Pen {
-  private _coord: Coordinate
+  private _coord: Coordinate = new Coordinate()
   private children: Pen[] = []
-
-  constructor() {
-    this._coord = new Coordinate()
-  }
 
   get coord() {
     return this._coord
   }
 
   set coord(c: Coordinate) {
-    this._coord = this._coord.clone({
-      scale: c.scale,
-      scroll: c.scroll,
-      angle: c.angle,
-      flipY: c.flipY,
-    })
+    this._coord = this._coord.clone(c)
   }
 
   get childCount() {
@@ -116,10 +107,10 @@ export class Pen {
     const baseWidth = ctx.lineWidth
     ctx.lineWidth = baseWidth * pressure
     segments.forEach(seg => {
-      const [start, ...lests] = seg
+      const [start, ...rests] = seg
       ctx.beginPath()
       ctx.moveTo(start.point.x, start.point.y)
-      lests.forEach(p => {
+      rests.forEach(p => {
         ctx.lineTo(p.point.x, p.point.y)
       })
       ctx.stroke()

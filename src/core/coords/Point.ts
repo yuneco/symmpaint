@@ -43,3 +43,5 @@ export class Point {
     return new Point(this.x * times, this.y * times)
   }
 }
+
+export const toPoint = (pointLike: {x: number; y: number}): Point => new Point(pointLike.x, pointLike.y)

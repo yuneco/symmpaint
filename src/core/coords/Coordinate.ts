@@ -32,7 +32,7 @@ export class Coordinate {
   /** この座標系のDOMMatrix */
   private readonly _matrix: DOMMatrix
 
-  constructor(data?: Partial<CoordinateData>
+  constructor(data?: Partial<CoordinateData | Coordinate>
   ) {
     this.scroll = data?.scroll ?? new Point()
     this.scale = data?.scale ?? 1
@@ -54,7 +54,7 @@ export class Coordinate {
     }
   }
 
-  clone(data?: Partial<CoordinateData>): Coordinate {
+  clone(data?: Partial<CoordinateData | Coordinate>): Coordinate {
     const base = this.toData()
     return new Coordinate({...base, ...data})
   }

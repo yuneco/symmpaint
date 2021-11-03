@@ -29,10 +29,10 @@ export const replayPenStroke = (
       )  
     })
   } else {
-    const [first, ...lests] = stroke.inputs
+    const [first, ...rests] = stroke.inputs
     if (!first) return
     let last = first
-    lests.forEach((inp) => {
+    rests.forEach((inp) => {
       if(inp.pressure) pen.drawTo(canvas, defaultMatrix, last.point, inp.point, inp.pressure)
       last = inp
     })

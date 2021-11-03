@@ -8,7 +8,7 @@ export class StrokeStyle {
   readonly color: string
   readonly penSize: number
   readonly alpha: number
-  constructor(data?: Partial<StrokeStyleDate>) {
+  constructor(data?: Partial<StrokeStyleDate | StrokeStyle>) {
     this.color = data?.color ?? '#000000'
     this.penSize = data?.penSize ?? 10
     this.alpha = data?.alpha ?? 1
@@ -22,7 +22,7 @@ export class StrokeStyle {
     }
   }
 
-  clone(change?: Partial<StrokeStyleDate>) {
+  clone(change?: Partial<StrokeStyleDate | StrokeStyle>) {
     return new StrokeStyle({...this.toData(), ...change})
   }
 }
