@@ -4,7 +4,6 @@ import { AbstractCanvas } from './AbstractCanvas'
 import { PenInput } from './PenInput'
 
 export type PenState = Readonly<{
-  position: Point
   coord: Coordinate
   children: PenState[]
 }>
@@ -15,7 +14,6 @@ export type PenState = Readonly<{
  * また、再帰的に子要素（子ペン）を持つことができます。子要素は親の座標系を継承します。
  */
 export class Pen {
-  private position: Point = new Point()
   private _coord: Coordinate
   private children: Pen[] = []
 
@@ -40,14 +38,9 @@ export class Pen {
     return this.children.length
   }
 
-  get pos() {
-    return this.position
-  }
-
   /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて取得します */
   get state(): PenState {
     return {
-      position: this.position,
       coord: this.coord,
       children: this.children.map((ch) => ch.state),
     }
@@ -55,7 +48,6 @@ export class Pen {
 
   /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて復元します */
   set state(st: PenState) {
-    this.position = st.position
     this.coord = st.coord
     if (this.children.length > st.children.length) {
       // 不要なペンを削除
@@ -92,19 +84,14 @@ export class Pen {
     this.children.length = 0
   }
 
-  /** ペンを移動します */
-  moveTo(p: Point) {
-    this.position = p
-    this.children.forEach((pen) => pen.moveTo(p))
-  }
 
   /** 指定の座標まで線を引きます */
-  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p: Point, pressure = 0.5) {
+  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p0: Point, p1: Point, pressure = 0.5) {
     if (pressure <= 0) return
     const ctx = canvas.ctx
 
     // 先にdryrunで全ての子ペンから描画座標を取得する
-    const segments = this.dryRun(matrix, [{point: this.position, pressure: 0}, {point: p, pressure}])
+    const segments = this.dryRun(matrix, [{point: p0, pressure: 0}, {point: p1, pressure}])
     const baseWidth = ctx.lineWidth
     segments.forEach(([start, end]) => {
       if (!end) return
@@ -115,7 +102,6 @@ export class Pen {
       ctx.stroke()
     })
     ctx.lineWidth = baseWidth
-    this.position = p
   }
 
   /**

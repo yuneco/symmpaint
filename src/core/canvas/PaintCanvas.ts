@@ -36,6 +36,8 @@ type EventStatus = {
   startCoord: Coordinate
   /** 現在のストローク開始時の座標 */
   startPoint: Point
+  /** 現在のストロークにおける直近の座標 */
+  lastPoint: Point
   /** スタンプのキャプチャーモードか？ */
   isCapturing: boolean
   isInMultiTouch: boolean
@@ -57,6 +59,7 @@ export class PaintCanvas {
     activeEvent: undefined,
     startCoord: new Coordinate(),
     startPoint: new Point(),
+    lastPoint: new Point(),
     isCapturing: false,
     isInMultiTouch: false,
   }
@@ -276,7 +279,7 @@ export class PaintCanvas {
     const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
-    this.eventStatus.startPoint = this.event2canvasPoint(ev)
+    this.eventStatus.lastPoint = this.eventStatus.startPoint = this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
 
     if (action === 'zoomup' || action === 'zoomdown') {
@@ -301,17 +304,18 @@ export class PaintCanvas {
 
   private onDrag(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
+    const canvasP = this.event2canvasPoint(ev)
     if (action === 'draw') {
-      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
+      this.continueStroke(canvasP, ev.pressure || 0.5)
+      this.eventStatus.lastPoint = canvasP
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.pen.moveTo(this.eventStatus.startPoint)
-      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0.5)
+      this.continueStroke(canvasP, ev.pressure || 0.5)
     }
     if (action === 'draw:stamp' && this.stamp) {
       clearCanvas(this.strokeCanvas)
-      const dp = this.event2canvasPoint(ev).sub(this.eventStatus.startPoint)
+      const dp = canvasP.sub(this.eventStatus.startPoint)
       const stampScale = dp.length / 100
       this.putStroke(
         this.stamp,
@@ -333,16 +337,16 @@ export class PaintCanvas {
 
   private onUp(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
+    const canvasP = this.event2canvasPoint(ev)
     const hasPaint =
       action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
     if (action === 'draw') {
-      this.continueStroke(this.event2canvasPoint(ev), ev.pressure || 0)
+      this.continueStroke(canvasP, ev.pressure || 0)
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.pen.moveTo(this.eventStatus.startPoint)
       this.continueStroke(
-        this.event2canvasPoint(ev),
+        canvasP,
         this.history.current
           ? getStrokeEndPressure(this.history.current.inputs)
           : 0.5
@@ -351,7 +355,7 @@ export class PaintCanvas {
     }
     if (action === 'draw:stamp' && this.stamp) {
       clearCanvas(this.strokeCanvas)
-      const dp = this.event2canvasPoint(ev).sub(this.eventStatus.startPoint)
+      const dp = canvasP.sub(this.eventStatus.startPoint)
       const stampScale = dp.length / 100
       this.putStroke(
         this.stamp,
@@ -399,8 +403,6 @@ export class PaintCanvas {
     // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
     this.history.current?.addPoint(p, 0.5)
-    // 一時キャンバス上でストロークを開始
-    this.pen.moveTo(p)
   }
 
   /**
@@ -410,7 +412,7 @@ export class PaintCanvas {
    */
   private continueStroke(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
-    this.pen.drawTo(this.strokeCanvas, new DOMMatrix(), p, pressure)
+    this.pen.drawTo(this.strokeCanvas, new DOMMatrix(), this.eventStatus.lastPoint, p, pressure)
     this.rePaint()
   }
 
