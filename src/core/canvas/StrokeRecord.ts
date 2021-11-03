@@ -16,7 +16,7 @@ export type StrokeTool = 'pen' | 'clearAll'
  * 通常のペン操作では、一つの操作 = 1本のストロークです。
  * このレコードには、記録した操作を再現するために必要な全ての状態が保存されます。
  */
-export class StrokeRecord{
+export class StrokeRecord {
   /** addPointで記録された座標 */
   readonly inputs: PenInput[] = []
   /** ストローク記録時のペンの状態 */
@@ -34,7 +34,12 @@ export class StrokeRecord{
    * @param penState ペンの状態
    * @param tool このストロークの機能
    */
-  constructor(canvasCoord: Coordinate, penState: PenState, style: StrokeStyle, tool: StrokeTool = 'pen') {
+  constructor(
+    canvasCoord: Coordinate,
+    penState: PenState,
+    style: StrokeStyle,
+    tool: StrokeTool = 'pen'
+  ) {
     this.canvasCoord = canvasCoord
     this.penState = penState
     this.style = style
@@ -45,11 +50,11 @@ export class StrokeRecord{
    * ストロークの記録に座標を追加します
    */
   addPoint(point: Point, pressure: number) {
-    this.inputs.push({point, pressure})
+    this.inputs.push({ point, pressure })
   }
 
   /**
-   * 　記録した座標をクリアします
+   * 記録した座標をクリアします
    * @param shouldKeepFirst 最初の要素を保持するか？
    * @param shouldKeepLast 最後の要素を保持するか？
    */
@@ -65,13 +70,22 @@ export class StrokeRecord{
     const pen = new Pen()
     pen.state = this.penState
     const strokes = pen.dryRun(this.inputs, undefined, this.canvasCoord)
-    const anchor = toPoint(this.canvasCoord.matrixScrollAfter.transformPoint(pen.anchor.position)).invert
-    const joinedStroke = joinStrokes(strokes).map(inp => ({point: inp.point.move(anchor), pressure: inp.pressure}))
+    const anchor = toPoint(
+      this.canvasCoord.matrixScrollAfter.transformPoint(pen.anchor.scroll)
+    ).invert
+    const joinedStroke = joinStrokes(strokes).map((inp) => ({
+      point: inp.point.move(anchor),
+      pressure: inp.pressure,
+    }))
     pen.clearChildren()
-    pen.anchor = {position: new Point(), angle: 0}
-    const rec = new StrokeRecord(this.canvasCoord, pen.state, this.style, this.tool)
+    pen.anchor = new Coordinate()
+    const rec = new StrokeRecord(
+      this.canvasCoord,
+      pen.state,
+      this.style,
+      this.tool
+    )
     rec.inputs.push(...joinedStroke)
     return rec
   }
-
 }
