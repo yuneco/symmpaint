@@ -10,7 +10,6 @@ export const replayPenStroke = (
   stroke: StrokeRecord,
   isPreview: boolean
 ) => {
-  const defaultMatrix = new DOMMatrix()
   canvas.coord = stroke.canvasCoord
   canvas.ctx.strokeStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
@@ -23,7 +22,6 @@ export const replayPenStroke = (
       const pressure = getStrokeAvrPressure(seg)
       pen.drawLines(
         canvas,
-        defaultMatrix,
         seg.map((inp) => inp.point),
         pressure
       )  
@@ -33,7 +31,7 @@ export const replayPenStroke = (
     if (!first) return
     let last = first
     rests.forEach((inp) => {
-      if(inp.pressure) pen.drawTo(canvas, defaultMatrix, last.point, inp.point, inp.pressure)
+      if(inp.pressure) pen.drawTo(canvas, last.point, inp.point, inp.pressure)
       last = inp
     })
   }

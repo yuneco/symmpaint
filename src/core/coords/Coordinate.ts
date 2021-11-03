@@ -59,8 +59,23 @@ export class Coordinate {
     return new Coordinate({...base, ...data})
   }
 
+  get invert() {
+    return new Coordinate({
+      scroll: this.scroll.scale(-1),
+      scale: 1 / this.scale,
+      angle: -this.angle
+    })
+  }
+
   get matrix() {
     return this._matrix.translate(0)
+  }
+
+  get matrixScrollAfter() {
+    return new DOMMatrix()
+    .scaleSelf(this.scale, this.scale * (this.flipY ? -1 : 1))
+    .rotateSelf(this.angle)
+    .translateSelf(this.scroll.x, this.scroll.y)
   }
 
 }

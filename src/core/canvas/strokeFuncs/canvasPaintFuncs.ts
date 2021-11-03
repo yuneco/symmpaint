@@ -1,12 +1,13 @@
-import { AbstractCanvas } from "../AbstractCanvas";
-import { Point } from "../../coords/Point";
-import { a2r } from "../../coords/CoordUtil";
+import { AbstractCanvas } from '../AbstractCanvas'
+import { Point } from '../../coords/Point'
+import { a2r } from '../../coords/CoordUtil'
+import { Coordinate } from '../../coords/Coordinate'
 
 /**
  * キャンバスをクリアします
- * @param canvas 
+ * @param canvas
  */
-export const  clearCanvas = (canvas: AbstractCanvas): void => {
+export const clearCanvas = (canvas: AbstractCanvas): void => {
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -15,10 +16,10 @@ export const  clearCanvas = (canvas: AbstractCanvas): void => {
 
 /**
  * キャンバスを塗りつぶします
- * @param canvas 
+ * @param canvas
  * @param color
  */
- export const  fillCanvas = (canvas: AbstractCanvas, color: string): void => {
+export const fillCanvas = (canvas: AbstractCanvas, color: string): void => {
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.fillStyle = color
@@ -27,7 +28,7 @@ export const  clearCanvas = (canvas: AbstractCanvas): void => {
 }
 
 /**
- * 
+ *
  * @param canvas キャンバスに外枠を描きます
  */
 export const paintOutBorder = (canvas: AbstractCanvas): void => {
@@ -40,27 +41,34 @@ export const paintOutBorder = (canvas: AbstractCanvas): void => {
 
 /**
  * 対称描画時の補助線を描画します
- * @param canvas 
+ * @param canvas
  * @param count 対称数
  */
-export const paintKaraidGrid = (canvas: AbstractCanvas, count: number, isKaleido: boolean): void => {
-  const colMain = '#91bcccbb';
-  const colSub = isKaleido ? '#c5e4ebbb' : colMain;
+export const paintKaraidGrid = (
+  canvas: AbstractCanvas,
+  count: number,
+  isKaleido: boolean,
+  coord: Coordinate
+): void => {
+  const colMain = '#91bcccbb'
+  const colSub = isKaleido ? '#c5e4ebbb' : colMain
 
   const center = new Point(canvas.width / 2, canvas.height / 2)
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.translate(center.x, center.y)
+  canvas.ctx.rotate(a2r(coord.angle))
+  canvas.ctx.translate(coord.scroll.x, coord.scroll.y)
   canvas.ctx.lineWidth = 1
-  canvas.ctx.rotate(a2r(-90 +(360 / count)/2)) 
-  for(let index = 0; index < count; index++) {
-    canvas.ctx.strokeStyle = index % 2 === 0 ? colMain : colSub;
+  canvas.ctx.rotate(a2r(-90 + 360 / count / 2))
+  for (let index = 0; index < count; index++) {
+    canvas.ctx.strokeStyle = index % 2 === 0 ? colMain : colSub
     canvas.ctx.beginPath()
     canvas.ctx.moveTo(0, 0)
     canvas.ctx.lineTo(0, canvas.height)
     canvas.ctx.stroke()
     canvas.ctx.closePath()
-    canvas.ctx.rotate((360 / count) / 180 * Math.PI)    
+    canvas.ctx.rotate((360 / count / 180) * Math.PI)
   }
   canvas.ctx.restore()
 }

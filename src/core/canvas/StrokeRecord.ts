@@ -1,5 +1,5 @@
 import { Coordinate } from '../coords/Coordinate'
-import { Point } from '../coords/Point'
+import { Point, toPoint } from '../coords/Point'
 import { Pen, PenState } from './Pen'
 import { PenInput } from './PenInput'
 import { joinStrokes } from './strokeFuncs/joinStrokes'
@@ -64,9 +64,11 @@ export class StrokeRecord{
   get flatten() {
     const pen = new Pen()
     pen.state = this.penState
-    const strokes = pen.dryRun(new  DOMMatrix(), this.inputs)
-    const joinedStroke = joinStrokes(strokes)
+    const strokes = pen.dryRun(this.inputs, undefined, this.canvasCoord)
+    const anchor = toPoint(this.canvasCoord.matrixScrollAfter.transformPoint(pen.anchor.position)).invert
+    const joinedStroke = joinStrokes(strokes).map(inp => ({point: inp.point.move(anchor), pressure: inp.pressure}))
     pen.clearChildren()
+    pen.anchor = {position: new Point(), angle: 0}
     const rec = new StrokeRecord(this.canvasCoord, pen.state, this.style, this.tool)
     rec.inputs.push(...joinedStroke)
     return rec

@@ -1,3 +1,8 @@
+export type PointLike = {
+  x: number
+  y: number
+}
+
 /**
  * XY座標を保持するイミュータブルなクラスです
  */
@@ -10,15 +15,15 @@ export class Point {
     this.y = y
   }
 
-  equals(p: Point) {
+  equals(p: PointLike) {
     return this.x === p.x && this.y === p.y
   }
 
-  move(p: Point): Point {
+  move(p: PointLike): Point {
     return new Point(this.x + p.x, this.y + p.y)
   }
 
-  sub(p: Point): Point {
+  sub(p: PointLike): Point {
     return new Point(this.x - p.x, this.y - p.y)
   }
 
@@ -41,6 +46,10 @@ export class Point {
 
   scale(times: number): Point {
     return new Point(this.x * times, this.y * times)
+  }
+
+  get invert(): Point {
+    return this.scale(-1)
   }
 }
 

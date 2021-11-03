@@ -1,10 +1,15 @@
 import { Coordinate } from '../coords/Coordinate'
-import { Point } from '../coords/Point'
+import { Point, toPoint } from '../coords/Point'
 import { AbstractCanvas } from './AbstractCanvas'
 import { PenInput } from './PenInput'
 
+type PenAnchor = {
+  position: Point
+  angle: number
+}
 export type PenState = Readonly<{
   coord: Coordinate
+  anchor: PenAnchor
   children: PenState[]
 }>
 
@@ -16,6 +21,10 @@ export type PenState = Readonly<{
 export class Pen {
   private _coord: Coordinate = new Coordinate()
   private children: Pen[] = []
+  private _anchor: PenAnchor = {
+    position: new Point(),
+    angle: 0,
+  }
 
   get coord() {
     return this._coord
@@ -23,6 +32,15 @@ export class Pen {
 
   set coord(c: Coordinate) {
     this._coord = this._coord.clone(c)
+  }
+
+  get anchor() {
+    return { ...this._anchor }
+  }
+
+  set anchor(v) {
+    this._anchor.position = v.position
+    this._anchor.angle = v.angle
   }
 
   get childCount() {
@@ -33,6 +51,7 @@ export class Pen {
   get state(): PenState {
     return {
       coord: this.coord,
+      anchor: this._anchor,
       children: this.children.map((ch) => ch.state),
     }
   }
@@ -40,6 +59,7 @@ export class Pen {
   /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて復元します */
   set state(st: PenState) {
     this.coord = st.coord
+    this.anchor = st.anchor
     if (this.children.length > st.children.length) {
       // 不要なペンを削除
       this.children.length = st.children.length
@@ -55,7 +75,7 @@ export class Pen {
   /** 末端の（描画を行う）ペンを配列として返します */
   get leafs(): Pen[] {
     if (!this.childCount) return [this]
-    return this.children.flatMap(ch => ch.leafs)
+    return this.children.flatMap((ch) => ch.leafs)
   }
 
   /**
@@ -75,21 +95,46 @@ export class Pen {
     this.children.length = 0
   }
 
+  private anchorShiftInputs(
+    inps: PenInput[],
+    coord: Coordinate,
+    dir: 'add' | 'sub'
+  ): PenInput[] {
+    const mx = coord.matrixScrollAfter
+    const center = toPoint(mx.transformPoint(this._anchor.position.invert))
+    const transform =
+      dir === 'sub'
+        ? (p: Point) => p.move(center).rotate(-coord.angle -this.anchor.angle)
+        : (p: Point) => p.rotate(coord.angle +this.anchor.angle).move(center.invert)
+    return inps.map((inp) => ({
+      point: transform(inp.point),
+      pressure: inp.pressure,
+    }))
+  }
 
   /** 指定の座標まで線を引きます */
-  drawTo(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, p0: Point, p1: Point, pressure = 0.5) {
+  drawTo(canvas: AbstractCanvas, p0: Point, p1: Point, pressure = 0.5) {
     if (pressure <= 0) return
     const ctx = canvas.ctx
-
     // 先にdryrunで全ての子ペンから描画座標を取得する
-    const segments = this.dryRun(matrix, [{point: p0, pressure: 0}, {point: p1, pressure}])
+    const ps = [p0, p1]
+    const segments = this.dryRun(
+      [
+        { point: ps[0], pressure: 0 },
+        { point: ps[1], pressure },
+      ],
+      undefined,
+      canvas.coord
+    )
     const baseWidth = ctx.lineWidth
     segments.forEach(([start, end]) => {
       if (!end) return
+      const segPs = [start.point, end.point]
+      const [startP, endP] = segPs
       ctx.beginPath()
-      ctx.moveTo(start.point.x, start.point.y)
+      ctx.moveTo(startP.x, startP.y)
       ctx.lineWidth = baseWidth * end.pressure
-      ctx.lineTo(end.point.x, end.point.y)
+      ctx.lineTo(endP.x, endP.y)
       ctx.stroke()
     })
     ctx.lineWidth = baseWidth
@@ -98,20 +143,24 @@ export class Pen {
   /**
    * 入力点の配列を渡して折線を描画します。線の太さは一定です
    */
-  drawLines(canvas: AbstractCanvas, matrix: DOMMatrixReadOnly, points: Point[], pressure = 0.5) {
+  drawLines(canvas: AbstractCanvas, points: Point[], pressure = 0.5) {
     if (points.length < 2) return
     const ctx = canvas.ctx
 
-    const inps = points.map(point => ({point, pressure}))
-    const segments = this.dryRun(matrix, inps)
+    const inps = points.map((point) => ({
+      point,
+      pressure,
+    }))
+    const segments = this.dryRun(inps, undefined, canvas.coord)
     const baseWidth = ctx.lineWidth
     ctx.lineWidth = baseWidth * pressure
-    segments.forEach(seg => {
-      const [start, ...rests] = seg
+    segments.forEach((seg) => {
+      const segPs = seg.map((inp) => inp.point)
+      const [start, ...rests] = segPs
       ctx.beginPath()
-      ctx.moveTo(start.point.x, start.point.y)
-      rests.forEach(p => {
-        ctx.lineTo(p.point.x, p.point.y)
+      ctx.moveTo(start.x, start.y)
+      rests.forEach((p) => {
+        ctx.lineTo(p.x, p.y)
       })
       ctx.stroke()
     })
@@ -121,15 +170,33 @@ export class Pen {
   /**
    * 入力点の配列を子ペンに展開し、実際の描画座標の配列として返します
    */
-  dryRun(matrix: DOMMatrixReadOnly, inputs: PenInput[]): PenInput[][] {
-    const mx = matrix.multiply(this.coord.matrix)
-    if (this.childCount === 0) {
-      return [inputs.map(inp => {
-        const lp = mx.transformPoint(inp.point)
-        const out: PenInput = {point: new Point(lp.x, lp.y), pressure: inp.pressure}
-        return out
-      })]
+  dryRun(
+    inputs: PenInput[],
+    matrix: DOMMatrixReadOnly = new DOMMatrixReadOnly(),
+    anchorCoord?: Coordinate
+  ): PenInput[][] {
+    if (anchorCoord) {
+      inputs = this.anchorShiftInputs(inputs, anchorCoord, 'sub')
     }
-    return this.children.flatMap(ch => ch.dryRun(mx, inputs))
+    const mx = matrix.multiply(this.coord.matrix)
+
+    let outs: PenInput[][]
+    if (this.childCount === 0) {
+      outs = [
+        inputs.map((inp) => {
+          const lp = mx.transformPoint(inp.point)
+          const out: PenInput = {
+            point: new Point(lp.x, lp.y),
+            pressure: inp.pressure,
+          }
+          return out
+        }),
+      ]
+    } else {
+      outs = this.children.flatMap((ch) => ch.dryRun(inputs, mx))
+    }
+    return outs.map((inps) =>
+      anchorCoord ? this.anchorShiftInputs(inps, anchorCoord, 'add') : inps
+    )
   }
 }

@@ -40,6 +40,7 @@ type EventStatus = {
   lastPoint: Point
   /** スタンプのキャプチャーモードか？ */
   isCapturing: boolean
+  /** マルチタッチ操作中か？ */
   isInMultiTouch: boolean
 }
 
@@ -72,7 +73,7 @@ export class PaintCanvas {
   private readonly requestRotateTo = new PaintEvent<number>()
   private readonly requestUndo = new PaintEvent<void>()
 
-  private readonly pen: Pen
+  private readonly pen: Pen = new Pen()
   private style: StrokeStyle = new StrokeStyle()
   private stamp?: StrokeRecord
   private _tool: CanvasToolName = 'draw'
@@ -133,7 +134,7 @@ export class PaintCanvas {
         onEnd: () => {
           this.eventStatus.isInMultiTouch = false
         },
-        onTwoFingerTap: () => this.requestUndo.fire()
+        onTwoFingerTap: () => this.requestUndo.fire(),
       },
       MIN_CURSOR_MOVE
     )
@@ -147,7 +148,7 @@ export class PaintCanvas {
       MIN_CURSOR_MOVE
     )
 
-    this.pen = new Pen()
+    this.pen.anchor = { position: new Point(0, 0), angle: 0 }
     this.tool = 'draw'
     this.clear(false)
   }
@@ -279,7 +280,8 @@ export class PaintCanvas {
     const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
-    this.eventStatus.lastPoint = this.eventStatus.startPoint = this.event2canvasPoint(ev)
+    this.eventStatus.lastPoint = this.eventStatus.startPoint =
+      this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
 
     if (action === 'zoomup' || action === 'zoomdown') {
@@ -412,7 +414,7 @@ export class PaintCanvas {
    */
   private continueStroke(p: Point, pressure = 0.5) {
     this.history.current?.addPoint(p, pressure)
-    this.pen.drawTo(this.strokeCanvas, new DOMMatrix(), this.eventStatus.lastPoint, p, pressure)
+    this.pen.drawTo(this.strokeCanvas, this.eventStatus.lastPoint, p, pressure)
     this.rePaint()
   }
 
@@ -484,18 +486,19 @@ export class PaintCanvas {
   ) {
     const pen = new Pen()
     pen.state = this.pen.state
-    const recPen = new Pen()
-    recPen.state = rec.penState
-    recPen.coord = recPen.coord.clone({ scroll: p, scale, angle })
-    pen.leafs.forEach((leaf) => leaf.addChildPen())
-    pen.leafs.forEach((leaf) => (leaf.state = recPen.state))
+
+    const canvasP = p
     const stampRec = new StrokeRecord(
       this.coord,
       pen.state,
       this.style,
       rec.tool
     )
-    stampRec.inputs.push(...rec.inputs)
+    const movedInps = rec.inputs.map((inp) => ({
+      point: inp.point.scale(scale).rotate(angle).move(canvasP),
+      pressure: inp.pressure,
+    }))
+    stampRec.inputs.push(...movedInps)
     replayPenStroke(this.strokeCanvas, stampRec, isPreview)
     this.rePaint()
 
@@ -508,7 +511,7 @@ export class PaintCanvas {
         this.style,
         currentHist.tool
       )
-      newHist.inputs.push(...rec.inputs)
+      newHist.inputs.push(...stampRec.inputs)
     }
   }
 
@@ -519,7 +522,15 @@ export class PaintCanvas {
       this.strokeCanvas.output(this.view.ctx, { alpha: this.style.alpha })
     }
     if (this.penCount >= 2) {
-      paintKaraidGrid(this.view, this.penCount, this.isKaleido)
+      paintKaraidGrid(
+        this.view,
+        this.penCount,
+        this.isKaleido,
+        new Coordinate({
+          scroll: this.coord.scroll.invert.move(this.pen.anchor.position),
+          angle: this.coord.angle + this.pen.anchor.angle,
+        })
+      )
     }
   }
 }
