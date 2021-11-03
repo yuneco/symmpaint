@@ -55,6 +55,7 @@ export const paintKaraidGrid = (
 
   const center = new Point(canvas.width / 2, canvas.height / 2)
   const scroll = center.move(coord.scroll)
+  const len = Math.sqrt(canvas.width ** 2 + canvas.height ** 2)
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.translate(scroll.x, scroll.y)
@@ -65,7 +66,7 @@ export const paintKaraidGrid = (
     canvas.ctx.strokeStyle = index % 2 === 0 ? colMain : colSub
     canvas.ctx.beginPath()
     canvas.ctx.moveTo(0, 0)
-    canvas.ctx.lineTo(0, canvas.height)
+    canvas.ctx.lineTo(0, len)
     canvas.ctx.stroke()
     canvas.ctx.closePath()
     canvas.ctx.rotate((360 / count / 180) * Math.PI)
