@@ -154,7 +154,6 @@ export class PaintCanvas {
     )
 
     this.tool = 'draw'
-    this.pen.anchor = new Coordinate({scroll: new Point(500, 0), angle: 45})
     this.clear(false)
   }
 
