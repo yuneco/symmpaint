@@ -36,7 +36,7 @@ export class CanvasHistory {
   }
 
   get snapshot() {
-    return this.snapshots.peek()!
+    return this.snapshots.peek()
   }
 
   get prevSnapshot() {
@@ -59,8 +59,8 @@ export class CanvasHistory {
     const debugBox = document.querySelector('#debug .history .snaps')
     if (debugBox) {
       const scale = 120 / Math.max(snap.el.width, snap.el.height)
-      snap.el.style.width = snap.el.width * scale + 'px'
-      snap.el.style.height = snap.el.height * scale + 'px'
+      snap.el.style.width = `${snap.el.width * scale}px`
+      snap.el.style.height = `${snap.el.height * scale}px`
       debugBox.appendChild(snap.el)
       snap.el.scrollIntoView()
     }
@@ -89,6 +89,10 @@ export class CanvasHistory {
     const currentStackLength = this.history.length - this.lastSnapshotIndex - 1
     if (currentStackLength === STROKES_PER_SNAPSHOT) {
       this.addSnapshot()
+      if (!this.snapshot) {
+        console.error('failed to add snapshot')
+        return
+      }
       canvas.copy(this.snapshot.ctx, { alpha: this.currentStroke.style.alpha })
       console.log('new snapshot', this.snapshots.length)
     }
@@ -132,7 +136,7 @@ export class CanvasHistory {
 
     if (!this.lastHistories.length && this.snapshots.length >= 1) {
       const sp = this.snapshots.pop()
-      sp && document.getElementById('debug')?.removeChild(sp.el)
+      sp && sp.el.parentNode?.removeChild(sp.el)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
       console.log('back prev snap', this.snapshots.length, this.snapshots)
     }
