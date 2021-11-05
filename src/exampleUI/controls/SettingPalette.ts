@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/adjacent-overload-signatures */
 import { PaintEvent } from '../../core/events/PaintEvent'
 import { Point } from '../../core/coords/Point'
 import { Button } from '../ui/Bitton'
@@ -26,6 +27,7 @@ export class SettingPalette {
   private readonly slPenCount: Slider
   private readonly slPenWidth: Slider
   private readonly cbKaleido: Checkbox
+  private readonly cbEraser: Checkbox
   private readonly csDrawingColor: colorSelector
   private readonly csCanvasColor: colorSelector
   private readonly slDrawingAlpha: Slider
@@ -41,6 +43,7 @@ export class SettingPalette {
   readonly onUndo = new PaintEvent<void>()
   readonly onCopy = new PaintEvent<void>()
   readonly onKaleidoChange = new PaintEvent<boolean>()
+  readonly onEraserChange = new PaintEvent<boolean>()
   readonly onDrawingColorChange = new PaintEvent<string>()
   readonly onCanvasColorChange = new PaintEvent<string>()
   readonly onDrawingAlphaChange = new PaintEvent<number>()
@@ -87,6 +90,10 @@ export class SettingPalette {
 
   get tool() {
     return this.cbTools.value
+  }
+
+  get eraser() {
+    return this.cbEraser.value
   }
 
   set scale(v: number) {
@@ -155,6 +162,10 @@ export class SettingPalette {
     this.cbTools.value = v
   }
 
+  set eraser(v: boolean) {
+    this.cbEraser.value = v
+  }
+
   penCountUp() {
     this.penCount += this.kaleidoscope ? 2 : 1
   }
@@ -203,6 +214,7 @@ export class SettingPalette {
     const btnUndo = new Button('Undo')
     const btnCopy = new Button('Copy Image')
     const cbKaleido = (this.cbKaleido = new Checkbox('Kalaidoscope'))
+    const cbEraser = (this.cbEraser = new Checkbox('Eraser'))
     const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
     const csCanvasColor = this.csCanvasColor = new colorSelector('BG Color')
     const slDrawingAlpha = this.slDrawingAlpha = new Slider('Pen Alpha', 1, 100, 100, true)
@@ -217,6 +229,7 @@ export class SettingPalette {
     parent.appendChild(cbTools.el)
     parent.appendChild(slPenCount.el)
     parent.appendChild(cbKaleido.el)
+    parent.appendChild(cbEraser.el)
     parent.appendChild(csDrawingColor.el)
     parent.appendChild(csCanvasColor.el)
     parent.appendChild(slDrawingAlpha.el)
@@ -255,6 +268,9 @@ export class SettingPalette {
     cbKaleido.addEventListener('change', () => {
       this.onKaleidoChange.fire(cbKaleido.value)
       this.updateKareido2PenCount()
+    })
+    cbEraser.addEventListener('change', () => {
+      this.onEraserChange.fire(cbEraser.value)
     })
     csDrawingColor.addEventListener('input', () => {
       this.onDrawingColorChange.fire(csDrawingColor.value)

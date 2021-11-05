@@ -27,6 +27,11 @@ const RESOLUTION = 2 //window.devicePixelRatio
 /** カーソル移動を検出する最低距離(px) */
 const MIN_CURSOR_MOVE = 3.0
 
+const PENKIND2COMPOSITION = {
+  normal: '',
+  eraser: 'destination-out',
+}
+
 type EventStatus = {
   /** ストローク用の一時キャンバスが有効か？ */
   isUseStrokeCanvas: boolean
@@ -135,7 +140,10 @@ export class PaintCanvas {
           this.endStroke(false)
           this.eventStatus.isInMultiTouch = true
         },
-        onTransform: (tr, count) => count >= 3 ? this.onTouchTramsformAnchor(tr) : this.onTouchTramsformCanvas(tr),
+        onTransform: (tr, count) =>
+          count >= 3
+            ? this.onTouchTramsformAnchor(tr)
+            : this.onTouchTramsformCanvas(tr),
         onEnd: () => {
           this.eventStatus.isInMultiTouch = false
         },
@@ -219,6 +227,15 @@ export class PaintCanvas {
     this.style = this.style.clone({ alpha: v })
   }
 
+  get penKind(): 'normal' | 'eraser' {
+    const comp = this.style.composition
+    return comp === '' ? 'normal' : 'eraser'
+  }
+
+  set penKind(v: 'normal' | 'eraser') {
+    this.style = this.style.clone({ composition: PENKIND2COMPOSITION[v] })
+  }
+
   get hasStamp() {
     return !!this.stamp
   }
@@ -259,11 +276,15 @@ export class PaintCanvas {
     this.requestUndo.listen(...params)
   }
   /** アンカー移動操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorMoveTo(...params: Parameters<PaintEvent<Point>['listen']>) {
+  listenRequestAnchorMoveTo(
+    ...params: Parameters<PaintEvent<Point>['listen']>
+  ) {
     this.requestAnchorMoveTo.listen(...params)
   }
   /** アンカー回転操作発生時のリスナーを登録します。アンカー回転を行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorRotateTo(...params: Parameters<PaintEvent<number>['listen']>) {
+  listenRequestAnchorRotateTo(
+    ...params: Parameters<PaintEvent<number>['listen']>
+  ) {
     this.requestAnchorRotateTo.listen(...params)
   }
 
@@ -421,9 +442,13 @@ export class PaintCanvas {
     this.strokeCanvas.coord = this.canvas.coord
     this.strokeCanvas.ctx.lineWidth =
       this.style.penSize * this.canvas.coord.scale
-    this.strokeCanvas.ctx.strokeStyle = this.eventStatus.isCapturing
-      ? '#0044aa'
-      : this.style.color
+
+    const penColor = () => {
+      if (this.eventStatus.isCapturing) return '#0044aa'
+      if (this.penKind === 'eraser') return this.backgroundColor
+      return this.style.color
+    }
+    this.strokeCanvas.ctx.strokeStyle = penColor()
 
     // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
@@ -449,7 +474,10 @@ export class PaintCanvas {
     if (commitStroke) {
       this.history.commit(this.canvas)
       // 一時キャンバスの内容をキャンバスに転送
-      this.strokeCanvas.copy(this.canvas.ctx, { alpha: this.style.alpha })
+      this.strokeCanvas.copy(this.canvas.ctx, {
+        alpha: this.style.alpha,
+        composition: this.style.composition,
+      })
       clearCanvas(this.strokeCanvas)
     } else {
       this.history.rollback()
@@ -457,6 +485,7 @@ export class PaintCanvas {
     }
     this.eventStatus.isUseStrokeCanvas = false
     this.eventStatus.activeEvent = undefined
+    this.rePaint()
   }
 
   private onScroll(dist: PointsDist) {
@@ -494,9 +523,9 @@ export class PaintCanvas {
   private onTouchTramsformAnchor(transform: TouchTransform) {
     const angle = transform.angle + this.eventStatus.startAnchor.angle
     const scroll = transform.scroll
-    .scale(1 / this.eventStatus.startCoord.scale * RESOLUTION)
-    .rotate(-this.eventStatus.startCoord.angle)
-    .move(this.eventStatus.startAnchor.scroll)
+      .scale((1 / this.eventStatus.startCoord.scale) * RESOLUTION)
+      .rotate(-this.eventStatus.startCoord.angle)
+      .move(this.eventStatus.startAnchor.scroll)
 
     this.requestAnchorMoveTo.fire(scroll)
     this.requestAnchorRotateTo.fire(angle)
@@ -525,11 +554,13 @@ export class PaintCanvas {
     const pen = new Pen()
     pen.state = this.pen.state
 
+    const previewStyle = this.style.clone({color: this.penKind === 'eraser' ? this.backgroundColor : this.style.color})
+
     const canvasP = p
     const stampRec = new StrokeRecord(
       this.coord,
       pen.state,
-      this.style,
+      isPreview ? previewStyle : this.style,
       rec.tool
     )
     const movedInps = rec.inputs.map((inp) => ({
@@ -542,14 +573,8 @@ export class PaintCanvas {
 
     const currentHist = this.history.current
     if (!isPreview && currentHist) {
-      this.history.rollback()
-      const newHist = this.history.start(
-        currentHist.canvasCoord,
-        pen.state,
-        this.style,
-        currentHist.tool
-      )
-      newHist.inputs.push(...stampRec.inputs)
+      currentHist.clearPoints()
+      currentHist.inputs.push(...stampRec.inputs)
     }
   }
 
@@ -565,7 +590,10 @@ export class PaintCanvas {
         this.penCount,
         this.isKaleido,
         new Coordinate({
-          scroll: this.coord.scroll.invert.move(this.pen.anchor.scroll).scale(this.canvas.coord.scale).rotate(this.coord.angle),
+          scroll: this.coord.scroll.invert
+            .move(this.pen.anchor.scroll)
+            .scale(this.canvas.coord.scale)
+            .rotate(this.coord.angle),
           angle: this.coord.angle + this.pen.anchor.angle,
         })
       )

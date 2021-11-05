@@ -64,6 +64,9 @@ setting.onCopy.listen(() => {
 setting.onKaleidoChange.listen((isKaleido) => {
   canvas.isKaleido = isKaleido
 })
+setting.onEraserChange.listen((isEraser) => {
+  canvas.penKind = isEraser ? 'eraser' : 'normal'
+})
 setting.onDrawingColorChange.listen((color) => {
   canvas.penColor = color
 })

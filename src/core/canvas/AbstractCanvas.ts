@@ -3,7 +3,8 @@ import { Point } from '../coords/Point'
 
 type ImageTransferOption = {
   alpha: number,
-  background: string
+  background: string,
+  composition: string
 }
 export class AbstractCanvas {
   readonly el: HTMLCanvasElement
@@ -68,6 +69,7 @@ export class AbstractCanvas {
 
   private transferImageTo(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
     ctx.globalAlpha = option?.alpha ?? 1
+    ctx.globalCompositeOperation = option?.composition ?? 'source-over'
     if (option?.background) {
       ctx.fillStyle = option.background
       ctx.fillRect(0, 0, this.width, this.height)

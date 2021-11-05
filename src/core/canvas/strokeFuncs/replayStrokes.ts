@@ -58,7 +58,7 @@ export const replayStrokes = (
     if (stroke.tool === 'pen') {
       clearCanvas(strokeCanvas)
       replayPenStroke(strokeCanvas, stroke, isPreview)
-      strokeCanvas.copy(canvas.ctx, {alpha: stroke.style.alpha})
+      strokeCanvas.copy(canvas.ctx, {alpha: stroke.style.alpha, composition: stroke.style.composition})
     }
     if (stroke.tool === 'clearAll') {
       replayCelarAllStroke(canvas)
