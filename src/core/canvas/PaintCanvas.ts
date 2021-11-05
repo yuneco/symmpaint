@@ -140,6 +140,7 @@ export class PaintCanvas {
           this.eventStatus.isInMultiTouch = false
         },
         onTwoFingerTap: () => this.requestUndo.fire(),
+        onThreeFingerTap: () => this.onTouchTramsformResetAnchor(),
       },
       MIN_CURSOR_MOVE
     )
@@ -499,6 +500,11 @@ export class PaintCanvas {
 
     this.requestAnchorMoveTo.fire(scroll)
     this.requestAnchorRotateTo.fire(angle)
+  }
+
+  private onTouchTramsformResetAnchor() {
+    this.requestAnchorMoveTo.fire(new Point())
+    this.requestAnchorRotateTo.fire(0)
   }
 
   /**

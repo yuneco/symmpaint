@@ -42,6 +42,8 @@ type EventHandlers = {
   onEnd: () => void
   /** 2本指タップが発生した */
   onTwoFingerTap: () => void
+  /** 3本指タップが発生した */
+  onThreeFingerTap: () => void
 }
 
 /** 2点から線分の情報を得ます */
@@ -166,13 +168,13 @@ export const useTouchTransform = (
       isInMultiTouch = false
       basePoints = undefined
       handlers.onEnd?.()
-      // 2本指タップの判定
+      // 2,3本指タップの判定
       if (
-        maxTouchCount === 2 &&
         Date.now() - firstTouchMs < MAX_TWO_FINGER_TAP_DOWN_MS &&
         maxMove <= MAX_TWO_FINGER_TAP_MOVE_PX
       ) {
-        handlers.onTwoFingerTap?.()
+        if(maxTouchCount === 2) handlers.onTwoFingerTap?.()
+        if(maxTouchCount === 3) handlers.onThreeFingerTap?.()
       }
     }
   }
