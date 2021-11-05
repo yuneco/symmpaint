@@ -20,6 +20,7 @@ import { useDragEvent } from '../events/useDragEvent'
 import { PointsDist } from '../coords/PointsDist'
 import { TouchTransform, useTouchTransform } from '../events/useTouchTransform'
 import { getNextZoom } from '../events/zoomTable'
+import { PointerSmoother } from '../events/PointerSmoother'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -89,6 +90,8 @@ export class PaintCanvas {
   private _tool: CanvasToolName = 'draw'
   private _isKaleido = false
   private _backgroundColor = '#ffffff'
+
+  private readonly smoother = new PointerSmoother()
 
   /**
    * キャンバスを生成します
@@ -327,6 +330,7 @@ export class PaintCanvas {
     this.eventStatus.lastPoint = this.eventStatus.startPoint =
       this.event2canvasPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
+    this.smoother.clear()
 
     if (action === 'zoomup' || action === 'zoomdown') {
       const scale = this.coord.scale
@@ -351,17 +355,21 @@ export class PaintCanvas {
   private onDrag(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     const canvasP = this.event2canvasPoint(ev)
+    const smoothedInp = this.smoother.add({
+      point: canvasP,
+      pressure: ev.pressure,
+    })
     if (action === 'draw') {
-      this.continueStroke(canvasP, ev.pressure || 0.5)
-      this.eventStatus.lastPoint = canvasP
+      this.continueStroke(smoothedInp.point, smoothedInp.pressure || 0.5)
+      this.eventStatus.lastPoint = smoothedInp.point
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.continueStroke(canvasP, ev.pressure || 0.5)
+      this.continueStroke(smoothedInp.point, smoothedInp.pressure || 0.5)
     }
     if (action === 'draw:stamp' && this.stamp) {
       clearCanvas(this.strokeCanvas)
-      const dp = canvasP.sub(this.eventStatus.startPoint)
+      const dp = smoothedInp.point.sub(this.eventStatus.startPoint)
       const stampScale = dp.length / 100
       this.putStroke(
         this.stamp,
@@ -554,7 +562,10 @@ export class PaintCanvas {
     const pen = new Pen()
     pen.state = this.pen.state
 
-    const previewStyle = this.style.clone({color: this.penKind === 'eraser' ? this.backgroundColor : this.style.color})
+    const previewStyle = this.style.clone({
+      color:
+        this.penKind === 'eraser' ? this.backgroundColor : this.style.color,
+    })
 
     const canvasP = p
     const stampRec = new StrokeRecord(
