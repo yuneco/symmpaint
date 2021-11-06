@@ -8,7 +8,7 @@ import {
 } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
 import { CanvasToolName } from './CanvasToolName'
-import { multiplyCoord, normalizeAngle } from '../coords/CoordUtil'
+import { normalizeAngle } from '../coords/CoordUtil'
 import { CanvasHistory } from './CanvasHistory'
 import { getStrokeEndPressure } from './strokeFuncs/getStrokePressure'
 import { Pen } from './Pen'
@@ -511,22 +511,52 @@ export class PaintCanvas {
   }
 
   private onTouchTramsformCanvas(transform: TouchTransform) {
-    const angle = transform.angle
-    const scale = transform.scale
-    const scroll = transform.scroll
-      .scale((-1 / this.eventStatus.startCoord.scale ** 2 / scale) * RESOLUTION)
-      .rotate(-this.eventStatus.startCoord.angle * 2 - angle)
-    const c = multiplyCoord(
-      this.eventStatus.startCoord,
-      new Coordinate({
-        scroll,
-        angle,
-        scale,
-      })
+    const startCoord = this.eventStatus.startCoord
+    const {center, scroll, scale, angle} = transform
+
+    // viewキャンバスの座標を実キャンバスの座標系に変換します
+    const view2canvasPos = (vp: Point): Point => {
+      const cp = vp
+        .rotate(-startCoord.angle)
+        .move(startCoord.scroll)
+        .scale(1 / startCoord.scale)
+      return cp
+    }
+    // viewキャンバスの距離（移動量）を実キャンバスの座標系に変換します
+    const view2canvasDist = (vp: Point): Point => {
+      const cp = vp.rotate(-startCoord.angle).scale(1 / startCoord.scale)
+      return cp
+    }
+
+    // タッチ中心 @ viewキャンバス座標系
+    const posView = new Point(
+      (center.x - this.width / 2) * RESOLUTION,
+      (center.y - this.height / 2) * RESOLUTION
     )
-    this.requestChangeZoom.fire(c.scale)
-    this.requestRotateTo.fire(c.angle)
-    this.requestScrollTo.fire(c.scroll)
+    // タッチ中心 @ 実キャンバス座標系
+    const posCanvas = view2canvasPos(posView)
+
+    // 画面中心 @ viewキャンバス座標系
+    const viewCenter = new Point(0, 0)
+
+    // 画面中心 @ 実キャンバス座標系
+    const viewCenterAtCanvas = view2canvasPos(viewCenter)
+
+    // タッチ中心 - 画面中心 @ 実キャンバス座標系
+    const posCanvasFromCenter = posCanvas.sub(viewCenterAtCanvas)
+    
+    // タッチ操作（回転・スケール）での移動量 @ 実キャンバス座標系
+    const posMoved = posCanvasFromCenter.rotate(-angle).scale(1 / scale)
+    const posSub = posMoved.sub(posCanvasFromCenter)
+    
+    // タッチ操作スクロール量 @ viewキャンバス座標系
+    const viewScroll = scroll.scale(RESOLUTION)
+    // タッチ操作スクロール量 @ 実キャンバス座標系
+    const canvasScroll = view2canvasDist(viewScroll)
+
+    this.requestRotateTo.fire(startCoord.angle + angle)
+    this.requestChangeZoom.fire(startCoord.scale * scale)
+    this.requestScrollTo.fire(startCoord.scroll.sub(posSub).sub(canvasScroll))
   }
   private onTouchTramsformAnchor(transform: TouchTransform) {
     const angle = transform.angle + this.eventStatus.startAnchor.angle

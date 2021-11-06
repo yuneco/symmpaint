@@ -124,7 +124,7 @@ export const useTouchTransform = (
     removeTouches(list)
     const ts: TouchPoint[] = touchList2Array(list).map((t) => ({
       identifier: t.identifier,
-      pagePoint: new Point(t.pageX, t.pageY),
+      pagePoint: new Point(t.clientX, t.clientY),
     }))
     touches = [...touches, ...ts]
   }
@@ -136,7 +136,7 @@ export const useTouchTransform = (
     targets.forEach((target) => {
       const touch = touches.find((t) => t.identifier === target.identifier)
       if (!touch) return
-      const pNew = new Point(target.pageX, target.pageY)
+      const pNew = new Point(target.clientX, target.clientY)
       // 閾値未満なら無視する
       if (touch.pagePoint.sub(pNew).length <= minDragMargin) return
       touch.pagePoint = pNew

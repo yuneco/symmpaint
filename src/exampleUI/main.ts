@@ -153,3 +153,9 @@ document
 document
   .querySelectorAll<HTMLElement>(`.lang.${uaLang}`)
   .forEach((el) => (el.style.display = ''))
+
+
+// For Debug
+// window.canvas = canvas
+// window.Point = Point
+// window.Coordinate = Coordinate
