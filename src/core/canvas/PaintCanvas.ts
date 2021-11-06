@@ -83,6 +83,7 @@ export class PaintCanvas {
   private readonly requestUndo = new PaintEvent<void>()
   private readonly requestAnchorMoveTo = new PaintEvent<Point>()
   private readonly requestAnchorRotateTo = new PaintEvent<number>()
+  private readonly requestAnchorReset = new PaintEvent<void>()
 
   private readonly pen: Pen = new Pen()
   private style: StrokeStyle = new StrokeStyle()
@@ -151,7 +152,7 @@ export class PaintCanvas {
           this.eventStatus.isInMultiTouch = false
         },
         onTwoFingerTap: () => this.requestUndo.fire(),
-        onThreeFingerTap: () => this.onTouchTramsformResetAnchor(),
+        onThreeFingerTap: () => this.requestAnchorReset.fire(),
       },
       MIN_CURSOR_MOVE
     )
@@ -290,7 +291,12 @@ export class PaintCanvas {
   ) {
     this.requestAnchorRotateTo.listen(...params)
   }
-
+  /** アンカーリセット操作発生時のリスナーを登録します。アンカーリセットを行うにはリスナー側でanchorプロパティを変更します */
+  listenRequestAnchorReset(
+    ...params: Parameters<PaintEvent<void>['listen']>
+  ) {
+    this.requestAnchorReset.listen(...params)
+  }
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
@@ -567,11 +573,6 @@ export class PaintCanvas {
 
     this.requestAnchorMoveTo.fire(scroll)
     this.requestAnchorRotateTo.fire(angle)
-  }
-
-  private onTouchTramsformResetAnchor() {
-    this.requestAnchorMoveTo.fire(new Point())
-    this.requestAnchorRotateTo.fire(0)
   }
 
   /**

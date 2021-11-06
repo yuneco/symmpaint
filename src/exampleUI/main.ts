@@ -4,6 +4,7 @@ import { PaintCanvas } from '../core/canvas/PaintCanvas'
 import { SettingPalette } from './controls/SettingPalette'
 import { Point } from '../core/coords/Point'
 import { ToolKeyWatcher } from '../core/events/ToolKeyWatcher'
+import { Coordinate } from '../core/coords/Coordinate'
 
 // 配置先DOM要素を取得
 const elMain = document.querySelector<HTMLDivElement>('#main')!
@@ -25,6 +26,10 @@ const setting = new SettingPalette(elPalette, { width: size.x, height: size.y })
 /** メインキャンバス */
 const canvas = new PaintCanvas(elMain, size.x, size.y)
 
+const resetAnchorAngle = () => {
+  canvas.anchor = canvas.anchor.clone({angle: 360/canvas.penCount/2 + 90})
+}
+
 // 設定変更をリッスン
 setting.onScaleChange.listen((scale) => {
   canvas.coord = canvas.coord.clone({ scale })
@@ -37,6 +42,7 @@ setting.onScrollChange.listen((scroll) => {
 })
 setting.onPenCountChange.listen((count) => {
   canvas.penCount = count
+  resetAnchorAngle()
 })
 setting.onPenWidthChange.listen((width) => {
   canvas.penWidth = width
@@ -114,6 +120,10 @@ canvas.listenRequestAnchorMoveTo((pos) => {
 canvas.listenRequestAnchorRotateTo((angle) => {
   canvas.anchor = canvas.anchor.clone({angle})
 })
+canvas.listenRequestAnchorReset(() => {
+  canvas.anchor = new Coordinate()
+  resetAnchorAngle()
+})
 
 // キー操作でツール設定を変更
 window.addEventListener('keydown', (ev) => {
@@ -137,7 +147,7 @@ toolKeyWatcher.listenChange((tool) => (setting.tool = tool))
 
 // パレットの初期値設定
 setting.kaleidoscope = true
-setting.penCount = 6
+setting.penCount = 12
 setting.canvasColor = '#ffffff'
 
 // iOSのスクロール無効化
