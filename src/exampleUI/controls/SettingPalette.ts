@@ -7,6 +7,7 @@ import { Checkbox } from '../ui/Checkbox'
 import { colorSelector } from '../ui/ColorSelector'
 import { CanvasToolName } from '../../core/canvas/CanvasToolName'
 import { RadioGroup } from '../ui/RadioGroup'
+import { isSameArray } from '../../core/misc/ArrayUtil'
 
 const TOOL_NAMES: {[k in CanvasToolName]: string} = {
   draw: 'Draw',
@@ -24,9 +25,11 @@ export class SettingPalette {
   private readonly slAngle: Slider
   private readonly slX: Slider
   private readonly slY: Slider
-  private readonly slPenCount: Slider
+  private readonly slPenCount1: Slider
+  private readonly slPenCount2: Slider
   private readonly slPenWidth: Slider
-  private readonly cbKaleido: Checkbox
+  private readonly cbKaleido1: Checkbox
+  private readonly cbKaleido2: Checkbox
   private readonly cbEraser: Checkbox
   private readonly csDrawingColor: colorSelector
   private readonly csCanvasColor: colorSelector
@@ -37,12 +40,12 @@ export class SettingPalette {
   readonly onScaleChange = new PaintEvent<number>()
   readonly onAngleChange = new PaintEvent<number>()
   readonly onScrollChange = new PaintEvent<Point>()
-  readonly onPenCountChange = new PaintEvent<number>()
+  readonly onPenCountChange = new PaintEvent<[number, number]>()
   readonly onPenWidthChange = new PaintEvent<number>()
   readonly onClear = new PaintEvent<void>()
   readonly onUndo = new PaintEvent<void>()
   readonly onCopy = new PaintEvent<void>()
-  readonly onKaleidoChange = new PaintEvent<boolean>()
+  readonly onKaleidoChange = new PaintEvent<[boolean, boolean]>()
   readonly onEraserChange = new PaintEvent<boolean>()
   readonly onDrawingColorChange = new PaintEvent<string>()
   readonly onCanvasColorChange = new PaintEvent<string>()
@@ -65,7 +68,7 @@ export class SettingPalette {
   }
 
   get penCount() {
-    return this.slPenCount.value
+    return [this.slPenCount1.value, this.slPenCount2.value]
   }
 
   get penWidth() {
@@ -73,7 +76,7 @@ export class SettingPalette {
   }
 
   get kaleidoscope() {
-    return this.cbKaleido.value
+    return [this.cbKaleido1.value, this.cbKaleido2.value]
   }
 
   get drawingColor() {
@@ -121,10 +124,11 @@ export class SettingPalette {
     this.onScrollChange.fire(new Point(this.slX.value, this.slY.value))
   }
 
-  set penCount(v: number) {
-    if (this.penCount === v) return
-    this.slPenCount.value = v
-    this.onPenCountChange.fire(this.slPenCount.value)
+  set penCount(v: [number, number]) {
+    if (isSameArray(this.penCount, v)) return
+    this.slPenCount1.value = v[0]
+    this.slPenCount2.value = v[1]
+    this.onPenCountChange.fire([this.slPenCount1.value, this.slPenCount2.value])
   }
 
   set penWidth(v: number) {
@@ -133,11 +137,11 @@ export class SettingPalette {
     this.onPenWidthChange.fire(this.slPenWidth.value)
   }
 
-  set kaleidoscope(v: boolean) {
-    if (this.kaleidoscope === v) return
-    this.cbKaleido.value = v
-    this.onKaleidoChange.fire(this.cbKaleido.value)
-    this.updateKareido2PenCount()
+  set kaleidoscope(v: [boolean, boolean]) {
+    if (isSameArray(this.kaleidoscope, v)) return
+    this.cbKaleido1.value = v[0]
+    this.cbKaleido2.value = v[1]
+    this.onKaleidoChange.fire([this.cbKaleido1.value, this.cbKaleido2.value])
   }
 
   set drawingColor(v: string) {
@@ -167,19 +171,13 @@ export class SettingPalette {
   }
 
   penCountUp() {
-    this.penCount += this.kaleidoscope ? 2 : 1
+    const [c1, c2] = this.penCount
+    this.penCount = [c1 + 1, c2]
   }
   penCountDown() {
-    this.penCount -= this.kaleidoscope ? 2 : 1
-  }
-
-  private updateKareido2PenCount() {
-    const v = this.cbKaleido.value
-    if (v) {
-      this.penCount += this.penCount % 2
-    }
-    this.slPenCount.elSlider.min = v ? '2' : '1'
-    this.slPenCount.elSlider.step = v ? '2' : '1'
+    const [c1, c2] = this.penCount
+    if (c1 <= 1) return
+    this.penCount = [c1 - 1, c2]
   }
 
   private updateScrollRange() {
@@ -208,12 +206,14 @@ export class SettingPalette {
       this.canvasHeight / 2,
       0
     ))
-    const slPenCount = (this.slPenCount = new Slider('Pen Count', 1, 32, 1))
+    const slPenCount1 = (this.slPenCount1 = new Slider('Pen Count Parent', 1, 16, 1))
+    const slPenCount2 = (this.slPenCount2 = new Slider('Pen Count Child', 0, 8, 1))
     const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 2, 100, 20))
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
     const btnCopy = new Button('Copy Image')
-    const cbKaleido = (this.cbKaleido = new Checkbox('Kalaidoscope'))
+    const cbKaleido1 = (this.cbKaleido1 = new Checkbox('Kalaidoscope'))
+    const cbKaleido2 = (this.cbKaleido2 = new Checkbox('Kalaidoscope'))
     const cbEraser = (this.cbEraser = new Checkbox('Eraser'))
     const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
     const csCanvasColor = this.csCanvasColor = new colorSelector('BG Color')
@@ -227,11 +227,14 @@ export class SettingPalette {
     // parent.appendChild(slX.el)
     // parent.appendChild(slY.el)
     parent.appendChild(cbTools.el)
-    parent.appendChild(slPenCount.el)
-    parent.appendChild(cbKaleido.el)
     parent.appendChild(cbEraser.el)
     parent.appendChild(csDrawingColor.el)
     parent.appendChild(csCanvasColor.el)
+
+    parent.appendChild(slPenCount1.el)
+    parent.appendChild(cbKaleido1.el)
+    parent.appendChild(slPenCount2.el)
+    parent.appendChild(cbKaleido2.el)
     parent.appendChild(slDrawingAlpha.el)
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
@@ -250,8 +253,11 @@ export class SettingPalette {
     slY.addEventListener('input', () => {
       this.onScrollChange.fire(new Point(slX.value, slY.value))
     })
-    slPenCount.addEventListener('input', () => {
-      this.onPenCountChange.fire(slPenCount.value)
+    slPenCount1.addEventListener('input', () => {
+      this.onPenCountChange.fire([slPenCount1.value, slPenCount2.value])
+    })
+    slPenCount2.addEventListener('input', () => {
+      this.onPenCountChange.fire([slPenCount1.value, slPenCount2.value])
     })
     slPenWidth.addEventListener('input', () => {
       this.onPenWidthChange.fire(slPenWidth.value)
@@ -265,9 +271,11 @@ export class SettingPalette {
     btnCopy.addEventListener('click', () => {
       this.onCopy.fire()
     })
-    cbKaleido.addEventListener('change', () => {
-      this.onKaleidoChange.fire(cbKaleido.value)
-      this.updateKareido2PenCount()
+    cbKaleido1.addEventListener('change', () => {
+      this.onKaleidoChange.fire([cbKaleido1.value, cbKaleido2.value])
+    })
+    cbKaleido2.addEventListener('change', () => {
+      this.onKaleidoChange.fire([cbKaleido1.value, cbKaleido2.value])
     })
     cbEraser.addEventListener('change', () => {
       this.onEraserChange.fire(cbEraser.value)

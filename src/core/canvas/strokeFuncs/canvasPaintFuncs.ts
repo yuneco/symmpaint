@@ -48,10 +48,11 @@ export const paintKaraidGrid = (
   canvas: AbstractCanvas,
   count: number,
   isKaleido: boolean,
-  coord: Coordinate
+  coord: Coordinate,
+  color = '#91bccc'
 ): void => {
-  const colMain = '#91bcccbb'
-  const colSub = isKaleido ? '#c5e4ebbb' : colMain
+  const colMain = color
+  const colSub = `${color}88`
 
   const center = new Point(canvas.width / 2, canvas.height / 2)
   const scroll = center.move(coord.scroll)
@@ -63,7 +64,9 @@ export const paintKaraidGrid = (
   canvas.ctx.lineWidth = 1
   canvas.ctx.rotate(a2r(-90 + 360 / count / 2))
   for (let index = 0; index < count; index++) {
-    canvas.ctx.strokeStyle = index % 2 === 0 ? colMain : colSub
+    const isSubLine = isKaleido && index % 2 !== 0
+    canvas.ctx.strokeStyle = isSubLine ? colSub : colMain
+    canvas.ctx.setLineDash(isSubLine ? [4, 4] : [])
     canvas.ctx.beginPath()
     canvas.ctx.moveTo(0, 0)
     canvas.ctx.lineTo(0, len)

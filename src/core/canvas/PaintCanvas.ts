@@ -21,6 +21,7 @@ import { PointsDist } from '../coords/PointsDist'
 import { TouchTransform, useTouchTransform } from '../events/useTouchTransform'
 import { getNextZoom } from '../events/zoomTable'
 import { PointerSmoother } from '../events/PointerSmoother'
+import { isSameArray } from '../misc/ArrayUtil'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -40,10 +41,10 @@ type EventStatus = {
   activeEvent: CanvasToolName | undefined
   /** 現在のストローク開始時の座標系（スクロールや回転で使用） */
   startCoord: Coordinate
+  /** 現在のストローク開始時のアンカー[root, child] */
+  startAnchor: [Coordinate, Coordinate]
   /** 現在のストローク開始時の座標 */
   startPoint: Point
-  /** 現在のストローク開始時のアンカー */
-  startAnchor: Coordinate
   /** 現在のストロークにおける直近の座標 */
   lastPoint: Point
   /** スタンプのキャプチャーモードか？ */
@@ -67,8 +68,8 @@ export class PaintCanvas {
     isUseStrokeCanvas: false,
     activeEvent: undefined,
     startCoord: new Coordinate(),
+    startAnchor: [new Coordinate(), new Coordinate()],
     startPoint: new Point(),
-    startAnchor: new Coordinate(),
     lastPoint: new Point(),
     isCapturing: false,
     isInMultiTouch: false,
@@ -81,17 +82,21 @@ export class PaintCanvas {
   private readonly requestScrollTo = new PaintEvent<Point>()
   private readonly requestRotateTo = new PaintEvent<number>()
   private readonly requestUndo = new PaintEvent<void>()
-  private readonly requestAnchorMoveTo = new PaintEvent<Point>()
-  private readonly requestAnchorRotateTo = new PaintEvent<number>()
+  private readonly requestAnchorTransform = new PaintEvent<{
+    coord: Coordinate
+    target: 'root' | 'child'
+  }>()
   private readonly requestAnchorReset = new PaintEvent<void>()
 
   private readonly pen: Pen = new Pen()
   private style: StrokeStyle = new StrokeStyle()
   private stamp?: StrokeRecord
   private _tool: CanvasToolName = 'draw'
-  private _isKaleido = false
   private _backgroundColor = '#ffffff'
-
+  private _anchor = new Coordinate()
+  private _anchorChild = new Coordinate()
+  private _penCount: [number, number] = [1, 0]
+  private _isKaleido: [boolean, boolean] = [false, false]
   private readonly smoother = new PointerSmoother()
 
   /**
@@ -166,6 +171,8 @@ export class PaintCanvas {
       MIN_CURSOR_MOVE
     )
 
+    //this.anchor = new Coordinate({angle: 30})
+    this.childAnchor = new Coordinate({ scroll: new Point(300, 0), angle: 0 })
     this.tool = 'draw'
     this.clear(false)
   }
@@ -189,34 +196,29 @@ export class PaintCanvas {
     this.view.el.style.cursor = cursorForTool(v)
   }
 
-  get isKaleido() {
-    return this._isKaleido
+  get isKaleido(): [boolean, boolean] {
+    return [...this._isKaleido]
   }
 
   set isKaleido(v) {
-    if (v === this._isKaleido) return
-    this._isKaleido = v
-    const c = this.penCount
-    this.penCount = 1
-    this.penCount = c
+    if (isSameArray(this.isKaleido, v)) return
+    this._isKaleido = [...v]
+    this.rebuildPen()
     this.rePaint()
   }
 
-  get penCount() {
-    return this.pen.childCount
+  get penCount(): [number, number] {
+    return this._penCount
   }
-  set penCount(n: number) {
-    if (n === this.penCount) return
-    const pen = this.pen
-    // 子ペンを一度クリアして再設定
-    pen.clearChildren()
-    for (let penNo = 0; penNo < n; penNo++) {
-      const isFlip = this._isKaleido && penNo % 2 !== 0
-      pen.addChildPen(
-        new Coordinate({ angle: (penNo * 360) / n, flipY: isFlip })
-      )
-    }
+  set penCount(count) {
+    if (isSameArray(this.penCount, count)) return
+    this._penCount = [...count]
+    this.rebuildPen()
     this.rePaint()
+  }
+
+  get hasSubPen() {
+    return this.penCount[1] >= 1
   }
 
   set penWidth(v: number) {
@@ -255,12 +257,68 @@ export class PaintCanvas {
   }
 
   get anchor(): Coordinate {
-    return this.pen.anchor
+    return this._anchor
   }
 
   set anchor(v: Coordinate) {
-    this.pen.anchor = v
+    this._anchor = v
+    this.rebuildPen()
     this.rePaint()
+  }
+
+  get childAnchor(): Coordinate {
+    return this._anchorChild
+  }
+
+  set childAnchor(v) {
+    this._anchorChild = v
+    this.rebuildPen()
+    this.rePaint()
+  }
+
+  private get relativeChildAnchor(): Coordinate {
+    return new Coordinate({
+      scroll: this.childAnchor.scroll
+        .sub(this.anchor.scroll)
+        .rotate(-this.anchor.angle),
+      angle: this.childAnchor.angle,
+    })
+  }
+
+  private rebuildPen() {
+    const root = this.pen
+    const [pKaleido, cKaleido] = this.isKaleido
+    const [pCount, cCount] = [
+      this.penCount[0] * (pKaleido ? 2 : 1),
+      this.penCount[1] * (cKaleido ? 2 : 1),
+    ]
+    const relativeAnchor = this.relativeChildAnchor
+
+    // 子ペンを一度クリアして再設定
+    root.clearChildren()
+    root.coord = this._anchor
+    for (let penNo = 0; penNo < pCount; penNo++) {
+      const isFlip = this._isKaleido[0] && penNo % 2 !== 0
+      const child = root.addChildPen(
+        new Coordinate({ angle: (penNo / pCount) * 360, flipY: isFlip })
+      )
+      for (let penNoCh = 0; penNoCh < cCount; penNoCh++) {
+        const isFlipCh = this._isKaleido[1] && penNoCh % 2 !== 0
+        child
+          .addChildPen(
+            new Coordinate({
+              scroll: relativeAnchor.scroll,
+              angle: relativeAnchor.angle,
+            })
+          )
+          .addChildPen(
+            new Coordinate({
+              angle: (penNoCh / cCount) * 360,
+              flipY: isFlipCh,
+            })
+          )
+      }
+    }
   }
 
   /** ズーム変更操作発生時のリスナーを登録します。ズームを行うにはリスナー側で座標系(coord.scale)を変更します */
@@ -279,22 +337,16 @@ export class PaintCanvas {
   listenRequestUndo(...params: Parameters<PaintEvent<void>['listen']>) {
     this.requestUndo.listen(...params)
   }
-  /** アンカー移動操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorMoveTo(
-    ...params: Parameters<PaintEvent<Point>['listen']>
+  /** アンカー移動/回転操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
+  listenRequestAnchorTransform(
+    ...params: Parameters<
+      PaintEvent<{ coord: Coordinate; target: 'root' | 'child' }>['listen']
+    >
   ) {
-    this.requestAnchorMoveTo.listen(...params)
-  }
-  /** アンカー回転操作発生時のリスナーを登録します。アンカー回転を行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorRotateTo(
-    ...params: Parameters<PaintEvent<number>['listen']>
-  ) {
-    this.requestAnchorRotateTo.listen(...params)
+    this.requestAnchorTransform.listen(...params)
   }
   /** アンカーリセット操作発生時のリスナーを登録します。アンカーリセットを行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorReset(
-    ...params: Parameters<PaintEvent<void>['listen']>
-  ) {
+  listenRequestAnchorReset(...params: Parameters<PaintEvent<void>['listen']>) {
     this.requestAnchorReset.listen(...params)
   }
   /** キャンバスをクリアします */
@@ -321,7 +373,7 @@ export class PaintCanvas {
     })
   }
 
-  private event2canvasPoint(ev: PointerEvent): Point {
+  private event2viewPoint(ev: PointerEvent): Point {
     return new Point(
       (ev.offsetX - this.width / 2) * RESOLUTION,
       (ev.offsetY - this.height / 2) * RESOLUTION
@@ -332,9 +384,9 @@ export class PaintCanvas {
     const action = this.tool
     this.eventStatus.activeEvent = action
     this.eventStatus.startCoord = this.coord
-    this.eventStatus.startAnchor = this.anchor
+    this.eventStatus.startAnchor = [this.anchor, this.childAnchor]
     this.eventStatus.lastPoint = this.eventStatus.startPoint =
-      this.event2canvasPoint(ev)
+      this.event2viewPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
     this.smoother.clear()
 
@@ -360,9 +412,9 @@ export class PaintCanvas {
 
   private onDrag(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
-    const canvasP = this.event2canvasPoint(ev)
+    const viewP = this.event2viewPoint(ev)
     const smoothedInp = this.smoother.add({
-      point: canvasP,
+      point: viewP,
       pressure: ev.pressure,
     })
     if (action === 'draw') {
@@ -397,7 +449,7 @@ export class PaintCanvas {
 
   private onUp(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
-    const canvasP = this.event2canvasPoint(ev)
+    const canvasP = this.event2viewPoint(ev)
     const hasPaint =
       action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
     if (action === 'draw') {
@@ -446,14 +498,25 @@ export class PaintCanvas {
     this.endStroke(hasPaint)
   }
 
+  view2canvasPos = (vp: Point, coordType: 'start' | 'current'): Point => {
+    const coord =
+      coordType === 'start' ? this.eventStatus.startCoord : this.coord
+    const cp = vp
+      .scale(1 / coord.scale)
+      .rotate(-coord.angle)
+      .move(coord.scroll)
+    return cp
+  }
+
   /**
    * ストロークを開始します。
    * 一時キャンバスを有効にし、新規ストロークの記録を開始します。
    */
-  private startStroke(p: Point) {
+  private startStroke(viewPoint: Point) {
+    const canvasPoint = this.view2canvasPos(viewPoint, 'start')
     // 一時キャンバスを有効にしてに座標系を同期
     this.eventStatus.isUseStrokeCanvas = true
-    this.strokeCanvas.coord = this.canvas.coord
+    this.strokeCanvas.coord = new Coordinate() //this.canvas.coord
     this.strokeCanvas.ctx.lineWidth =
       this.style.penSize * this.canvas.coord.scale
 
@@ -466,7 +529,7 @@ export class PaintCanvas {
 
     // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
-    this.history.current?.addPoint(p, 0.5)
+    this.history.current?.addPoint(canvasPoint, 0.5)
   }
 
   /**
@@ -474,9 +537,14 @@ export class PaintCanvas {
    * スクロークは一時キャンバスを経由して描画されます。
    * 履歴に座標を追加します。
    */
-  private continueStroke(p: Point, pressure = 0.5) {
-    this.history.current?.addPoint(p, pressure)
-    this.pen.drawTo(this.strokeCanvas, this.eventStatus.lastPoint, p, pressure)
+  private continueStroke(viewPoint: Point, pressure = 0.5) {
+    const lastCanvasPoint = this.view2canvasPos(
+      this.eventStatus.lastPoint,
+      'start'
+    )
+    const canvasPoint = this.view2canvasPos(viewPoint, 'start')
+    this.history.current?.addPoint(canvasPoint, pressure)
+    this.pen.drawTo(this.strokeCanvas, lastCanvasPoint, canvasPoint, pressure)
     this.rePaint()
   }
 
@@ -518,16 +586,8 @@ export class PaintCanvas {
 
   private onTouchTramsformCanvas(transform: TouchTransform) {
     const startCoord = this.eventStatus.startCoord
-    const {center, scroll, scale, angle} = transform
+    const { center, scroll, scale, angle } = transform
 
-    // viewキャンバスの座標を実キャンバスの座標系に変換します
-    const view2canvasPos = (vp: Point): Point => {
-      const cp = vp
-        .rotate(-startCoord.angle)
-        .move(startCoord.scroll)
-        .scale(1 / startCoord.scale)
-      return cp
-    }
     // viewキャンバスの距離（移動量）を実キャンバスの座標系に変換します
     const view2canvasDist = (vp: Point): Point => {
       const cp = vp.rotate(-startCoord.angle).scale(1 / startCoord.scale)
@@ -540,21 +600,21 @@ export class PaintCanvas {
       (center.y - this.height / 2) * RESOLUTION
     )
     // タッチ中心 @ 実キャンバス座標系
-    const posCanvas = view2canvasPos(posView)
+    const posCanvas = this.view2canvasPos(posView, 'start')
 
     // 画面中心 @ viewキャンバス座標系
     const viewCenter = new Point(0, 0)
 
     // 画面中心 @ 実キャンバス座標系
-    const viewCenterAtCanvas = view2canvasPos(viewCenter)
+    const viewCenterAtCanvas = this.view2canvasPos(viewCenter, 'start')
 
     // タッチ中心 - 画面中心 @ 実キャンバス座標系
     const posCanvasFromCenter = posCanvas.sub(viewCenterAtCanvas)
-    
+
     // タッチ操作（回転・スケール）での移動量 @ 実キャンバス座標系
     const posMoved = posCanvasFromCenter.rotate(-angle).scale(1 / scale)
     const posSub = posMoved.sub(posCanvasFromCenter)
-    
+
     // タッチ操作スクロール量 @ viewキャンバス座標系
     const viewScroll = scroll.scale(RESOLUTION)
     // タッチ操作スクロール量 @ 実キャンバス座標系
@@ -564,15 +624,22 @@ export class PaintCanvas {
     this.requestChangeZoom.fire(startCoord.scale * scale)
     this.requestScrollTo.fire(startCoord.scroll.sub(posSub).sub(canvasScroll))
   }
+
   private onTouchTramsformAnchor(transform: TouchTransform) {
-    const angle = transform.angle + this.eventStatus.startAnchor.angle
+    const target = this.hasSubPen ? 'child' : 'root'
+    const targetAnchor = this.eventStatus.startAnchor[this.hasSubPen ? 1 : 0]
+
+    const angle = transform.angle + targetAnchor.angle
     const scroll = transform.scroll
       .scale((1 / this.eventStatus.startCoord.scale) * RESOLUTION)
       .rotate(-this.eventStatus.startCoord.angle)
-      .move(this.eventStatus.startAnchor.scroll)
+      .move(targetAnchor.scroll)
 
-    this.requestAnchorMoveTo.fire(scroll)
-    this.requestAnchorRotateTo.fire(angle)
+    this.requestAnchorTransform.fire({
+      coord: targetAnchor.clone({ scroll, angle }),
+      target,
+    })
+    //this.requestAnchorRotateTo.fire(angle)
   }
 
   /**
@@ -624,20 +691,44 @@ export class PaintCanvas {
     fillCanvas(this.view, '#cccccc')
     this.canvas.output(this.view.ctx, { background: this.backgroundColor })
     if (this.eventStatus.isUseStrokeCanvas) {
+      this.strokeCanvas.ctx.save()
+      this.strokeCanvas.coord = this.canvas.coord
       this.strokeCanvas.output(this.view.ctx, { alpha: this.style.alpha })
+      this.strokeCanvas.ctx.restore()
     }
-    if (this.penCount >= 2) {
+
+    const [countParent, countChild] = this.penCount
+    const [hasParentGrid, hasChildGrid] = [countParent >= 2, countChild >= 2]
+    if (hasParentGrid) {
+      // root coord
       paintKaraidGrid(
         this.view,
-        this.penCount,
-        this.isKaleido,
+        countParent * (this.isKaleido[0] ? 2 : 1),
+        this.isKaleido[0],
         new Coordinate({
           scroll: this.coord.scroll.invert
-            .move(this.pen.anchor.scroll)
+            .move(this.anchor.scroll)
             .scale(this.canvas.coord.scale)
             .rotate(this.coord.angle),
-          angle: this.coord.angle + this.pen.anchor.angle,
-        })
+          angle: this.coord.angle + this.anchor.angle,
+        }),
+        hasChildGrid ? '#cccccc' : undefined
+      )
+    }
+    if (hasChildGrid) {
+      // child coord
+      paintKaraidGrid(
+        this.view,
+        countChild * (this.isKaleido[1] ? 2 : 1),
+        this.isKaleido[1],
+        new Coordinate({
+          scroll: this.coord.scroll.invert
+            .move(this.childAnchor.scroll)
+            .scale(this.canvas.coord.scale)
+            .rotate(this.coord.angle),
+          angle: this.coord.angle + this.anchor.angle + this.childAnchor.angle,
+        }),
+        '#eeaabb'
       )
     }
   }

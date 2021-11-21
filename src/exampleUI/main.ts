@@ -27,7 +27,7 @@ const setting = new SettingPalette(elPalette, { width: size.x, height: size.y })
 const canvas = new PaintCanvas(elMain, size.x, size.y)
 
 const resetAnchorAngle = () => {
-  canvas.anchor = canvas.anchor.clone({angle: 360/canvas.penCount/2 + 90})
+  //canvas.anchor = canvas.anchor.clone({angle: 360/canvas.penCount/2})
 }
 
 // 設定変更をリッスン
@@ -114,11 +114,9 @@ canvas.listenRequestRotateTo((angle) => {
 canvas.listenRequestUndo(() => {
   canvas.undo()
 })
-canvas.listenRequestAnchorMoveTo((pos) => {
-  canvas.anchor = canvas.anchor.clone({scroll: pos})
-})
-canvas.listenRequestAnchorRotateTo((angle) => {
-  canvas.anchor = canvas.anchor.clone({angle})
+canvas.listenRequestAnchorTransform(({ coord, target }) => {
+  if (target === 'root') canvas.anchor = coord
+  if (target === 'child') canvas.childAnchor = coord
 })
 canvas.listenRequestAnchorReset(() => {
   canvas.anchor = new Coordinate()
@@ -146,14 +144,20 @@ const toolKeyWatcher = new ToolKeyWatcher()
 toolKeyWatcher.listenChange((tool) => (setting.tool = tool))
 
 // パレットの初期値設定
-setting.kaleidoscope = true
-setting.penCount = 12
+setting.kaleidoscope = [true, true]
+setting.penCount = [6, 4]
 setting.canvasColor = '#ffffff'
 
 // iOSのスクロール無効化
 elMain.addEventListener('touchmove', function (event) {
   event.preventDefault()
-})
+}, {passive: false})
+// パレット領域でのマルチタッチを無効にする
+elPalette.addEventListener('touchmove', function (event) {
+  if (event.touches.length >= 2) {
+    event.preventDefault()
+  }
+}, {passive: false})
 
 // 説明文の言語切り替え
 const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
@@ -163,7 +167,6 @@ document
 document
   .querySelectorAll<HTMLElement>(`.lang.${uaLang}`)
   .forEach((el) => (el.style.display = ''))
-
 
 // For Debug
 // window.canvas = canvas
