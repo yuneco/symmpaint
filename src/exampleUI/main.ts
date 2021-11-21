@@ -151,7 +151,13 @@ setting.canvasColor = '#ffffff'
 // iOSのスクロール無効化
 elMain.addEventListener('touchmove', function (event) {
   event.preventDefault()
-})
+}, {passive: false})
+// パレット領域でのマルチタッチを無効にする
+elPalette.addEventListener('touchmove', function (event) {
+  if (event.touches.length >= 2) {
+    event.preventDefault()
+  }
+}, {passive: false})
 
 // 説明文の言語切り替え
 const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
