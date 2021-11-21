@@ -10,7 +10,6 @@ export const replayPenStroke = (
   stroke: StrokeRecord,
   isPreview: boolean
 ) => {
-  canvas.coord = stroke.canvasCoord
   canvas.ctx.strokeStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
   const pen = new Pen()
@@ -18,20 +17,20 @@ export const replayPenStroke = (
 
   if (isPreview) {
     const segments = splitStoke(stroke.inputs)
-    segments.forEach(seg => {
+    segments.forEach((seg) => {
       const pressure = getStrokeAvrPressure(seg)
       pen.drawLines(
         canvas,
         seg.map((inp) => inp.point),
         pressure
-      )  
+      )
     })
   } else {
     const [first, ...rests] = stroke.inputs
     if (!first) return
     let last = first
     rests.forEach((inp) => {
-      if(inp.pressure) pen.drawTo(canvas, last.point, inp.point, inp.pressure)
+      if (inp.pressure) pen.drawTo(canvas, last.point, inp.point, inp.pressure)
       last = inp
     })
   }
@@ -58,7 +57,10 @@ export const replayStrokes = (
     if (stroke.tool === 'pen') {
       clearCanvas(strokeCanvas)
       replayPenStroke(strokeCanvas, stroke, isPreview)
-      strokeCanvas.copy(canvas.ctx, {alpha: stroke.style.alpha, composition: stroke.style.composition})
+      strokeCanvas.copy(canvas.ctx, {
+        alpha: stroke.style.alpha,
+        composition: stroke.style.composition,
+      })
     }
     if (stroke.tool === 'clearAll') {
       replayCelarAllStroke(canvas)

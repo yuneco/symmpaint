@@ -5,7 +5,6 @@ import { PenInput } from './PenInput'
 
 export type PenState = Readonly<{
   coord: Coordinate
-  anchor: Coordinate
   children: PenState[]
 }>
 
@@ -17,7 +16,6 @@ export type PenState = Readonly<{
 export class Pen {
   private _coord: Coordinate = new Coordinate()
   private children: Pen[] = []
-  anchor = new Coordinate()
 
   get coord() {
     return this._coord
@@ -35,7 +33,6 @@ export class Pen {
   get state(): PenState {
     return {
       coord: this.coord,
-      anchor: this.anchor,
       children: this.children.map((ch) => ch.state),
     }
   }
@@ -43,7 +40,6 @@ export class Pen {
   /** 出力コンテキストを除いた全てのペンの状態を子ペンを含めて復元します */
   set state(st: PenState) {
     this.coord = st.coord
-    this.anchor = st.anchor
     if (this.children.length > st.children.length) {
       // 不要なペンを削除
       this.children.length = st.children.length
@@ -60,6 +56,24 @@ export class Pen {
   get leafs(): Pen[] {
     if (!this.childCount) return [this]
     return this.children.flatMap((ch) => ch.leafs)
+  }
+
+  childAt(index: number): Pen | undefined {
+    return this.children[index]
+  }
+
+  /** 末端の（描画を行う）ペンの合成済みmatrixを配列で返します */
+  matrices(parent: DOMMatrix): DOMMatrix[] {
+    const mx = parent.multiply(this.coord.matrix)
+    if (!this.childCount) {
+      return [mx]
+    }
+    return this.children.flatMap((ch) => ch.matrices(mx))
+  }
+
+  firstPenCoord(): Coordinate[] {
+    if (!this.childCount) return [this.coord]
+    return [this.coord, ...this.children[0].firstPenCoord()]
   }
 
   /**
@@ -79,37 +93,16 @@ export class Pen {
     this.children.length = 0
   }
 
-  private anchorShiftInputs(
-    inps: PenInput[],
-    coord: Coordinate,
-    dir: 'add' | 'sub'
-  ): PenInput[] {
-    const mx = coord.matrixScrollAfter
-    const center = toPoint(mx.transformPoint(this.anchor.scroll.invert))
-    const transform =
-      dir === 'sub'
-        ? (p: Point) => p.move(center).rotate(-coord.angle - this.anchor.angle)
-        : (p: Point) => p.rotate(coord.angle + this.anchor.angle).move(center.invert)
-    return inps.map((inp) => ({
-      point: transform(inp.point),
-      pressure: inp.pressure,
-    }))
-  }
-
   /** 指定の座標まで線を引きます */
   drawTo(canvas: AbstractCanvas, p0: Point, p1: Point, pressure = 0.5) {
     if (pressure <= 0) return
     const ctx = canvas.ctx
     // 先にdryrunで全ての子ペンから描画座標を取得する
     const ps = [p0, p1]
-    const segments = this.dryRun(
-      [
-        { point: ps[0], pressure: 0 },
-        { point: ps[1], pressure },
-      ],
-      undefined,
-      canvas.coord
-    )
+    const segments = this.dryRun([
+      { point: ps[0], pressure: 0 },
+      { point: ps[1], pressure },
+    ])
     const baseWidth = ctx.lineWidth
     segments.forEach(([start, end]) => {
       if (!end) return
@@ -135,7 +128,7 @@ export class Pen {
       point,
       pressure,
     }))
-    const segments = this.dryRun(inps, undefined, canvas.coord)
+    const segments = this.dryRun(inps)
     const baseWidth = ctx.lineWidth
     ctx.lineWidth = baseWidth * pressure
     segments.forEach((seg) => {
@@ -154,33 +147,19 @@ export class Pen {
   /**
    * 入力点の配列を子ペンに展開し、実際の描画座標の配列として返します
    */
-  dryRun(
-    inputs: PenInput[],
-    matrix: DOMMatrixReadOnly = new DOMMatrixReadOnly(),
-    anchorCoord?: Coordinate
-  ): PenInput[][] {
-    if (anchorCoord) {
-      inputs = this.anchorShiftInputs(inputs, anchorCoord, 'sub')
-    }
-    const mx = matrix.multiply(this.coord.matrix)
+  dryRun(inputs: PenInput[]): PenInput[][] {
+    const mxs = this.matrices(new DOMMatrix())
+    // 入力座標→基準のペンの座標系
+    const mxBase = mxs[0].inverse()
 
-    let outs: PenInput[][]
-    if (this.childCount === 0) {
-      outs = [
-        inputs.map((inp) => {
-          const lp = mx.transformPoint(inp.point)
-          const out: PenInput = {
-            point: new Point(lp.x, lp.y),
-            pressure: inp.pressure,
-          }
-          return out
-        }),
-      ]
-    } else {
-      outs = this.children.flatMap((ch) => ch.dryRun(inputs, mx))
-    }
-    return outs.map((inps) =>
-      anchorCoord ? this.anchorShiftInputs(inps, anchorCoord, 'add') : inps
-    )
+    return mxs.map((mx) => {
+      return inputs.map((inp) => {
+        const p = mxBase.transformPoint(inp.point)
+        return {
+          point: toPoint(mx.transformPoint(p)),
+          pressure: inp.pressure,
+        }
+      })
+    })
   }
 }

@@ -69,16 +69,16 @@ export class StrokeRecord {
   get flatten() {
     const pen = new Pen()
     pen.state = this.penState
-    const strokes = pen.dryRun(this.inputs, undefined, this.canvasCoord)
+    const strokes = pen.dryRun(this.inputs)
     const anchor = toPoint(
-      this.canvasCoord.matrixScrollAfter.transformPoint(pen.anchor.scroll)
+      this.canvasCoord.matrixScrollAfter.transformPoint(pen.coord.scroll)
     ).invert
     const joinedStroke = joinStrokes(strokes).map((inp) => ({
       point: inp.point.move(anchor),
       pressure: inp.pressure,
     }))
     pen.clearChildren()
-    pen.anchor = new Coordinate()
+    pen.coord = new Coordinate()
     const rec = new StrokeRecord(
       this.canvasCoord,
       pen.state,
