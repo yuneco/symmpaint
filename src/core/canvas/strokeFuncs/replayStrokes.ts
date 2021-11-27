@@ -11,7 +11,7 @@ export const replayPenStroke = (
   isPreview: boolean
 ) => {
   canvas.ctx.strokeStyle = stroke.style.color
-  canvas.ctx.lineWidth = stroke.style.penSize * stroke.canvasCoord.scale
+  canvas.ctx.lineWidth = stroke.style.penSize
   const pen = new Pen()
   pen.state = stroke.penState
 

@@ -517,8 +517,7 @@ export class PaintCanvas {
     // 一時キャンバスを有効にしてに座標系を同期
     this.eventStatus.isUseStrokeCanvas = true
     this.strokeCanvas.coord = new Coordinate() //this.canvas.coord
-    this.strokeCanvas.ctx.lineWidth =
-      this.style.penSize * this.canvas.coord.scale
+    this.strokeCanvas.ctx.lineWidth = this.style.penSize
 
     const penColor = () => {
       if (this.eventStatus.isCapturing) return '#0044aa'
