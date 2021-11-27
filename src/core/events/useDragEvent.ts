@@ -33,12 +33,14 @@ export const useDragEvent = (
   ondown: DownHandler,
   ondrag: DragHandler,
   onup: UpHandler,
-  minDragMargin = 1
+  minDragMargin = 1,
+  maxFPS = 60
 ): Canceler => {
   const state = {
     startPoint: new Point(),
     lastRawPoint: new Point(),
     isWatchMove: false,
+    lastMs: Date.now()
   }
 
   const handlerDown = (ev: PointerEvent) => {
@@ -51,9 +53,15 @@ export const useDragEvent = (
     if (!ev.isPrimary) return
     if (!state.isWatchMove) return
     const p = new Point(ev.clientX, ev.clientY)
-    if (p.sub(state.lastRawPoint).length < minDragMargin) return
+    const dist = p.sub(state.lastRawPoint).length
+    const now = Date.now()
+    const fps = 1000 / (now - state.lastMs)
+    if (dist < minDragMargin) return
+    if (fps > maxFPS) return
+    if ((dist / minDragMargin) * (maxFPS / fps) < 3) return
     ondrag(ev, distForPoint(target, state.startPoint, p))
     state.lastRawPoint = p
+    state.lastMs = now
   }
 
   const handlerUp = (ev: PointerEvent) => {
