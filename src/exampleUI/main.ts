@@ -145,7 +145,7 @@ toolKeyWatcher.listenChange((tool) => (setting.tool = tool))
 
 // パレットの初期値設定
 setting.kaleidoscope = [true, true]
-setting.penCount = [6, 4]
+setting.penCount = [6, 6]
 setting.canvasColor = '#ffffff'
 
 // iOSのスクロール無効化

@@ -71,11 +71,6 @@ export class Pen {
     return this.children.flatMap((ch) => ch.matrices(mx))
   }
 
-  firstPenCoord(): Coordinate[] {
-    if (!this.childCount) return [this.coord]
-    return [this.coord, ...this.children[0].firstPenCoord()]
-  }
-
   /**
    * 子ペンを追加します
    * @param coord 子ペンの座標型。省略時は親と同じ
@@ -104,16 +99,18 @@ export class Pen {
       { point: ps[1], pressure },
     ])
     const baseWidth = ctx.lineWidth
+    const lineWidth = pressure * baseWidth
+    if (lineWidth < 1.0) return
+
+    ctx.beginPath()
+    ctx.lineWidth = lineWidth 
     segments.forEach(([start, end]) => {
       if (!end) return
-      const segPs = [start.point, end.point]
-      const [startP, endP] = segPs
-      ctx.beginPath()
+      const [startP, endP] = [start.point, end.point]
       ctx.moveTo(startP.x, startP.y)
-      ctx.lineWidth = baseWidth * end.pressure
       ctx.lineTo(endP.x, endP.y)
-      ctx.stroke()
     })
+    ctx.stroke()
     ctx.lineWidth = baseWidth
   }
 
@@ -130,17 +127,17 @@ export class Pen {
     }))
     const segments = this.dryRun(inps)
     const baseWidth = ctx.lineWidth
+
+    ctx.beginPath()
     ctx.lineWidth = baseWidth * pressure
     segments.forEach((seg) => {
-      const segPs = seg.map((inp) => inp.point)
-      const [start, ...rests] = segPs
-      ctx.beginPath()
+      const [start, ...rests] = seg.map((inp) => inp.point)
       ctx.moveTo(start.x, start.y)
       rests.forEach((p) => {
         ctx.lineTo(p.x, p.y)
       })
-      ctx.stroke()
     })
+    ctx.stroke()
     ctx.lineWidth = baseWidth
   }
 

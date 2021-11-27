@@ -10,6 +10,12 @@ export const normalizeAngle = (angle: number): number => {
   return m <= 180 ? m : -360 + m
 }
 
+export const mixAngle = (a0: number, a1: number, amount = 0.5): number => {
+  const p0 = new Point(1, 0).rotate(a0).scale(1 - amount)
+  const p1 = new Point(1, 0).rotate(a1).scale(amount)
+  return p0.move(p1).angle
+}
+
 export const a2r = (angle: number): number => (angle / 180) * Math.PI
 export const r2a = (rad: number): number => (rad / Math.PI) * 180
 

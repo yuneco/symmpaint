@@ -27,7 +27,7 @@ import { isSameArray } from '../misc/ArrayUtil'
 const RESOLUTION = 2 //window.devicePixelRatio
 
 /** カーソル移動を検出する最低距離(px) */
-const MIN_CURSOR_MOVE = 3.0
+const MIN_CURSOR_MOVE = 3.5
 
 const PENKIND2COMPOSITION = {
   normal: '',
@@ -529,7 +529,7 @@ export class PaintCanvas {
 
     // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
-    this.history.current?.addPoint(canvasPoint, 0.5)
+    this.history.current?.addPoint(canvasPoint, 0)
   }
 
   /**
