@@ -54,11 +54,19 @@ setting.onUndo.listen(() => {
   canvas.undo()
 })
 const copyImg = async () => {
-  const blob = await canvas.toImgBlob()
   // see: https://stackoverflow.com/questions/61187374/how-to-fix-the-cannot-find-name-clipboarditem-error
-  const item = new ClipboardItem({
-    'image/png': blob as unknown as ClipboardItemData,
-  })
+  let item: ClipboardItem | undefined
+  try {
+    // for safari
+    item = new ClipboardItem({
+      'image/png': canvas.toImgBlob(),
+    })
+  } catch {
+    // for chrome
+    item = new ClipboardItem({
+      'image/png': (await canvas.toImgBlob()) as unknown as ClipboardItemData,
+    })
+  }
   await navigator.clipboard.write([item])
 }
 setting.onCopy.listen(() => {
@@ -149,15 +157,23 @@ setting.penCount = [6, 6]
 setting.canvasColor = '#ffffff'
 
 // iOSのスクロール無効化
-elMain.addEventListener('touchmove', function (event) {
-  event.preventDefault()
-}, {passive: false})
-// パレット領域でのマルチタッチを無効にする
-elPalette.addEventListener('touchmove', function (event) {
-  if (event.touches.length >= 2) {
+elMain.addEventListener(
+  'touchmove',
+  function (event) {
     event.preventDefault()
-  }
-}, {passive: false})
+  },
+  { passive: false }
+)
+// パレット領域でのマルチタッチを無効にする
+elPalette.addEventListener(
+  'touchmove',
+  function (event) {
+    if (event.touches.length >= 2) {
+      event.preventDefault()
+    }
+  },
+  { passive: false }
+)
 
 // 説明文の言語切り替え
 const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
