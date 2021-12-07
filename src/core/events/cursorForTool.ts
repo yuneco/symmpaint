@@ -6,9 +6,11 @@ export const cursorForTool = (tool: CanvasToolName) => {
     {
       draw: 'crosshair',
       scroll: 'move',
+      'scroll:anchor': 'move',
       zoomup: 'zoom-in',
       zoomdown: 'zoom-out',
       rotate: 'grab',
+      'rotate:anchor': 'grab',
       'draw:line': 'crosshair',
       'draw:stamp': 'crosshair',
     }[tool] ?? 'default'

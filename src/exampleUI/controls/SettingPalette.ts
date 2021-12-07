@@ -14,12 +14,14 @@ const TOOL_NAMES: {[k in CanvasToolName]: string} = {
   'draw:line': 'Line',
   'draw:stamp': 'Stamp',
   scroll: 'Move',
+  'scroll:anchor': 'Move Anchor',
   rotate: 'Rotate',
+  'rotate:anchor': 'Rotate Anchor',
   zoomup: '+',
   zoomdown: '-'
 } as const
 
-const toolList = ['draw', 'draw:line', 'draw:stamp', 'scroll', 'zoomup', 'zoomdown', 'rotate'] as const
+const toolList = ['draw', 'draw:line', 'draw:stamp', 'scroll', 'scroll:anchor', 'zoomup', 'zoomdown', 'rotate', 'rotate:anchor'] as const
 export class SettingPalette {
   private readonly slScale: Slider
   private readonly slAngle: Slider

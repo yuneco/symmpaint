@@ -113,18 +113,27 @@ canvas.listenRequestZoom((scale) => {
   //setting.scale = scale
   canvas.coord = canvas.coord.clone({ scale })
 })
-canvas.listenRequestScrollTo((pos) => {
-  canvas.coord = canvas.coord.clone({ scroll: pos })
+canvas.listenRequestScrollTo(({ point, target }) => {
+  if (target === 'canvas') {
+    canvas.coord = canvas.coord.clone({ scroll: point })
+  }
+  if (target === 'anchor') {
+    canvas.activeAnchor = canvas.activeAnchor.clone({ scroll: point })
+  }
 })
-canvas.listenRequestRotateTo((angle) => {
-  canvas.coord = canvas.coord.clone({ angle })
+canvas.listenRequestRotateTo(({ angle, target }) => {
+  if (target === 'canvas') {
+    canvas.coord = canvas.coord.clone({ angle })
+  }
+  if (target === 'anchor') {
+    canvas.activeAnchor = canvas.activeAnchor.clone({ angle })
+  }
 })
 canvas.listenRequestUndo(() => {
   canvas.undo()
 })
-canvas.listenRequestAnchorTransform(({ coord, target }) => {
-  if (target === 'root') canvas.anchor = coord
-  if (target === 'child') canvas.childAnchor = coord
+canvas.listenRequestAnchorTransform((coord) => {
+  canvas.activeAnchor = coord
 })
 canvas.listenRequestAnchorReset(() => {
   canvas.anchor = new Coordinate()
@@ -142,7 +151,7 @@ window.addEventListener('keydown', (ev) => {
   if (ev.key === 'z' && ev.metaKey) {
     setting.onUndo.fire()
   }
-  if (ev.key === 'z' && ev.metaKey) {
+  if (ev.key === 'c' && ev.metaKey) {
     setting.onCopy.fire()
   }
 })

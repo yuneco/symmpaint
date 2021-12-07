@@ -53,6 +53,11 @@ type EventStatus = {
   isInMultiTouch: boolean
 }
 
+/** 移動の対象 */
+type TransformScrollTarget = 'canvas' | 'anchor'
+/** 回転の対象 */
+type TransformRotateTarget = TransformScrollTarget
+
 export class PaintCanvas {
   private readonly width: number
   private readonly height: number
@@ -79,13 +84,16 @@ export class PaintCanvas {
 
   // 変更通知イベント
   private readonly requestChangeZoom = new PaintEvent<number>()
-  private readonly requestScrollTo = new PaintEvent<Point>()
-  private readonly requestRotateTo = new PaintEvent<number>()
-  private readonly requestUndo = new PaintEvent<void>()
-  private readonly requestAnchorTransform = new PaintEvent<{
-    coord: Coordinate
-    target: 'root' | 'child'
+  private readonly requestScrollTo = new PaintEvent<{
+    point: Point
+    target: TransformScrollTarget
   }>()
+  private readonly requestRotateTo = new PaintEvent<{
+    angle: number
+    target: TransformRotateTarget
+  }>()
+  private readonly requestUndo = new PaintEvent<void>()
+  private readonly requestAnchorTransform = new PaintEvent<Coordinate>()
   private readonly requestAnchorReset = new PaintEvent<void>()
 
   private readonly pen: Pen = new Pen()
@@ -168,6 +176,7 @@ export class PaintCanvas {
       (ev) => !this.eventStatus.isInMultiTouch && this.onDown(ev),
       (ev, dist) => !this.eventStatus.isInMultiTouch && this.onDrag(ev, dist),
       (ev, dist) => !this.eventStatus.isInMultiTouch && this.onUp(ev, dist),
+      () => (this.tool === 'scroll:anchor' || this.tool === 'rotate:anchor') ? this.canvas2displayPos(this.activeAnchor.scroll, 'start') : undefined,
       MIN_CURSOR_MOVE
     )
 
@@ -276,6 +285,14 @@ export class PaintCanvas {
     this.rePaint()
   }
 
+  get activeAnchor(): Coordinate {
+    return this.hasSubPen ? this.childAnchor : this.anchor
+  }
+
+  set activeAnchor(v) {
+    this[this.hasSubPen ? 'childAnchor' : 'anchor'] = v
+  }
+
   private get relativeChildAnchor(): Coordinate {
     return new Coordinate({
       scroll: this.childAnchor.scroll
@@ -326,11 +343,19 @@ export class PaintCanvas {
     this.requestChangeZoom.listen(...params)
   }
   /** スクロール操作発生時のリスナーを登録します。スクロールを行うにはリスナー側で座標系(coord.scroll)を変更します */
-  listenRequestScrollTo(...params: Parameters<PaintEvent<Point>['listen']>) {
+  listenRequestScrollTo(
+    ...params: Parameters<
+      PaintEvent<{ point: Point; target: TransformScrollTarget }>['listen']
+    >
+  ) {
     this.requestScrollTo.listen(...params)
   }
   /** 回転操作発生時のリスナーを登録します。回転を行うにはリスナー側で座標系(coord.angle)を変更します */
-  listenRequestRotateTo(...params: Parameters<PaintEvent<number>['listen']>) {
+  listenRequestRotateTo(
+    ...params: Parameters<
+      PaintEvent<{ angle: number; target: TransformRotateTarget }>['listen']
+    >
+  ) {
     this.requestRotateTo.listen(...params)
   }
   /** Undo操作発生時のリスナーを登録します。Undoを行うにはリスナー側でundoメソッドを呼び出します */
@@ -340,7 +365,7 @@ export class PaintCanvas {
   /** アンカー移動/回転操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
   listenRequestAnchorTransform(
     ...params: Parameters<
-      PaintEvent<{ coord: Coordinate; target: 'root' | 'child' }>['listen']
+      PaintEvent<Coordinate>['listen']
     >
   ) {
     this.requestAnchorTransform.listen(...params)
@@ -437,12 +462,10 @@ export class PaintCanvas {
         true
       )
     }
-    if (action === 'scroll') {
-      this.onScroll(dist)
-    }
-    if (action === 'rotate') {
-      this.onRotate(dist)
-    }
+    if (action === 'scroll') this.onScroll(dist, 'canvas')
+    if (action === 'scroll:anchor') this.onScroll(dist, 'anchor')
+    if (action === 'rotate') this.onRotate(dist, 'canvas')
+    if (action === 'rotate:anchor') this.onRotate(dist, 'anchor')
 
     ev.preventDefault()
   }
@@ -488,12 +511,10 @@ export class PaintCanvas {
       return
     }
 
-    if (action === 'scroll') {
-      this.onScroll(dist)
-    }
-    if (action === 'rotate') {
-      this.onRotate(dist)
-    }
+    if (action === 'scroll') this.onScroll(dist, 'canvas')
+    if (action === 'scroll:anchor') this.onScroll(dist, 'anchor')
+    if (action === 'rotate') this.onRotate(dist, 'canvas')
+    if (action === 'rotate:anchor') this.onRotate(dist, 'anchor')
 
     this.endStroke(hasPaint)
   }
@@ -506,6 +527,20 @@ export class PaintCanvas {
       .rotate(-coord.angle)
       .move(coord.scroll)
     return cp
+  }
+  canvas2viewPos = (cp: Point, coordType: 'start' | 'current'): Point => {
+    const coord =
+      coordType === 'start' ? this.eventStatus.startCoord : this.coord
+    const vp = cp
+      .move(coord.scroll.invert)
+      .rotate(coord.angle)
+      .scale(coord.scale)
+    return vp
+  }
+  canvas2displayPos = (cp: Point, coordType: 'start' | 'current'): Point => {
+    return this.canvas2viewPos(cp, coordType)
+      .move(new Point(this.width, this.height))
+      .scale(1 / RESOLUTION)
   }
 
   /**
@@ -569,18 +604,29 @@ export class PaintCanvas {
     this.rePaint()
   }
 
-  private onScroll(dist: PointsDist) {
-    const scroll = this.eventStatus.startCoord.scroll.move(
+  private onScroll(dist: PointsDist, target: TransformScrollTarget) {
+    const anchorIndex = this.hasSubPen ? 1 : 0
+    const targetCoord = {
+      canvas: this.eventStatus.startCoord,
+      anchor: this.eventStatus.startAnchor[anchorIndex],
+    }[target]
+    const scroll = targetCoord.scroll.move(
       dist.distance
         .scale((-1 / this.coord.scale) * RESOLUTION)
         .rotate(-this.coord.angle)
+        .scale(target === 'anchor' ? -1 : 1)
     )
-    this.requestScrollTo.fire(scroll)
+    this.requestScrollTo.fire({ point: scroll, target })
   }
 
-  private onRotate(dist: PointsDist) {
-    const angle = this.eventStatus.startCoord.angle + dist.angle
-    this.requestRotateTo.fire(normalizeAngle(angle))
+  private onRotate(dist: PointsDist, target: TransformRotateTarget) {
+    const anchorIndex = this.hasSubPen ? 1 : 0
+    const targetCoord = {
+      canvas: this.eventStatus.startCoord,
+      anchor: this.eventStatus.startAnchor[anchorIndex],
+    }[target]
+    const angle = targetCoord.angle + dist.angle
+    this.requestRotateTo.fire({ angle: normalizeAngle(angle), target })
   }
 
   private onTouchTramsformCanvas(transform: TouchTransform) {
@@ -619,13 +665,18 @@ export class PaintCanvas {
     // タッチ操作スクロール量 @ 実キャンバス座標系
     const canvasScroll = view2canvasDist(viewScroll)
 
-    this.requestRotateTo.fire(startCoord.angle + angle)
+    this.requestRotateTo.fire({
+      angle: startCoord.angle + angle,
+      target: 'canvas',
+    })
     this.requestChangeZoom.fire(startCoord.scale * scale)
-    this.requestScrollTo.fire(startCoord.scroll.sub(posSub).sub(canvasScroll))
+    this.requestScrollTo.fire({
+      point: startCoord.scroll.sub(posSub).sub(canvasScroll),
+      target: 'canvas',
+    })
   }
 
   private onTouchTramsformAnchor(transform: TouchTransform) {
-    const target = this.hasSubPen ? 'child' : 'root'
     const targetAnchor = this.eventStatus.startAnchor[this.hasSubPen ? 1 : 0]
 
     const angle = transform.angle + targetAnchor.angle
@@ -634,10 +685,7 @@ export class PaintCanvas {
       .rotate(-this.eventStatus.startCoord.angle)
       .move(targetAnchor.scroll)
 
-    this.requestAnchorTransform.fire({
-      coord: targetAnchor.clone({ scroll, angle }),
-      target,
-    })
+    this.requestAnchorTransform.fire(targetAnchor.clone({ scroll, angle }))
     //this.requestAnchorRotateTo.fire(angle)
   }
 

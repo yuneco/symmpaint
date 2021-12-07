@@ -8,7 +8,9 @@ export const toolForKeys = (keys: string[]): CanvasToolName => {
   const keyShift = keys.includes('Shift')
   if (keySp && keyCmd && keyOpt) return 'zoomdown'
   if (keySp && keyCmd) return 'zoomup'
+  if (keySp && keyOpt && keyShift) return 'rotate:anchor'
   if (keySp && keyOpt) return 'rotate'
+  if (keySp && keyShift) return 'scroll:anchor'
   if (keySp) return 'scroll'
   if (keyShift) return 'draw:line'
   if (keyOpt) return 'draw:stamp'

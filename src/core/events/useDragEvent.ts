@@ -6,10 +6,15 @@ type DragHandler = (ev: PointerEvent, dist: PointsDist) => void
 type UpHandler = (ev: PointerEvent, dist: PointsDist) => void
 type Canceler = () => void
 
-/** 指定の要素の中央をウインドウ座標（ClientX,Y）で返します */
-const elementCenter = (el: HTMLElement): Point => {
+/**
+ * 基準点の座標をウインドウ座標（ClientX,Y）で返します
+ * @param elementCenter 要素のローカル座標における基準点。省略時は嘘の中央
+ */
+const elementAnchor = (el: HTMLElement, elementCenter?: Point): Point => {
   const r = el.getBoundingClientRect()
-  return new Point(r.left + r.width / 2, r.top + r.height / 2)
+  return new Point(r.left, r.top).move(
+    elementCenter ?? new Point(r.width / 2, r.height / 2)
+  )
 }
 
 /** 角AOBを求めます */
@@ -20,19 +25,31 @@ const pointsAngle = (pO: Point, pA: Point, pB: Point): number => {
 }
 
 const distForPoint = (
-  el: HTMLElement,
+  pCenter: Point,
   pStart: Point,
   pEnd: Point
 ): PointsDist => ({
   distance: pEnd.sub(pStart),
-  angle: pointsAngle(elementCenter(el), pStart, pEnd),
+  angle: pointsAngle(pCenter, pStart, pEnd),
 })
 
+/**
+ * ドラッグイベントを監視し、カーソルの移動量や回転量を提供します。
+ * @param target ドラッグイベントを監視する要素
+ * @param ondown マウスダウン時のイベント。ドラッグを監視する場合はtrueを返してください
+ * @param ondrag ドラッグ時のイベント
+ * @param onup アップ時のイベント
+ * @param center ドラッグによる回転の中心座標を返す関数。指定しないかこの関数がundefinedを返した場合、要素の中心を回転の中心とします
+ * @param minDragMargin ドラッグイベントを発行するための最低移動量(px)。小さくするほど頻繁にイベントが発生します
+ * @param maxFPS ドラッグイベントを発行する最大頻度の目安。大きくするほど頻繁にイベントが発生します
+ * @returns
+ */
 export const useDragEvent = (
   target: HTMLElement,
   ondown: DownHandler,
   ondrag: DragHandler,
   onup: UpHandler,
+  center?: () => Point | undefined,
   minDragMargin = 1,
   maxFPS = 60
 ): Canceler => {
@@ -40,8 +57,10 @@ export const useDragEvent = (
     startPoint: new Point(),
     lastRawPoint: new Point(),
     isWatchMove: false,
-    lastMs: Date.now()
+    lastMs: Date.now(),
   }
+
+  const getCenter = () => elementAnchor(target, center?.())
 
   const handlerDown = (ev: PointerEvent) => {
     if (!ev.isPrimary) return
@@ -59,7 +78,7 @@ export const useDragEvent = (
     if (dist < minDragMargin) return
     if (fps > maxFPS) return
     if ((dist / minDragMargin) * (maxFPS / fps) < 3) return
-    ondrag(ev, distForPoint(target, state.startPoint, p))
+    ondrag(ev, distForPoint(getCenter(), state.startPoint, p))
     state.lastRawPoint = p
     state.lastMs = now
   }
@@ -68,7 +87,7 @@ export const useDragEvent = (
     if (!ev.isPrimary) return
     if (!state.isWatchMove) return
     const p = new Point(ev.clientX, ev.clientY)
-    onup(ev, distForPoint(target, state.startPoint, p))
+    onup(ev, distForPoint(getCenter(), state.startPoint, p))
     state.isWatchMove = false
   }
 

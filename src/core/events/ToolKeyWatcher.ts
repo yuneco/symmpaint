@@ -3,10 +3,12 @@ import { PaintEvent } from './PaintEvent'
 import { toolForKeys } from './toolForKeys'
 import { CanvasToolName } from '../canvas/CanvasToolName'
 
+type ChangeEvent = PaintEvent<CanvasToolName>
+
 export class ToolKeyWatcher {
   private readonly keyWatcher: KeyPressWatcher
   private tool?: CanvasToolName
-  private readonly onChange = new PaintEvent<CanvasToolName>()
+  private readonly onChange: ChangeEvent = new PaintEvent()
   constructor() {
   // キー状態の変更監視
     this.keyWatcher = new KeyPressWatcher()
@@ -19,7 +21,7 @@ export class ToolKeyWatcher {
     })
   }
 
-  listenChange(...params: Parameters<typeof this.onChange.listen>) {
+  listenChange(...params: Parameters<ChangeEvent['listen']>) {
     this.onChange.listen(...params)
   }
 }
