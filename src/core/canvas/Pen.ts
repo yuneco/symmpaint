@@ -72,6 +72,13 @@ export class Pen {
     return this.children.flatMap((ch) => ch.matrices(mx))
   }
 
+  /** 末端の（描画を行う）ペンの合成済みmatrixを最初の（1本目の）ペンのmatrix基準に変換して返します */
+  matricesBasedFirstPen(parent: DOMMatrix): DOMMatrix[] {
+    const mxs = this.matrices(parent)
+    const mxBase = mxs[0].inverse()
+    return mxs.map(mx => mx.multiply(mxBase))
+  }
+
   /**
    * 子ペンを追加します
    * @param coord 子ペンの座標型。省略時は親と同じ
@@ -89,34 +96,8 @@ export class Pen {
     this.children.length = 0
   }
 
-  /** 指定の座標まで線を引きます */
-  // drawTo(canvas: AbstractCanvas, p0: Point, p1: Point, pressure = 0.5) {
-  //   if (pressure <= 0) return
-  //   const ctx = canvas.ctx
-  //   // 先にdryrunで全ての子ペンから描画座標を取得する
-  //   const ps = [p0, p1]
-  //   const segments = this.dryRun([
-  //     { point: ps[0], pressure: 0 },
-  //     { point: ps[1], pressure },
-  //   ])
-  //   const baseWidth = ctx.lineWidth
-  //   const lineWidth = pressure * baseWidth
-  //   if (lineWidth < 1.0) return
-
-  //   ctx.beginPath()
-  //   ctx.lineWidth = lineWidth 
-  //   segments.forEach(([start, end]) => {
-  //     if (!end) return
-  //     const [startP, endP] = [start.point, end.point]
-  //     ctx.moveTo(startP.x, startP.y)
-  //     ctx.lineTo(endP.x, endP.y)
-  //   })
-  //   ctx.stroke()
-  //   ctx.lineWidth = baseWidth
-  // }
-
   drawStrokes(canvas: AbstractCanvas, strokes: PenStroke[]) {
-    const mxs = this.matrices(new DOMMatrix())
+    const mxs = this.matricesBasedFirstPen(new DOMMatrix())
     drawStrokesWithTransform(canvas.ctx, strokes, mxs)
   }
 
@@ -132,22 +113,8 @@ export class Pen {
       pressure,
     }))
 
-    const mxs = this.matrices(new DOMMatrix())
+    const mxs = this.matricesBasedFirstPen(new DOMMatrix())
     drawStrokesWithTransform(ctx, [inps], mxs)
-
-    //const segments = this.dryRun(inps)
-    //const baseWidth = ctx.lineWidth
-    // ctx.beginPath()
-    // ctx.lineWidth = baseWidth * pressure
-    // segments.forEach((seg) => {
-    //   const [start, ...rests] = seg.map((inp) => inp.point)
-    //   ctx.moveTo(start.x, start.y)
-    //   rests.forEach((p) => {
-    //     ctx.lineTo(p.x, p.y)
-    //   })
-    // })
-    // ctx.stroke()
-    // ctx.lineWidth = baseWidth
   }
 
   /**

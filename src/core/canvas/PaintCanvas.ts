@@ -442,16 +442,11 @@ export class PaintCanvas {
       point: viewP,
       pressure: ev.pressure,
     })
-    if (action === 'draw') {
+    if (action === 'draw' || action === 'draw:line') {
       this.continueStroke(smoothedInp.point, smoothedInp.pressure || 0.5)
       this.eventStatus.lastPoint = smoothedInp.point
     }
-    if (action === 'draw:line') {
-      clearCanvas(this.strokeCanvas)
-      this.continueStroke(smoothedInp.point, smoothedInp.pressure || 0.5)
-    }
     if (action === 'draw:stamp' && this.stamp) {
-      clearCanvas(this.strokeCanvas)
       const dp = smoothedInp.point.sub(this.eventStatus.startPoint)
       const stampScale = dp.length / 100
       this.putStroke(
@@ -480,13 +475,17 @@ export class PaintCanvas {
     }
     if (action === 'draw:line') {
       clearCanvas(this.strokeCanvas)
-      this.continueStroke(
-        canvasP,
-        this.history.current
-          ? getStrokeEndPressure(this.history.current.inputs)
-          : 0.5
-      )
-      this.history.current?.clearPoints(true, true) // ストローク履歴の中間を捨てる
+      const current = this.history.current
+      const pressure = this.history.current
+      ? getStrokeEndPressure(this.history.current.inputs)
+      : 0.5
+      this.continueStroke(canvasP,pressure)
+      if (current) {
+        current.inputs.length = 1
+        current.inputs[0].pressure = pressure
+        const last = {point: canvasP,pressure}
+        current.inputs.push(last, last)
+      }
     }
     if (action === 'draw:stamp' && this.stamp) {
       clearCanvas(this.strokeCanvas)
@@ -559,7 +558,7 @@ export class PaintCanvas {
       if (this.penKind === 'eraser') return this.backgroundColor
       return this.style.color
     }
-    this.strokeCanvas.ctx.strokeStyle = penColor()
+    this.strokeCanvas.ctx.fillStyle = penColor()
 
     // ストロークの記録を開始
     this.history.start(this.coord, this.pen.state, this.style)
@@ -572,16 +571,20 @@ export class PaintCanvas {
    * 履歴に座標を追加します。
    */
   private continueStroke(viewPoint: Point, pressure = 0.5) {
-    const lastCanvasPoint = this.view2canvasPos(
-      this.eventStatus.lastPoint,
-      'start'
-    )
+    const action = this.eventStatus.activeEvent
     const canvasPoint = this.view2canvasPos(viewPoint, 'start')
     const stroke = this.history.current
     if (!stroke) return
     stroke.addPoint(canvasPoint, pressure)
     clearCanvas(this.strokeCanvas)
-    this.pen.drawStrokes(this.strokeCanvas, [stroke.inputs])
+    if (action === 'draw:line') {
+      const start = {point: stroke.inputs[0].point, pressure}
+      const last = stroke.inputs[stroke.inputs.length - 1]
+      const inps = [start, last, last]
+      this.pen.drawStrokes(this.strokeCanvas, [inps])
+    } else {
+      this.pen.drawStrokes(this.strokeCanvas, [stroke.inputs])
+    }
     this.rePaint()
   }
 
@@ -727,7 +730,7 @@ export class PaintCanvas {
       pressure: inp.pressure,
     }))
     stampRec.inputs.push(...movedInps)
-    replayPenStroke(this.strokeCanvas, stampRec, isPreview)
+    replayPenStroke(this.strokeCanvas, stampRec)
     this.rePaint()
 
     const currentHist = this.history.current

@@ -2,38 +2,18 @@ import { AbstractCanvas } from '../AbstractCanvas'
 import { clearCanvas } from './canvasPaintFuncs'
 import { Pen } from '../Pen'
 import { StrokeRecord } from '../StrokeRecord'
-import { getStrokeAvrPressure } from './getStrokePressure'
 import { splitStoke } from './splitStroke'
 
 export const replayPenStroke = (
   canvas: AbstractCanvas,
   stroke: StrokeRecord,
-  isPreview: boolean
 ) => {
   canvas.ctx.strokeStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize
   const pen = new Pen()
   pen.state = stroke.penState
+  pen.drawStrokes(canvas, splitStoke(stroke.inputs))
 
-  if (isPreview) {
-    const segments = splitStoke(stroke.inputs)
-    segments.forEach((seg) => {
-      const pressure = getStrokeAvrPressure(seg)
-      pen.drawLines(
-        canvas,
-        seg.map((inp) => inp.point),
-        pressure
-      )
-    })
-  } else {
-    const [first, ...rests] = stroke.inputs
-    if (!first) return
-    let last = first
-    rests.forEach((inp) => {
-      if (inp.pressure) pen.drawTo(canvas, last.point, inp.point, inp.pressure)
-      last = inp
-    })
-  }
 }
 
 export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
@@ -50,13 +30,12 @@ export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
 export const replayStrokes = (
   canvas: AbstractCanvas,
   strokeCanvas: AbstractCanvas,
-  strokes: StrokeRecord[],
-  isPreview = false
+  strokes: StrokeRecord[]
 ) => {
   strokes.forEach((stroke) => {
     if (stroke.tool === 'pen') {
       clearCanvas(strokeCanvas)
-      replayPenStroke(strokeCanvas, stroke, isPreview)
+      replayPenStroke(strokeCanvas, stroke)
       strokeCanvas.copy(canvas.ctx, {
         alpha: stroke.style.alpha,
         composition: stroke.style.composition,

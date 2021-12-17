@@ -31,6 +31,8 @@ const createPath = (inputs: PenInput[], thickness: number) => {
     y: inp.point.y,
     w: Math.max(1, inp.pressure * thickness)
   }))
+  // const smoothedPoints = smooth(points, 3)
+  // return new Path2D(compute(...smoothedPoints).d)
 
   const smoothedPoints = smooth(points, 3)
   const edgePoints: Vector2[] = [];
@@ -59,17 +61,15 @@ const createPath = (inputs: PenInput[], thickness: number) => {
   return points2path(edgePoints)
 }
 
-
+/**
+ * ストロークを描画します
+ * @param ctx 出力先。塗り色(fillStyle)と線の太さ(lineWidth)はこのctxに設定されているものを使用します
+ * @param inputStrokes ストローク
+ * @param transforms 複製する座標変換。ストロークをこのtransformの数だけ、座標変換した上で描画します
+ */
 export const drawStrokesWithTransform = (ctx: CanvasRenderingContext2D ,inputStrokes: PenStroke[], transforms: (DOMMatrix | undefined)[]) => {
   const strokes = inputStrokes.flatMap(splitStroke)
   const pathParts = strokes.map(st => createPath(st, ctx.lineWidth))
-  // const path = new Path2D()
-  // pathParts.forEach(p => path.addPath(p))
-
-  // const rootPath = new Path2D()
-  // transforms.forEach(tr => rootPath.addPath(path, tr))
-
-  // ctx.fill(rootPath, 'nonzero')
   transforms.forEach(tr => {
     pathParts.forEach(path => {
       const p = new Path2D()
