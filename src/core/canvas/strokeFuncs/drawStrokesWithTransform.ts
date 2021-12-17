@@ -1,10 +1,15 @@
 import { computeSidePoints, smooth, vector2, Vector2 } from "svg-variable-width-line";
 import { PenInput, PenStroke } from "../PenInput";
 
+const contrast = (n: number) => {
+  return Math.max(0.1, 1 - Math.pow(1 - n, 2))
+}
+
 const points2path = (points: ({x: number, y: number})[]) => {
   const [first, ...edges] = points
   const d = `M${first.x}, ${first.y} L` + edges.map(p => isNaN(p.x + p.y) ? '' : `${p.x}, ${p.y}`).join(' ') + ''
-  return new Path2D(d)
+  const path = new Path2D(d)
+  return path
 } 
 
 const splitStroke = (inputs: PenStroke): PenStroke[] => {
@@ -17,7 +22,7 @@ const splitStroke = (inputs: PenStroke): PenStroke[] => {
     const a2 = p3.point.sub(p2.point).angle;
 
     const angle = Math.abs(a1 - a2)
-    if (Math.abs(angle - 180) < 10) {
+    if (Math.abs(angle - 180) < 30) {
       return [inputs.slice(0, index), ...splitStroke(inputs.slice(index - 1))]
     }  
   }
@@ -29,7 +34,7 @@ const createPath = (inputs: PenInput[], thickness: number) => {
   const points = inputs.map(inp => ({
     x: inp.point.x,
     y: inp.point.y,
-    w: Math.max(1, inp.pressure * thickness)
+    w: Math.max(1, contrast(inp.pressure) * thickness)
   }))
   // const smoothedPoints = smooth(points, 3)
   // return new Path2D(compute(...smoothedPoints).d)

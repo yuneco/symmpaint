@@ -20,7 +20,6 @@ import { useDragEvent } from '../events/useDragEvent'
 import { PointsDist } from '../coords/PointsDist'
 import { TouchTransform, useTouchTransform } from '../events/useTouchTransform'
 import { getNextZoom } from '../events/zoomTable'
-import { PointerSmoother } from '../events/PointerSmoother'
 import { isSameArray } from '../misc/ArrayUtil'
 
 // Retina対応: 固定でx2
@@ -105,7 +104,7 @@ export class PaintCanvas {
   private _anchorChild = new Coordinate()
   private _penCount: [number, number] = [1, 0]
   private _isKaleido: [boolean, boolean] = [false, false]
-  private readonly smoother = new PointerSmoother()
+  //private readonly smoother = new PointerSmoother()
 
   /**
    * キャンバスを生成します
@@ -413,8 +412,7 @@ export class PaintCanvas {
     this.eventStatus.lastPoint = this.eventStatus.startPoint =
       this.event2viewPoint(ev)
     this.eventStatus.isCapturing = ev.metaKey
-    this.smoother.clear()
-
+    
     if (action === 'zoomup' || action === 'zoomdown') {
       const scale = this.coord.scale
       if (action === 'zoomup')
@@ -438,16 +436,16 @@ export class PaintCanvas {
   private onDrag(ev: PointerEvent, dist: PointsDist) {
     const action = this.eventStatus.activeEvent
     const viewP = this.event2viewPoint(ev)
-    const smoothedInp = this.smoother.add({
+    const inp = {
       point: viewP,
       pressure: ev.pressure,
-    })
+    }
     if (action === 'draw' || action === 'draw:line') {
-      this.continueStroke(smoothedInp.point, smoothedInp.pressure || 0.5)
-      this.eventStatus.lastPoint = smoothedInp.point
+      this.continueStroke(inp.point, inp.pressure || 0.5)
+      this.eventStatus.lastPoint = inp.point
     }
     if (action === 'draw:stamp' && this.stamp) {
-      const dp = smoothedInp.point.sub(this.eventStatus.startPoint)
+      const dp = inp.point.sub(this.eventStatus.startPoint)
       const stampScale = dp.length / 100
       this.putStroke(
         this.stamp,

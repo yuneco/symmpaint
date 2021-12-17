@@ -4,6 +4,6 @@ import { Point } from './coords/Point'
 import { ToolKeyWatcher } from './events/ToolKeyWatcher'
 
 const utils = {
-  ToolKeyWatcher
+  ToolKeyWatcher,
 }
 export { PaintCanvas, Coordinate, Point, utils }
