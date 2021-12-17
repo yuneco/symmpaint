@@ -577,8 +577,11 @@ export class PaintCanvas {
       'start'
     )
     const canvasPoint = this.view2canvasPos(viewPoint, 'start')
-    this.history.current?.addPoint(canvasPoint, pressure)
-    this.pen.drawTo(this.strokeCanvas, lastCanvasPoint, canvasPoint, pressure)
+    const stroke = this.history.current
+    if (!stroke) return
+    stroke.addPoint(canvasPoint, pressure)
+    clearCanvas(this.strokeCanvas)
+    this.pen.drawStrokes(this.strokeCanvas, [stroke.inputs])
     this.rePaint()
   }
 

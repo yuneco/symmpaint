@@ -1338,6 +1338,11 @@ supports-color@^7.1.0:
   dependencies:
     has-flag "^4.0.0"
 
+svg-variable-width-line@^0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/svg-variable-width-line/-/svg-variable-width-line-0.1.2.tgz#fc3021f5077bbf60cafdd099a818fdb0fc3aceb3"
+  integrity sha512-Lk4U09bsR7ieZEGd+m7tzOg2asXt5fgJUPQ8BpktKxK8zsz68lcvqkrdPCqscn5WhtZG/1tZpnOyOah9OdZL6g==
+
 text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"

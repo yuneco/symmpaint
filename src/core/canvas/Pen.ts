@@ -1,7 +1,8 @@
 import { Coordinate } from '../coords/Coordinate'
 import { Point, toPoint } from '../coords/Point'
 import { AbstractCanvas } from './AbstractCanvas'
-import { PenInput } from './PenInput'
+import { PenInput, PenStroke } from './PenInput'
+import { drawStrokesWithTransform } from './strokeFuncs/drawStrokesWithTransform'
 
 export type PenState = Readonly<{
   coord: Coordinate
@@ -89,29 +90,34 @@ export class Pen {
   }
 
   /** 指定の座標まで線を引きます */
-  drawTo(canvas: AbstractCanvas, p0: Point, p1: Point, pressure = 0.5) {
-    if (pressure <= 0) return
-    const ctx = canvas.ctx
-    // 先にdryrunで全ての子ペンから描画座標を取得する
-    const ps = [p0, p1]
-    const segments = this.dryRun([
-      { point: ps[0], pressure: 0 },
-      { point: ps[1], pressure },
-    ])
-    const baseWidth = ctx.lineWidth
-    const lineWidth = pressure * baseWidth
-    if (lineWidth < 1.0) return
+  // drawTo(canvas: AbstractCanvas, p0: Point, p1: Point, pressure = 0.5) {
+  //   if (pressure <= 0) return
+  //   const ctx = canvas.ctx
+  //   // 先にdryrunで全ての子ペンから描画座標を取得する
+  //   const ps = [p0, p1]
+  //   const segments = this.dryRun([
+  //     { point: ps[0], pressure: 0 },
+  //     { point: ps[1], pressure },
+  //   ])
+  //   const baseWidth = ctx.lineWidth
+  //   const lineWidth = pressure * baseWidth
+  //   if (lineWidth < 1.0) return
 
-    ctx.beginPath()
-    ctx.lineWidth = lineWidth 
-    segments.forEach(([start, end]) => {
-      if (!end) return
-      const [startP, endP] = [start.point, end.point]
-      ctx.moveTo(startP.x, startP.y)
-      ctx.lineTo(endP.x, endP.y)
-    })
-    ctx.stroke()
-    ctx.lineWidth = baseWidth
+  //   ctx.beginPath()
+  //   ctx.lineWidth = lineWidth 
+  //   segments.forEach(([start, end]) => {
+  //     if (!end) return
+  //     const [startP, endP] = [start.point, end.point]
+  //     ctx.moveTo(startP.x, startP.y)
+  //     ctx.lineTo(endP.x, endP.y)
+  //   })
+  //   ctx.stroke()
+  //   ctx.lineWidth = baseWidth
+  // }
+
+  drawStrokes(canvas: AbstractCanvas, strokes: PenStroke[]) {
+    const mxs = this.matrices(new DOMMatrix())
+    drawStrokesWithTransform(canvas.ctx, strokes, mxs)
   }
 
   /**
@@ -125,20 +131,23 @@ export class Pen {
       point,
       pressure,
     }))
-    const segments = this.dryRun(inps)
-    const baseWidth = ctx.lineWidth
 
-    ctx.beginPath()
-    ctx.lineWidth = baseWidth * pressure
-    segments.forEach((seg) => {
-      const [start, ...rests] = seg.map((inp) => inp.point)
-      ctx.moveTo(start.x, start.y)
-      rests.forEach((p) => {
-        ctx.lineTo(p.x, p.y)
-      })
-    })
-    ctx.stroke()
-    ctx.lineWidth = baseWidth
+    const mxs = this.matrices(new DOMMatrix())
+    drawStrokesWithTransform(ctx, [inps], mxs)
+
+    //const segments = this.dryRun(inps)
+    //const baseWidth = ctx.lineWidth
+    // ctx.beginPath()
+    // ctx.lineWidth = baseWidth * pressure
+    // segments.forEach((seg) => {
+    //   const [start, ...rests] = seg.map((inp) => inp.point)
+    //   ctx.moveTo(start.x, start.y)
+    //   rests.forEach((p) => {
+    //     ctx.lineTo(p.x, p.y)
+    //   })
+    // })
+    // ctx.stroke()
+    // ctx.lineWidth = baseWidth
   }
 
   /**

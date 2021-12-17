@@ -26,5 +26,7 @@
     "typescript": "^4.3.2",
     "vite": "^2.6.7"
   },
-  "dependencies": {}
+  "dependencies": {
+    "svg-variable-width-line": "^0.1.2"
+  }
 }
