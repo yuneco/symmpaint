@@ -8,7 +8,7 @@ export const replayPenStroke = (
   canvas: AbstractCanvas,
   stroke: StrokeRecord,
 ) => {
-  canvas.ctx.strokeStyle = stroke.style.color
+  canvas.ctx.fillStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize
   const pen = new Pen()
   pen.state = stroke.penState
