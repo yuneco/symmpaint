@@ -44,7 +44,7 @@ export const paintOutBorder = (canvas: AbstractCanvas): void => {
  * @param canvas
  * @param count 対称数
  */
-export const paintKaraidGrid = (
+export const paintKaleidoGrid = (
   canvas: AbstractCanvas,
   count: number,
   isKaleido: boolean,

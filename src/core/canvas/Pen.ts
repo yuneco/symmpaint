@@ -59,6 +59,12 @@ export class Pen {
     return this.children.flatMap((ch) => ch.leafs)
   }
 
+  clone() {
+    const pen = new Pen()
+    pen.state = this.state
+    return pen
+  }
+
   childAt(index: number): Pen | undefined {
     return this.children[index]
   }

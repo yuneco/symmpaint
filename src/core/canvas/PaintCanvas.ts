@@ -1,24 +1,20 @@
 import { AbstractCanvas } from './AbstractCanvas'
 import { Coordinate } from '../coords/Coordinate'
 import { PaintEvent } from '../events/PaintEvent'
-import {
-  clearCanvas,
-  fillCanvas,
-  paintKaraidGrid,
-} from './strokeFuncs/canvasPaintFuncs'
+import { clearCanvas, fillCanvas } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
-import { CanvasToolName } from './CanvasToolName'
 import { CanvasHistory } from './CanvasHistory'
 import { Pen } from './Pen'
 import { StrokeStyle } from './StrokeStyle'
-import { StrokeRecord } from './StrokeRecord'
 import { cursorForTool } from '../events/cursorForTool'
 import { useDragEvent } from '../events/useDragEvent'
 import { TouchTransform, useTouchTransform } from '../events/useTouchTransform'
 import { isSameArray } from '../misc/ArrayUtil'
-import { StrokeState, useStrokeTools } from './toolFuncs/useStrokeTools'
+import { StrokeState, useStrokeTools } from './canvasFuncs/useStrokeTools'
 import { CanvasEventParm, PaintCanvasEvent } from './PaintCanvasEvent'
 import { createPen } from './penFuncs/createPen'
+import { PaintCanvasSetting } from './PaintCanvasSetting'
+import { paintCanvasKaleidoAnchor } from './canvasFuncs/paintCanvasKaleidoAnchor'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -26,6 +22,7 @@ const RESOLUTION = 2 //window.devicePixelRatio
 /** カーソル移動を検出する最低距離(px) */
 const MIN_CURSOR_MOVE = 3.5
 
+// ペンのモードごとの合成モード
 const PENKIND2COMPOSITION = {
   normal: '',
   eraser: 'destination-out',
@@ -55,17 +52,22 @@ export class PaintCanvas {
     requestAnchorReset: new PaintEvent(),
   } as const
 
-  readonly pen: Pen = new Pen()
-  style: StrokeStyle = new StrokeStyle()
-  stamp?: StrokeRecord
-  private _tool: CanvasToolName = 'draw'
-  private _backgroundColor = '#ffffff'
-  private _anchor: [Coordinate, Coordinate] = [
-    new Coordinate(),
-    new Coordinate(),
-  ]
-  private _penCount: [number, number] = [1, 0]
-  private _isKaleido: [boolean, boolean] = [false, false]
+  // キャンバスの設定
+  private setting: PaintCanvasSetting = {
+    style: new StrokeStyle(),
+    stamp: undefined,
+    tool: 'draw',
+    backgroundColor: '#ffffff',
+    anchor: [new Coordinate(), new Coordinate()],
+    penCount: [1, 0],
+    isKaleido: [false, false],
+  }
+
+  /**
+   * 描画用のペン
+   * キャンバスの設定を変更した際はrebuildPenで再生成してください
+   */
+  private readonly pen: Pen = new Pen()
 
   /**
    * キャンバスを生成します
@@ -150,6 +152,10 @@ export class PaintCanvas {
     this.clear(false)
   }
 
+  get canvasPen() {
+    return this.pen.clone()
+  }
+
   get coord() {
     return this.canvas.coord
   }
@@ -160,31 +166,31 @@ export class PaintCanvas {
   }
 
   get tool() {
-    return this._tool
+    return this.setting.tool
   }
 
   set tool(v) {
-    this._tool = v
+    this.setting.tool = v
     this.view.el.style.cursor = cursorForTool(v)
   }
 
   get isKaleido(): [boolean, boolean] {
-    return [...this._isKaleido]
+    return [...this.setting.isKaleido]
   }
 
   set isKaleido(v) {
     if (isSameArray(this.isKaleido, v)) return
-    this._isKaleido = [...v]
+    this.setting.isKaleido = [...v]
     this.rebuildPen()
     this.rePaint()
   }
 
   get penCount(): [number, number] {
-    return this._penCount
+    return this.setting.penCount
   }
   set penCount(count) {
     if (isSameArray(this.penCount, count)) return
-    this._penCount = [...count]
+    this.setting.penCount = [...count]
     this.rebuildPen()
     this.rePaint()
   }
@@ -194,56 +200,62 @@ export class PaintCanvas {
   }
 
   set penWidth(v: number) {
-    this.style = this.style.clone({ penSize: v })
+    this.setting.style = this.setting.style.clone({ penSize: v })
   }
 
   set penColor(v: string) {
-    this.style = this.style.clone({ color: v })
+    this.setting.style = this.setting.style.clone({ color: v })
   }
 
   set penAlpha(v: number) {
-    this.style = this.style.clone({ alpha: v })
+    this.setting.style = this.setting.style.clone({ alpha: v })
   }
 
   get penKind(): 'normal' | 'eraser' {
-    const comp = this.style.composition
+    const comp = this.setting.style.composition
     return comp === '' ? 'normal' : 'eraser'
   }
 
   set penKind(v: 'normal' | 'eraser') {
-    this.style = this.style.clone({ composition: PENKIND2COMPOSITION[v] })
+    this.setting.style = this.setting.style.clone({
+      composition: PENKIND2COMPOSITION[v],
+    })
   }
 
-  get hasStamp() {
-    return !!this.stamp
+  get stamp() {
+    return this.setting.stamp
+  }
+
+  set stamp(v) {
+    this.setting.stamp = v
   }
 
   get backgroundColor() {
-    return this._backgroundColor
+    return this.setting.backgroundColor
   }
 
   set backgroundColor(v) {
-    if (this._backgroundColor === v) return
-    this._backgroundColor = v
+    if (this.setting.backgroundColor === v) return
+    this.setting.backgroundColor = v
     this.rePaint()
   }
 
   get anchor(): Coordinate {
-    return this._anchor[0]
+    return this.setting.anchor[0]
   }
 
   set anchor(v: Coordinate) {
-    this._anchor[0] = v
+    this.setting.anchor[0] = v
     this.rebuildPen()
     this.rePaint()
   }
 
   get childAnchor(): Coordinate {
-    return this._anchor[1]
+    return this.setting.anchor[1]
   }
 
   set childAnchor(v) {
-    this._anchor[1] = v
+    this.setting.anchor[1] = v
     this.rebuildPen()
     this.rePaint()
   }
@@ -256,11 +268,15 @@ export class PaintCanvas {
     this[this.hasSubPen ? 'childAnchor' : 'anchor'] = v
   }
 
+  get style() {
+    return this.setting.style
+  }
+
   private rebuildPen() {
     this.pen.state = createPen(
-      this._penCount,
-      this._anchor,
-      this._isKaleido
+      this.setting.penCount,
+      this.setting.anchor,
+      this.setting.isKaleido
     ).state
   }
 
@@ -301,7 +317,12 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(isSaveHistory = true) {
     if (isSaveHistory) {
-      this.history.start(this.coord, this.pen.state, this.style, 'clearAll')
+      this.history.start(
+        this.coord,
+        this.pen.state,
+        this.setting.style,
+        'clearAll'
+      )
       this.history.commit(this.canvas)
     }
     clearCanvas(this.canvas)
@@ -317,7 +338,7 @@ export class PaintCanvas {
   }
 
   startHistory() {
-    return this.history.start(this.coord, this.pen.state, this.style)
+    return this.history.start(this.coord, this.pen.state, this.setting.style)
   }
 
   endHistory(commit: boolean, strokeCanvas?: AbstractCanvas) {
@@ -327,8 +348,8 @@ export class PaintCanvas {
     }
     this.history.commit(this.canvas)
     strokeCanvas?.copy(this.canvas.ctx, {
-      alpha: this.style.alpha,
-      composition: this.style.composition,
+      alpha: this.setting.style.alpha,
+      composition: this.setting.style.composition,
     })
     this.rePaint()
   }
@@ -424,47 +445,21 @@ export class PaintCanvas {
     )
   }
 
-  private paintGrid() {
-    const [countParent, countChild] = this.penCount
-    const [hasParentGrid, hasChildGrid] = [countParent >= 2, countChild >= 2]
-    if (hasParentGrid) {
-      // root coord
-      paintKaraidGrid(
-        this.view,
-        countParent * (this.isKaleido[0] ? 2 : 1),
-        this.isKaleido[0],
-        new Coordinate({
-          scroll: this.coord.scroll.invert
-            .move(this.anchor.scroll)
-            .scale(this.canvas.coord.scale)
-            .rotate(this.coord.angle),
-          angle: this.coord.angle + this.anchor.angle,
-        }),
-        hasChildGrid ? '#cccccc' : undefined
-      )
-    }
-    if (hasChildGrid) {
-      // child coord
-      paintKaraidGrid(
-        this.view,
-        countChild * (this.isKaleido[1] ? 2 : 1),
-        this.isKaleido[1],
-        new Coordinate({
-          scroll: this.coord.scroll.invert
-            .move(this.childAnchor.scroll)
-            .scale(this.canvas.coord.scale)
-            .rotate(this.coord.angle),
-          angle: this.coord.angle + this.anchor.angle + this.childAnchor.angle,
-        }),
-        '#eeaabb'
-      )
-    }
-  }
-
+  private rePaintRequestId = 0
   rePaint(customPaint?: (ctx: CanvasRenderingContext2D) => void) {
-    fillCanvas(this.view, '#cccccc')
-    this.canvas.output(this.view.ctx, { background: this.backgroundColor })
-    customPaint?.(this.view.ctx)
-    this.paintGrid()
+    cancelAnimationFrame(this.rePaintRequestId)
+    this.rePaintRequestId = requestAnimationFrame(() => {
+      this.rePaintRequestId = 0
+      fillCanvas(this.view, '#cccccc')
+      this.canvas.output(this.view.ctx, { background: this.backgroundColor })
+      customPaint?.(this.view.ctx)
+      paintCanvasKaleidoAnchor(
+        this.view,
+        this.coord,
+        this.setting.anchor,
+        this.isKaleido,
+        this.penCount
+      )
+    })
   }
 }

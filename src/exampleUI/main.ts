@@ -92,7 +92,7 @@ setting.onDrawingAlphaChange.listen((alpha) => {
 })
 setting.onToolChange.listen((tool) => {
   canvas.tool = tool
-  if (tool === 'draw:stamp' && !canvas.hasStamp) {
+  if (tool === 'draw:stamp' && !canvas.stamp) {
     const msg = {
       ja: 'スタンプを使用するには、先にCommand(Ctrl)を押しながら線を引いてスタンプを記録します',
       en: 'Before using stamp, draw with Command(Ctrl) key for record a stroke.',

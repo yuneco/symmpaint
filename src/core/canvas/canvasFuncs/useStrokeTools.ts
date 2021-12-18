@@ -13,8 +13,6 @@ import { replayPenStroke } from '../strokeFuncs/replayStrokes'
 import { StrokeRecord } from '../StrokeRecord'
 
 type EventStatus = {
-  /** ストローク用の一時キャンバスが有効か？ */
-  isUseStrokeCanvas: boolean
   /** 現在のストロークで実行中の操作 */
   activeEvent: CanvasToolName | undefined
   /** 現在のストローク開始時の座標系（スクロールや回転で使用） */
@@ -27,10 +25,10 @@ type EventStatus = {
   lastPoint: Point
   /** スタンプのキャプチャーモードか？ */
   isCapturing: boolean
-  /** マルチタッチ操作中か？ */
-  isInMultiTouch: boolean
   /** 履歴の現在のストローク */
   currentStroke: StrokeRecord | undefined
+  /** 現在のストローク用のペン */
+  pen: Pen
 }
 
 /** 移動の対象 */
@@ -61,15 +59,14 @@ export type StrokeState = {
 export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
   let enabled = true
   const eventStatus: EventStatus = {
-    isUseStrokeCanvas: false,
     activeEvent: undefined,
     startCoord: new Coordinate(),
     startAnchor: [new Coordinate(), new Coordinate()],
     startPoint: new Point(),
     lastPoint: new Point(),
     isCapturing: false,
-    isInMultiTouch: false,
     currentStroke: undefined,
+    pen: new Pen()
   }
 
   const strokeCanvas = new AbstractCanvas(
@@ -84,14 +81,21 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     )
   }
 
-  const onDown = (ev: PointerEvent): boolean => {
-    if (!enabled) return false
+  const resetEventStatus = (ev: PointerEvent) => {
     const action = canvas.tool
     eventStatus.activeEvent = action
     eventStatus.startCoord = canvas.coord
     eventStatus.startAnchor = [canvas.anchor, canvas.childAnchor]
     eventStatus.lastPoint = eventStatus.startPoint = event2viewPoint(ev)
     eventStatus.isCapturing = ev.metaKey
+    eventStatus.pen = canvas.canvasPen
+    eventStatus.currentStroke = undefined
+  }
+
+  const onDown = (ev: PointerEvent): boolean => {
+    if (!enabled) return false
+    const action = canvas.tool
+    resetEventStatus(ev)
 
     if (action === 'zoomup' || action === 'zoomdown') {
       const scale = canvas.coord.scale
@@ -200,9 +204,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
    */
   const startStroke = (viewPoint: Point) => {
     const canvasPoint = canvas.view2canvasPos(viewPoint, 'start')
-    // 一時キャンバスを有効にしてに座標系を同期
-    eventStatus.isUseStrokeCanvas = true
-    strokeCanvas.coord = new Coordinate() //canvas.canvas.coord
+    strokeCanvas.coord = new Coordinate()
     strokeCanvas.ctx.lineWidth = canvas.style.penSize
 
     const penColor = () => {
@@ -233,9 +235,9 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       const start = { point: stroke.inputs[0].point, pressure }
       const last = stroke.inputs[stroke.inputs.length - 1]
       const inps = [start, last, last]
-      canvas.pen.drawStrokes(strokeCanvas, [inps])
+      eventStatus.pen.drawStrokes(strokeCanvas, [inps])
     } else {
-      canvas.pen.drawStrokes(strokeCanvas, [stroke.inputs])
+      eventStatus.pen.drawStrokes(strokeCanvas, [stroke.inputs])
     }
     rePaint()
   }
@@ -247,7 +249,6 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
   const endStroke = (commitStroke: boolean) => {
     canvas.endHistory(commitStroke, strokeCanvas)
     clearCanvas(strokeCanvas)
-    eventStatus.isUseStrokeCanvas = false
     eventStatus.activeEvent = undefined
   }
 
@@ -267,7 +268,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     isPreview: boolean
   ) => {
     const pen = new Pen()
-    pen.state = canvas.pen.state
+    pen.state = eventStatus.pen.state
 
     const previewStyle = canvas.style.clone({
       color:
