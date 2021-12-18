@@ -117,11 +117,14 @@ export class CanvasHistory {
     return this.history.length > this.oldestSnapshotIndex
   }
 
-  undo(output: AbstractCanvas, strokeCanvas: AbstractCanvas): boolean {
+  undo(output: AbstractCanvas): boolean {
     if (!this.undoable) {
       console.log('no more history')
       return false
     }
+
+    const tempCanvas = new AbstractCanvas(output.width, output.height)
+
     output.ctx.save()
     const snap = this.snapshot
     if (snap) {
@@ -132,7 +135,7 @@ export class CanvasHistory {
     }
 
     this.history.pop() // 最後の一つを捨てる
-    replayStrokes(output, strokeCanvas, this.lastHistories)
+    replayStrokes(output, tempCanvas, this.lastHistories)
 
     if (!this.lastHistories.length && this.snapshots.length >= 1) {
       const sp = this.snapshots.pop()

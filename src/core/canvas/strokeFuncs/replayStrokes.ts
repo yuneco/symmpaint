@@ -8,12 +8,13 @@ export const replayPenStroke = (
   canvas: AbstractCanvas,
   stroke: StrokeRecord,
 ) => {
+  canvas.ctx.save()
   canvas.ctx.fillStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize
   const pen = new Pen()
   pen.state = stroke.penState
   pen.drawStrokes(canvas, splitStoke(stroke.inputs))
-
+  canvas.ctx.restore()
 }
 
 export const replayCelarAllStroke = (canvas: AbstractCanvas) => {
