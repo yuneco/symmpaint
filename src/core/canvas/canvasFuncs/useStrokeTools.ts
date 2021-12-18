@@ -124,11 +124,13 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       pressure: ev.pressure,
     }
     if (action === 'draw' || action === 'draw:line') {
+      clearCanvas(strokeCanvas)
       continueStroke(inp.point, inp.pressure || 0.5)
     }
     if (action === 'draw:stamp' && canvas.stamp) {
       const dp = inp.point.sub(eventStatus.startPoint)
       const stampScale = dp.length / 100
+      clearCanvas(strokeCanvas)
       putStroke(
         canvas.stamp,
         eventStatus.startPoint,
@@ -230,7 +232,6 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     const stroke = eventStatus.currentStroke
     if (!stroke) return
     stroke.addPoint(canvasPoint, pressure)
-    clearCanvas(strokeCanvas)
     if (action === 'draw:line') {
       const start = { point: stroke.inputs[0].point, pressure }
       const last = stroke.inputs[stroke.inputs.length - 1]
