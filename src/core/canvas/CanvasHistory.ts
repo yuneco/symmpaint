@@ -53,7 +53,10 @@ export class CanvasHistory {
     this.snapshots.push(snap)
     const prev = this.prevSnapshot
     if (prev) {
+      snap.ctx.save()
+      snap.ctx.resetTransform()
       snap.ctx.drawImage(prev.el, 0, 0)
+      snap.ctx.restore()
     }
 
     const debugBox = document.querySelector('#debug .history .snaps')
@@ -128,10 +131,10 @@ export class CanvasHistory {
     output.ctx.save()
     const snap = this.snapshot
     if (snap) {
+      output.ctx.save()
       output.ctx.resetTransform()
       output.ctx.drawImage(snap.el, 0, 0)
-    } else {
-      console.log('no prev')
+      output.ctx.restore()
     }
 
     this.history.pop() // 最後の一つを捨てる
