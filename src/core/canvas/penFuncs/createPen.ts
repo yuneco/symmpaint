@@ -1,25 +1,32 @@
-import { Coordinate } from "../.."
-import { Pen } from "../Pen"
+import { Coordinate } from '../..'
+import { Pen } from '../Pen'
 
 const relativeChildAnchor = (anchor: [Coordinate, Coordinate]): Coordinate => {
   return new Coordinate({
-    scroll: anchor[1].scroll
-      .sub(anchor[0].scroll)
-      .rotate(-anchor[0].angle),
+    scroll: anchor[1].scroll.sub(anchor[0].scroll).rotate(-anchor[0].angle),
     angle: anchor[1].angle,
   })
 }
 
-export const createPen = (count: [number, number], anchor: [Coordinate, Coordinate], isKaleido: [boolean, boolean]) => {
+export const createPen = (
+  count: [number, number],
+  anchor: [Coordinate, Coordinate],
+  isKaleido: [boolean, boolean]
+) => {
   const root = new Pen()
   const [pKaleido, cKaleido] = isKaleido
   const [pCount, cCount] = [
     count[0] * (pKaleido ? 2 : 1),
     count[1] * (cKaleido ? 2 : 1),
   ]
-  const relativeAnchor = relativeChildAnchor(anchor)
 
-  root.coord = anchor[0]
+  // 最初のペンと最後のペンの真ん中が0度になるよう、ルートの軸を360/親ペン数/2だけずらす
+  const pAnchor = anchor[0].clone({ angle: anchor[0].angle + 360 / pCount / 2 })
+  const cAnchor = anchor[1]
+  // ずらした軸を基準に子アンカーの相対位置を求める
+  const relativeAnchor = relativeChildAnchor([pAnchor, cAnchor])
+
+  root.coord = pAnchor
   for (let penNo = 0; penNo < pCount; penNo++) {
     const isFlip = pKaleido && penNo % 2 !== 0
     const child = root.addChildPen(
@@ -43,5 +50,6 @@ export const createPen = (count: [number, number], anchor: [Coordinate, Coordina
     }
   }
 
+  console.log(root.state)
   return root
 }

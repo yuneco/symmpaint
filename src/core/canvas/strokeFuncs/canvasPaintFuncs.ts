@@ -62,7 +62,7 @@ export const paintKaleidoGrid = (
   canvas.ctx.translate(scroll.x, scroll.y)
   canvas.ctx.rotate(a2r(coord.angle))
   canvas.ctx.lineWidth = 1
-  canvas.ctx.rotate(a2r(-90 + 360 / count / 2))
+//  canvas.ctx.rotate(a2r(-90 + 360 / count / 2))
   for (let index = 0; index < count; index++) {
     const isSubLine = isKaleido && index % 2 !== 0
     canvas.ctx.strokeStyle = isSubLine ? colSub : colMain
