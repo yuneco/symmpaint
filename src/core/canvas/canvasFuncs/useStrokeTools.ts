@@ -118,9 +118,8 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
   const onDrag = (ev: PointerEvent, dist: PointsDist) => {
     if (!enabled) return
     const action = eventStatus.activeEvent
-    const viewP = event2viewPoint(ev)
     const inp = {
-      point: viewP,
+      point: event2viewPoint(ev),
       pressure: ev.pressure,
     }
     if (action === 'draw' || action === 'draw:line') {
@@ -151,27 +150,30 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
   const onUp = (ev: PointerEvent, dist: PointsDist) => {
     if (!enabled) return
     const action = eventStatus.activeEvent
-    const canvasP = event2viewPoint(ev)
+    const inp = {
+      point: event2viewPoint(ev),
+      pressure: ev.pressure,
+    }
     const hasPaint =
       action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
     if (action === 'draw') {
-      continueStroke(canvasP, ev.pressure || 0)
+      continueStroke(inp.point, ev.pressure || 0)
     }
     if (action === 'draw:line') {
       clearCanvas(strokeCanvas)
       const current = eventStatus.currentStroke
       const pressure = current ? getStrokeEndPressure(current.inputs) : 0.5
-      continueStroke(canvasP, pressure)
+      continueStroke(inp.point, pressure)
       if (current) {
+        const last = current.inputs[current.inputs.length - 1]
         current.inputs.length = 1
         current.inputs[0].pressure = pressure
-        const last = { point: canvasP, pressure }
         current.inputs.push(last, last)
       }
     }
     if (action === 'draw:stamp' && canvas.stamp) {
       clearCanvas(strokeCanvas)
-      const dp = canvasP.sub(eventStatus.startPoint)
+      const dp = inp.point.sub(eventStatus.startPoint)
       const stampScale = dp.length / 100
       putStroke(
         canvas.stamp,
