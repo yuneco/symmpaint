@@ -2,7 +2,7 @@ import { Coordinate } from "../.."
 import { AbstractCanvas } from "../AbstractCanvas"
 import { paintKaleidoGrid } from "../strokeFuncs/canvasPaintFuncs"
 
-export const  paintCanvasKaleidoAnchor = (view: AbstractCanvas, coord: Coordinate, anchor: [Coordinate, Coordinate], isKaleido: [boolean, boolean], penCount: [number, number]) => {
+export const  paintCanvasKaleidoAnchor = (view: AbstractCanvas, coord: Coordinate, anchor: [Coordinate, Coordinate], isKaleido: [boolean, boolean], penCount: [number, number], color: [string, string]) => {
   const [countParent, countChild] = penCount
   const [hasParentGrid, hasChildGrid] = [countParent >= 2, countChild >= 2]
   if (hasParentGrid) {
@@ -18,7 +18,7 @@ export const  paintCanvasKaleidoAnchor = (view: AbstractCanvas, coord: Coordinat
           .rotate(coord.angle),
         angle: coord.angle + anchor[0].angle,
       }),
-      hasChildGrid ? '#cccccc' : undefined
+      hasChildGrid ? '#cccccc' : color[0]
     )
   }
   if (hasChildGrid) {
@@ -34,7 +34,7 @@ export const  paintCanvasKaleidoAnchor = (view: AbstractCanvas, coord: Coordinat
           .rotate(coord.angle),
         angle: coord.angle + anchor[0].angle + anchor[1].angle,
       }),
-      '#eeaabb'
+      color[1]
     )
   }
 }

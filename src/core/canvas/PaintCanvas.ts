@@ -61,6 +61,7 @@ export class PaintCanvas {
     anchor: [new Coordinate(), new Coordinate()],
     penCount: [1, 0],
     isKaleido: [false, false],
+    anchorColor: ['#91bccc', '#eeaabb']
   }
 
   /**
@@ -272,6 +273,14 @@ export class PaintCanvas {
     return this.setting.style
   }
 
+  get anchorColor(): [string, string] {
+    return [...this.setting.anchorColor]
+  }
+
+  set anchorColor(v) {
+    this.setting.anchorColor = [...v]
+  }
+
   private rebuildPen() {
     this.pen.state = createPen(
       this.setting.penCount,
@@ -360,6 +369,11 @@ export class PaintCanvas {
     })
   }
 
+  /**
+   * ビュー座標→実キャンバス座標 の変換を行います
+   * ビュー座標 : 表示用のキャンバスの座標系。中心が0,0
+   * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
+   */
   view2canvasPos = (vp: Point, coordType: 'start' | 'current'): Point => {
     const coord =
       coordType === 'start' ? this.strokeState.startCoord : this.coord
@@ -369,6 +383,11 @@ export class PaintCanvas {
       .move(coord.scroll)
     return cp
   }
+  /**
+   * 実キャンバス座標→ビュー座標 の変換を行います
+   * ビュー座標 : 表示用のキャンバスの座標系。中心が0,0
+   * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
+   */
   canvas2viewPos = (cp: Point, coordType: 'start' | 'current'): Point => {
     const coord =
       coordType === 'start' ? this.strokeState.startCoord : this.coord
@@ -378,10 +397,26 @@ export class PaintCanvas {
       .scale(coord.scale)
     return vp
   }
+  /** 
+   * 実キャンバス→画面座標 の変換を行います
+   * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
+   * 画面座標 : 画面表示されるキャンバスの左上を0,0とした座標
+   */
   canvas2displayPos = (cp: Point, coordType: 'start' | 'current'): Point => {
     return this.canvas2viewPos(cp, coordType)
       .move(new Point(this.width, this.height))
       .scale(1 / RESOLUTION)
+  }
+  /** 
+   * 画面座標→実キャンバス の変換を行います
+   * 画面座標 : 画面表示されるキャンバスの左上を0,0とした座標
+   * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
+   */
+  display2canvasPos = (dp: Point, coordType: 'start' | 'current'): Point => {
+    return this.canvas2viewPos(
+      dp.scale(RESOLUTION).move(new Point(-this.width, -this.height)),
+      coordType
+    )
   }
 
   private onTouchTramsformCanvas(transform: TouchTransform) {
@@ -458,7 +493,8 @@ export class PaintCanvas {
         this.coord,
         this.setting.anchor,
         this.isKaleido,
-        this.penCount
+        this.penCount,
+        this.setting.anchorColor
       )
     })
   }
