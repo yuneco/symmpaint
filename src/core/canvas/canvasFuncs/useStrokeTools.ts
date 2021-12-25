@@ -87,7 +87,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     eventStatus.startCoord = canvas.coord
     eventStatus.startAnchor = [canvas.anchor, canvas.childAnchor]
     eventStatus.lastPoint = eventStatus.startPoint = event2viewPoint(ev)
-    eventStatus.isCapturing = ev.metaKey
+    eventStatus.isCapturing = canvas.enableCapture && ev.metaKey
     eventStatus.pen = canvas.canvasPen
     eventStatus.currentStroke = undefined
   }

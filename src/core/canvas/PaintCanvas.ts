@@ -63,7 +63,8 @@ export class PaintCanvas {
     anchor: [new Coordinate(), new Coordinate()],
     penCount: [1, 0],
     isKaleido: [false, false],
-    anchorColor: ['#91bccc', '#eeaabb']
+    anchorColor: ['#91bccc', '#eeaabb'],
+    enableCapure: true
   }
 
   /**
@@ -288,6 +289,14 @@ export class PaintCanvas {
 
   set anchorColor(v) {
     this.setting.anchorColor = [...v]
+  }
+
+  get enableCapture() {
+    return this.setting.enableCapure
+  }
+
+  set enableCapture(v) {
+    this.setting.enableCapure = v
   }
 
   private rebuildPen() {

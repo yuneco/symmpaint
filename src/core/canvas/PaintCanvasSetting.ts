@@ -12,4 +12,5 @@ export type PaintCanvasSetting = {
   isKaleido: [boolean, boolean]
   stamp: StrokeRecord | undefined
   anchorColor: [string, string]
+  enableCapure: boolean
 }
