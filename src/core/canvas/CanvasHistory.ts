@@ -12,7 +12,9 @@ const STROKES_PER_SNAPSHOT = 10
 export class CanvasHistory {
   private readonly canvasWidth: number
   private readonly canvasHeight: number
+  // ストロークの履歴自体は無制限に記録する
   private readonly history = new LimittedStack<StrokeRecord>(Infinity)
+  // スナップショットはメモリ使用量が多いので上限を設ける
   private readonly snapshots = new LimittedStack<AbstractCanvas>(
     MAXSTROKE / STROKES_PER_SNAPSHOT
   )
@@ -31,6 +33,11 @@ export class CanvasHistory {
     })
   }
 
+  /** Undo可能な履歴の数 */
+  get length() {
+    return this.history.length - this.oldestSnapshotIndex
+  }
+
   get strokes() {
     return this.history.peek()
   }
@@ -47,6 +54,16 @@ export class CanvasHistory {
     const items = this.history.getItems()
     return items.slice(this.lastSnapshotIndex)
   }
+
+  get current() {
+    return this.currentStroke
+  }
+
+  get undoable() {
+    return this.length >= 1
+    // return this.history.length > this.oldestSnapshotIndex
+  }
+
 
   addSnapshot() {
     const snap = new AbstractCanvas(this.canvasWidth, this.canvasHeight)
@@ -110,14 +127,6 @@ export class CanvasHistory {
     if (!this.currentStroke) return
     // console.log('stroke rollbacked')
     this.currentStroke = undefined
-  }
-
-  get current() {
-    return this.currentStroke
-  }
-
-  get undoable() {
-    return this.history.length > this.oldestSnapshotIndex
   }
 
   undo(output: AbstractCanvas): boolean {

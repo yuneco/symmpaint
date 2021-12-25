@@ -299,6 +299,10 @@ export class PaintCanvas {
     this.setting.enableCapure = v
   }
 
+  get historyCount() {
+    return this.history.length
+  }
+
   private rebuildPen() {
     this.pen.state = createPen(
       this.setting.penCount,
