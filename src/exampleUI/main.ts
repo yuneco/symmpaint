@@ -139,6 +139,12 @@ canvas.listenRequestAnchorReset(() => {
   canvas.anchor = new Coordinate()
   resetAnchorAngle()
 })
+canvas.listenStrokeStart(() => {
+  console.log('start stroke')
+})
+canvas.listenStrokeEnd(() => {
+  console.log('end stroke')
+})
 
 // キー操作でツール設定を変更
 window.addEventListener('keydown', (ev) => {

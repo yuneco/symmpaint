@@ -147,8 +147,8 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     ev.preventDefault()
   }
 
-  const onUp = (ev: PointerEvent, dist: PointsDist) => {
-    if (!enabled) return
+  const onUp = (ev: PointerEvent, dist: PointsDist): boolean => {
+    if (!enabled) return false
     const action = eventStatus.activeEvent
     const inp = {
       point: event2viewPoint(ev),
@@ -191,7 +191,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       canvas.stamp = eventStatus.currentStroke?.flatten
       endStroke(false)
       rePaint()
-      return
+      return false
     }
 
     if (action === 'scroll') onScroll(dist, 'canvas')
@@ -200,6 +200,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     if (action === 'rotate:anchor') onRotate(dist, 'anchor')
 
     endStroke(hasPaint)
+    return true
   }
 
   /**

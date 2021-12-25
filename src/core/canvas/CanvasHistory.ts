@@ -27,7 +27,7 @@ export class CanvasHistory {
     this.canvasHeight = canvasHeight
     this.snapshots.listenOverflow(() => {
       this.oldestSnapshotIndex += STROKES_PER_SNAPSHOT
-      console.log(`oldestSnapshotIndex: ${this.oldestSnapshotIndex}`)
+      // console.log(`oldestSnapshotIndex: ${this.oldestSnapshotIndex}`)
     })
   }
 
@@ -97,7 +97,7 @@ export class CanvasHistory {
         return
       }
       canvas.copy(this.snapshot.ctx, { alpha: this.currentStroke.style.alpha })
-      console.log('new snapshot', this.snapshots.length)
+      // console.log('new snapshot', this.snapshots.length)
     }
 
     this.currentStroke = undefined
@@ -108,7 +108,7 @@ export class CanvasHistory {
    */
   rollback() {
     if (!this.currentStroke) return
-    console.log('stroke rollbacked')
+    // console.log('stroke rollbacked')
     this.currentStroke = undefined
   }
 
@@ -122,7 +122,7 @@ export class CanvasHistory {
 
   undo(output: AbstractCanvas): boolean {
     if (!this.undoable) {
-      console.log('no more history')
+      // console.log('no history to undo')
       return false
     }
 
@@ -144,7 +144,7 @@ export class CanvasHistory {
       const sp = this.snapshots.pop()
       sp && sp.el.parentNode?.removeChild(sp.el)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
-      console.log('back prev snap', this.snapshots.length, this.snapshots)
+      // console.log('back prev snap', this.snapshots.length, this.snapshots)
     }
     output.ctx.restore()
     return true

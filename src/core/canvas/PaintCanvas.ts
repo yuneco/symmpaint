@@ -50,6 +50,8 @@ export class PaintCanvas {
     requestUndo: new PaintEvent(),
     requestAnchorTransform: new PaintEvent(),
     requestAnchorReset: new PaintEvent(),
+    strokeStart: new PaintEvent(),
+    strokeEnd: new PaintEvent(),
   } as const
 
   // キャンバスの設定
@@ -138,9 +140,16 @@ export class PaintCanvas {
     // キャンバス上のマウスイベントを初期化
     useDragEvent(
       this.view.el,
-      (ev) => stroke.onDown(ev),
+      (ev) => {
+        const onStarted = stroke.onDown(ev)
+        if (onStarted) this.events.strokeStart.fire()
+        return onStarted
+      },
       (ev, dist) => stroke.onDrag(ev, dist),
-      (ev, dist) => stroke.onUp(ev, dist),
+      (ev, dist) => {
+        const isPainted = stroke.onUp(ev, dist)
+        this.events.strokeEnd.fire(isPainted)
+      },
       () =>
         this.tool === 'scroll:anchor' || this.tool === 'rotate:anchor'
           ? this.canvas2displayPos(this.activeAnchor.scroll, 'start')
@@ -321,6 +330,19 @@ export class PaintCanvas {
     fn: (p: CanvasEventParm<'requestAnchorReset'>) => void
   ) {
     this.events['requestAnchorReset'].listen(fn)
+  }
+
+  /** ストローク開始時のイベントハンドラ */
+  listenStrokeStart(
+    fn: (p: CanvasEventParm<'strokeStart'>) => void
+  ) {
+    this.events['strokeStart'].listen(fn)
+  }
+  /** ストローク終了時のイベントハンドラ */
+  listenStrokeEnd(
+    fn: (p: CanvasEventParm<'strokeEnd'>) => void
+  ) {
+    this.events['strokeEnd'].listen(fn)
   }
 
   /** キャンバスをクリアします */

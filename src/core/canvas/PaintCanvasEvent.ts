@@ -17,6 +17,8 @@ export type PaintCanvasEvent = {
   requestUndo: PaintEvent<void>
   requestAnchorTransform: PaintEvent<Coordinate>
   requestAnchorReset: PaintEvent<void>
+  strokeStart: PaintEvent<void>
+  strokeEnd: PaintEvent<boolean>
 }
 type EventParm<T> = T extends PaintEvent<infer U> ? U : never
 export type CanvasEventParm<K extends keyof PaintCanvasEvent> = EventParm<PaintCanvasEvent[K]>

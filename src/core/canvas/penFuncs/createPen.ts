@@ -51,6 +51,5 @@ export const createPen = (
     }
   }
 
-  console.log(root.state)
   return root
 }
