@@ -147,8 +147,8 @@ export class PaintCanvas {
         return onStarted
       },
       (ev, dist) => stroke.onDrag(ev, dist),
-      (ev, dist) => {
-        const isPainted = stroke.onUp(ev, dist)
+      (ev, dist, isCommit) => {
+        const isPainted = stroke.onUp(ev, dist, !isCommit)
         this.events.strokeEnd.fire(isPainted)
       },
       () =>

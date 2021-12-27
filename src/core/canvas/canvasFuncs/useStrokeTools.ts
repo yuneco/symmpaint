@@ -147,8 +147,14 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     ev.preventDefault()
   }
 
-  const onUp = (ev: PointerEvent, dist: PointsDist): boolean => {
+  const onUp = (ev: PointerEvent, dist: PointsDist, isCanceled = false): boolean => {
     if (!enabled) return false
+    if (isCanceled) {
+      endStroke(false)
+      rePaint()
+      return false
+    }
+
     const action = eventStatus.activeEvent
     const inp = {
       point: event2viewPoint(ev),

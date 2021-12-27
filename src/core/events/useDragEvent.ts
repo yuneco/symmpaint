@@ -3,7 +3,7 @@ import { PointsDist } from '../coords/PointsDist'
 
 type DownHandler = (ev: PointerEvent) => boolean
 type DragHandler = (ev: PointerEvent, dist: PointsDist) => void
-type UpHandler = (ev: PointerEvent, dist: PointsDist) => void
+type UpHandler = (ev: PointerEvent, dist: PointsDist, isCommit: boolean) => void
 type Canceler = () => void
 
 /**
@@ -83,22 +83,28 @@ export const useDragEvent = (
     state.lastMs = now
   }
 
-  const handlerUp = (ev: PointerEvent) => {
+  const handlerUp = (ev: PointerEvent, isCommit = true) => {
     if (!ev.isPrimary) return
     if (!state.isWatchMove) return
     const p = new Point(ev.clientX, ev.clientY)
-    onup(ev, distForPoint(getCenter(), state.startPoint, p))
+    onup(ev, distForPoint(getCenter(), state.startPoint, p), isCommit)
     state.isWatchMove = false
+  }
+
+  const handlerCancel = (ev: PointerEvent) => {
+    handlerUp(ev, false)
   }
 
   target.addEventListener('pointerdown', handlerDown)
   target.addEventListener('pointermove', handlerMove)
   target.addEventListener('pointerup', handlerUp)
+  target.addEventListener('pointercancel', handlerCancel)
 
   const canceler = () => {
     target.removeEventListener('pointerdown', handlerDown)
     target.removeEventListener('pointermove', handlerMove)
     target.removeEventListener('pointerup', handlerUp)
+    target.removeEventListener('pointercancel', handlerCancel)
   }
 
   return canceler
