@@ -67,6 +67,7 @@ export class AbstractCanvas {
   }
 
   private transferImageTo(ctx: CanvasRenderingContext2D, option?: Partial<ImageTransferOption>) {
+    if (this.el.width === 0 || this.el.height === 0) return
     ctx.globalAlpha = option?.alpha ?? 1
     ctx.globalCompositeOperation = option?.composition ?? 'source-over'
     if (option?.background) {
