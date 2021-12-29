@@ -38,7 +38,7 @@ export class PaintCanvas {
   /** 表示用Canvas */
   private readonly view: AbstractCanvas
   /** 履歴 */
-  private readonly history: CanvasHistory
+  private history: CanvasHistory
   /** 現在のストロークの状態 */
   private strokeState: StrokeState
 
@@ -64,7 +64,7 @@ export class PaintCanvas {
     penCount: [1, 0],
     isKaleido: [false, false],
     anchorColor: ['#91bccc', '#eeaabb'],
-    enableCapure: true
+    enableCapure: true,
   }
 
   /**
@@ -160,7 +160,7 @@ export class PaintCanvas {
 
     this.childAnchor = new Coordinate({ scroll: new Point(300, 0), angle: 0 })
     this.tool = 'draw'
-    this.clear(false)
+    clearCanvas(this.canvas)
   }
 
   get canvasPen() {
@@ -346,21 +346,17 @@ export class PaintCanvas {
   }
 
   /** ストローク開始時のイベントハンドラ */
-  listenStrokeStart(
-    fn: (p: CanvasEventParm<'strokeStart'>) => void
-  ) {
+  listenStrokeStart(fn: (p: CanvasEventParm<'strokeStart'>) => void) {
     this.events['strokeStart'].listen(fn)
   }
   /** ストローク終了時のイベントハンドラ */
-  listenStrokeEnd(
-    fn: (p: CanvasEventParm<'strokeEnd'>) => void
-  ) {
+  listenStrokeEnd(fn: (p: CanvasEventParm<'strokeEnd'>) => void) {
     this.events['strokeEnd'].listen(fn)
   }
 
   /** キャンバスをクリアします */
-  clear(isSaveHistory = true) {
-    if (isSaveHistory) {
+  clear(shouldClearHistory: boolean) {
+    if (!shouldClearHistory) {
       this.history.start(
         this.coord,
         this.pen.state,
@@ -368,6 +364,11 @@ export class PaintCanvas {
         'clearAll'
       )
       this.history.commit(this.canvas)
+    } else {
+      this.history = new CanvasHistory(
+        this.width * RESOLUTION,
+        this.height * RESOLUTION
+      )
     }
     clearCanvas(this.canvas)
     this.rePaint()
@@ -376,7 +377,7 @@ export class PaintCanvas {
   /** 最後のストロークを取り消します */
   undo() {
     if (!this.history.undoable) return
-    this.clear(false)
+    clearCanvas(this.canvas)
     this.history.undo(this.canvas)
     this.rePaint()
   }
@@ -432,7 +433,7 @@ export class PaintCanvas {
       .scale(coord.scale)
     return vp
   }
-  /** 
+  /**
    * 実キャンバス→画面座標 の変換を行います
    * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
    * 画面座標 : 画面表示されるキャンバスの左上を0,0とした座標
@@ -442,7 +443,7 @@ export class PaintCanvas {
       .move(new Point(this.width, this.height))
       .scale(1 / RESOLUTION)
   }
-  /** 
+  /**
    * 画面座標→実キャンバス の変換を行います
    * 画面座標 : 画面表示されるキャンバスの左上を0,0とした座標
    * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0

@@ -29,7 +29,6 @@ export class CanvasHistory {
     this.canvasHeight = canvasHeight
     this.snapshots.listenOverflow(() => {
       this.oldestSnapshotIndex += STROKES_PER_SNAPSHOT
-      // console.log(`oldestSnapshotIndex: ${this.oldestSnapshotIndex}`)
     })
   }
 
@@ -61,7 +60,6 @@ export class CanvasHistory {
 
   get undoable() {
     return this.length >= 1
-    // return this.history.length > this.oldestSnapshotIndex
   }
 
 
@@ -78,6 +76,7 @@ export class CanvasHistory {
 
     const debugBox = document.querySelector('#debug .history .snaps')
     if (debugBox) {
+      debugBox.innerHTML = ''
       const scale = 120 / Math.max(snap.el.width, snap.el.height)
       snap.el.style.width = `${snap.el.width * scale}px`
       snap.el.style.height = `${snap.el.height * scale}px`

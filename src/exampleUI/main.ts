@@ -48,7 +48,9 @@ setting.onPenWidthChange.listen((width) => {
   canvas.penWidth = width
 })
 setting.onClear.listen(() => {
-  canvas.clear()
+  const isOk = confirm('Are you sure you want to clear canvas? This action can not undo.')
+  if (!isOk) return
+  canvas.clear(true)
 })
 setting.onUndo.listen(() => {
   canvas.undo()
