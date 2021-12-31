@@ -30,6 +30,12 @@ export class CanvasHistory {
     this.snapshots.listenOverflow(() => {
       this.oldestSnapshotIndex += STROKES_PER_SNAPSHOT
     })
+
+    const debugBox = document.querySelector('#debug .history .snaps')
+    if (debugBox) {
+      debugBox.innerHTML = ''
+    }
+
   }
 
   /** Undo可能な履歴の数 */
@@ -66,17 +72,9 @@ export class CanvasHistory {
   addSnapshot() {
     const snap = new AbstractCanvas(this.canvasWidth, this.canvasHeight)
     this.snapshots.push(snap)
-    const prev = this.prevSnapshot
-    if (prev) {
-      snap.ctx.save()
-      snap.ctx.resetTransform()
-      snap.ctx.drawImage(prev.el, 0, 0)
-      snap.ctx.restore()
-    }
 
     const debugBox = document.querySelector('#debug .history .snaps')
     if (debugBox) {
-      debugBox.innerHTML = ''
       const scale = 120 / Math.max(snap.el.width, snap.el.height)
       snap.el.style.width = `${snap.el.width * scale}px`
       snap.el.style.height = `${snap.el.height * scale}px`
@@ -112,7 +110,7 @@ export class CanvasHistory {
         console.error('failed to add snapshot')
         return
       }
-      canvas.copy(this.snapshot.ctx, { alpha: this.currentStroke.style.alpha })
+      canvas.copy(this.snapshot.ctx)
       // console.log('new snapshot', this.snapshots.length)
     }
 
@@ -152,7 +150,6 @@ export class CanvasHistory {
       const sp = this.snapshots.pop()
       sp && sp.el.parentNode?.removeChild(sp.el)
       this.lastSnapshotIndex -= STROKES_PER_SNAPSHOT
-      // console.log('back prev snap', this.snapshots.length, this.snapshots)
     }
     output.ctx.restore()
     return true
