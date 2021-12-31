@@ -49,14 +49,16 @@ export const paintKaleidoGrid = (
   count: number,
   isKaleido: boolean,
   coord: Coordinate,
-  color = '#91bccc'
+  color = '#91bccc',
+  is2nd = false
 ): void => {
   const colMain = color
   const colSub = `${color}88`
 
   const center = new Point(canvas.width / 2, canvas.height / 2)
   const scroll = center.move(coord.scroll)
-  const len = Math.sqrt(canvas.width ** 2 + canvas.height ** 2)
+  const lenMax = Math.sqrt(canvas.width ** 2 + canvas.height ** 2)
+  const lenShort = lenMax * 0.15
   canvas.ctx.save()
   canvas.ctx.resetTransform()
   canvas.ctx.translate(scroll.x, scroll.y)
@@ -64,6 +66,7 @@ export const paintKaleidoGrid = (
   canvas.ctx.lineWidth = 1
   for (let index = 0; index < count; index++) {
     const isSubLine = isKaleido && index % 2 !== 0
+    const len = (index === 0 || !is2nd) ? lenMax : lenShort
     canvas.ctx.strokeStyle = isSubLine ? colSub : colMain
     canvas.ctx.setLineDash(isSubLine ? [4, 4] : [])
     canvas.ctx.beginPath()

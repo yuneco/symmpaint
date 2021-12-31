@@ -2,9 +2,10 @@ import { Coordinate } from '../..'
 import { Pen } from '../Pen'
 
 const relativeChildAnchor = (anchor: [Coordinate, Coordinate]): Coordinate => {
+  const angleP2C = anchor[1].scroll.sub(anchor[0].scroll).angle
   return new Coordinate({
     scroll: anchor[1].scroll.sub(anchor[0].scroll).rotate(-anchor[0].angle),
-    angle: anchor[1].angle,
+    angle: angleP2C + anchor[1].angle,
   })
 }
 
@@ -22,6 +23,7 @@ export const createPen = (
 
   // 最初のペンと最後のペンの真ん中が0度になるよう、ルートの軸を360/親ペン数/2だけずらす
   const pAngleOffset = 360 / pCount / 2
+  const cAngleOffset = 360 / cCount / 2
   const pAnchor = anchor[0].clone({ angle: anchor[0].angle + pAngleOffset })
   const cAnchor = anchor[1]
   // ずらした軸を基準に子アンカーの相対位置を求める
@@ -39,7 +41,10 @@ export const createPen = (
         .addChildPen(
           new Coordinate({
             scroll: relativeAnchor.scroll,
-            angle: relativeAnchor.angle - pAngleOffset,
+            angle:
+              relativeAnchor.angle +
+              (cAngleOffset - pAngleOffset) -
+              anchor[0].angle,
           })
         )
         .addChildPen(

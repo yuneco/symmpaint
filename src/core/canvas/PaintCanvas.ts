@@ -158,7 +158,7 @@ export class PaintCanvas {
       MIN_CURSOR_MOVE
     )
 
-    this.childAnchor = new Coordinate({ scroll: new Point(300, 0), angle: 0 })
+    this.childAnchor = new Coordinate({ scroll: new Point(300, -70), angle: 0 })
     this.tool = 'draw'
     clearCanvas(this.canvas)
   }
