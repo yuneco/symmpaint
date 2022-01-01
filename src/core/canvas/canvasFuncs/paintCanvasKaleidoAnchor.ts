@@ -8,7 +8,7 @@ export const paintCanvasKaleidoAnchor = (
   anchor: [Coordinate, Coordinate],
   isKaleido: [boolean, boolean],
   penCount: [number, number],
-  color: [string, string],
+  color: [string, string]
 ) => {
   const [hasParentGrid, hasChildGrid] = [penCount[0] >= 2, penCount[1] >= 2]
   const [pKaleido, cKaleido] = isKaleido
@@ -51,7 +51,7 @@ export const paintCanvasKaleidoAnchor = (
           .move(anchor[1].scroll)
           .scale(coord.scale)
           .rotate(coord.angle),
-        angle: (angleP2C + anchor[1].angle) + 90,
+        angle: coord.angle + angleP2C + anchor[1].angle + 90,
       }),
       color[1],
       true
