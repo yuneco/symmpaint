@@ -22,11 +22,11 @@ export class StrokeStyle {
       color: this.color,
       penSize: this.penSize,
       alpha: this.alpha,
-      composition: this.composition
+      composition: this.composition,
     }
   }
 
   clone(change?: Partial<StrokeStyleDate | StrokeStyle>) {
-    return new StrokeStyle({...this.toData(), ...change})
+    return new StrokeStyle({ ...this.toData(), ...change })
   }
 }

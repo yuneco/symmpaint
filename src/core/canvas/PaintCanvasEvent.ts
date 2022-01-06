@@ -1,12 +1,12 @@
-import { Coordinate, Point } from ".."
-import { PaintEvent } from "../events/PaintEvent"
+import { Coordinate, Point } from '..'
+import { PaintEvent } from '../events/PaintEvent'
 
 /** 移動の対象 */
 export type TransformTarget = 'canvas' | 'anchor'
 
 export type PaintCanvasEvent = {
   requestChangeZoom: PaintEvent<number>
-  requestScrollTo:PaintEvent<{
+  requestScrollTo: PaintEvent<{
     point: Point
     target: TransformTarget
   }>

@@ -21,10 +21,7 @@ export const pushHistory = (
   }
 
   const lastSnapIndex = getSnapshotIndexFor(stateNew)
-  if (
-    lastSnapIndex === undefined ||
-    stateNew.currentIndex - lastSnapIndex >= snapInterval
-  ) {
+  if (lastSnapIndex === undefined || stateNew.currentIndex - lastSnapIndex >= snapInterval) {
     // add new snapshot
     stateNew.stack[stateNew.currentIndex].snapshot = createSnap()
   }
@@ -35,9 +32,7 @@ export const pushHistory = (
     .filter(notNull)
   if (snaps.length > maxSnaps) {
     snaps.length = snaps.length - maxSnaps
-    snaps.forEach(
-      (snapIndex) => (stateNew.stack[snapIndex].snapshot = undefined)
-    )
+    snaps.forEach((snapIndex) => (stateNew.stack[snapIndex].snapshot = undefined))
   }
 
   return stateNew

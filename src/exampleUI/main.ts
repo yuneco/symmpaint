@@ -201,12 +201,8 @@ elPalette.addEventListener(
 
 // 説明文の言語切り替え
 const uaLang = navigator.language === 'ja' ? 'ja' : 'en'
-document
-  .querySelectorAll<HTMLElement>('.lang')
-  .forEach((el) => (el.style.display = 'none'))
-document
-  .querySelectorAll<HTMLElement>(`.lang.${uaLang}`)
-  .forEach((el) => (el.style.display = ''))
+document.querySelectorAll<HTMLElement>('.lang').forEach((el) => (el.style.display = 'none'))
+document.querySelectorAll<HTMLElement>(`.lang.${uaLang}`).forEach((el) => (el.style.display = ''))
 
 // For Debug
 // window.canvas = canvas

@@ -10,7 +10,7 @@ export class ToolKeyWatcher {
   private tool?: CanvasToolName
   private readonly onChange: ChangeEvent = new PaintEvent()
   constructor() {
-  // キー状態の変更監視
+    // キー状態の変更監視
     this.keyWatcher = new KeyPressWatcher()
     this.keyWatcher.listen(() => {
       const toolNew = toolForKeys(this.keyWatcher.keys)

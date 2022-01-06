@@ -79,12 +79,7 @@ export class StrokeRecord {
     }))
     pen.clearChildren()
     pen.coord = new Coordinate()
-    const rec = new StrokeRecord(
-      this.canvasCoord,
-      pen.state,
-      this.style,
-      this.tool
-    )
+    const rec = new StrokeRecord(this.canvasCoord, pen.state, this.style, this.tool)
     rec.inputs.push(...joinedStroke)
     return rec
   }

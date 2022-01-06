@@ -1,6 +1,6 @@
-import { getFirstSnapshotIndex } from "./getFirstSnapshotIndex";
-import { HistoryEntry } from "./HistoryEntry";
-import { HistoryState } from "./HistoryState";
+import { getFirstSnapshotIndex } from './getFirstSnapshotIndex'
+import { HistoryEntry } from './HistoryEntry'
+import { HistoryState } from './HistoryState'
 
 export const hasBackHistory = (state: HistoryState): boolean => {
   const first = getFirstSnapshotIndex(state)

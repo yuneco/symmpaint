@@ -4,10 +4,7 @@ import { Pen } from '../Pen'
 import { StrokeRecord } from '../StrokeRecord'
 import { splitStoke } from './splitStroke'
 
-export const replayPenStroke = (
-  canvas: AbstractCanvas,
-  stroke: StrokeRecord,
-) => {
+export const replayPenStroke = (canvas: AbstractCanvas, stroke: StrokeRecord) => {
   canvas.ctx.save()
   canvas.ctx.fillStyle = stroke.style.color
   canvas.ctx.lineWidth = stroke.style.penSize

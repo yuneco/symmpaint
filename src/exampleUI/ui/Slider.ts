@@ -43,14 +43,10 @@ export class Slider {
     this.elText.textContent = String(value)
   }
 
-  addEventListener(
-    ...params: Parameters<HTMLInputElement['addEventListener']>
-  ) {
+  addEventListener(...params: Parameters<HTMLInputElement['addEventListener']>) {
     return this.elSlider.addEventListener(...params)
   }
-  removeEventListener(
-    ...params: Parameters<HTMLInputElement['removeEventListener']>
-  ) {
+  removeEventListener(...params: Parameters<HTMLInputElement['removeEventListener']>) {
     return this.elSlider.removeEventListener(...params)
   }
 }

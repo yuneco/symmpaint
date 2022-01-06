@@ -4,7 +4,7 @@ export class colorSelector {
   readonly el: HTMLDivElement
   readonly elColor: HTMLInputElement
 
-  constructor(label: string, value = false, ) {
+  constructor(label: string, value = false) {
     const elOuter = (this.el = document.createElement('div'))
     const elColor = (this.elColor = document.createElement('input'))
     const elLabel = document.createElement('label')
@@ -18,7 +18,7 @@ export class colorSelector {
     elColor.type = 'color'
     elColor.checked = value
     elLabelText.textContent = label
-   }
+  }
 
   get value() {
     return this.elColor.value
@@ -28,14 +28,10 @@ export class colorSelector {
     this.elColor.value = v
   }
 
-  addEventListener(
-    ...params: Parameters<HTMLInputElement['addEventListener']>
-  ) {
+  addEventListener(...params: Parameters<HTMLInputElement['addEventListener']>) {
     return this.elColor.addEventListener(...params)
   }
-  removeEventListener(
-    ...params: Parameters<HTMLInputElement['removeEventListener']>
-  ) {
+  removeEventListener(...params: Parameters<HTMLInputElement['removeEventListener']>) {
     return this.elColor.removeEventListener(...params)
   }
 }

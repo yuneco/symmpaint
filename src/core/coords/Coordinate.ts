@@ -2,10 +2,10 @@ import { Point } from './Point'
 
 type CoordinateData = {
   // anchor: Point;
-  scroll: Point;
-  scale: number;
-  angle: number;
-  flipY: boolean;
+  scroll: Point
+  scale: number
+  angle: number
+  flipY: boolean
 }
 
 /**
@@ -32,38 +32,37 @@ export class Coordinate {
   /** この座標系のDOMMatrix */
   private readonly _matrix: DOMMatrix
 
-  constructor(data?: Partial<CoordinateData | Coordinate>
-  ) {
+  constructor(data?: Partial<CoordinateData | Coordinate>) {
     this.scroll = data?.scroll ?? new Point()
     this.scale = data?.scale ?? 1
     this.angle = data?.angle ?? 0
     this.flipY = data?.flipY ?? false
 
-  this._matrix = new DOMMatrix()
+    this._matrix = new DOMMatrix()
       .translateSelf(this.scroll.x, this.scroll.y)
       .scaleSelf(this.scale, this.scale * (this.flipY ? -1 : 1))
       .rotateSelf(this.angle)
-    }
+  }
 
   toData(): CoordinateData {
     return {
       scroll: this.scroll,
       scale: this.scale,
       angle: this.angle,
-      flipY: this.flipY
+      flipY: this.flipY,
     }
   }
 
   clone(data?: Partial<CoordinateData | Coordinate>): Coordinate {
     const base = this.toData()
-    return new Coordinate({...base, ...data})
+    return new Coordinate({ ...base, ...data })
   }
 
   get invert() {
     return new Coordinate({
       scroll: this.scroll.scale(-1),
       scale: 1 / this.scale,
-      angle: -this.angle
+      angle: -this.angle,
     })
   }
 
@@ -73,9 +72,8 @@ export class Coordinate {
 
   get matrixScrollAfter() {
     return new DOMMatrix()
-    .scaleSelf(this.scale, this.scale * (this.flipY ? -1 : 1))
-    .rotateSelf(this.angle)
-    .translateSelf(this.scroll.x, this.scroll.y)
+      .scaleSelf(this.scale, this.scale * (this.flipY ? -1 : 1))
+      .rotateSelf(this.angle)
+      .translateSelf(this.scroll.x, this.scroll.y)
   }
-
 }

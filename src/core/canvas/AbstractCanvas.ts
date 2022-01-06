@@ -2,8 +2,8 @@ import { Coordinate } from '../coords/Coordinate'
 import { Point } from '../coords/Point'
 
 type ImageTransferOption = {
-  alpha: number,
-  background: string,
+  alpha: number
+  background: string
   composition: string
 }
 export class AbstractCanvas {

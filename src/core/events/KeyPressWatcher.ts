@@ -1,6 +1,6 @@
-import { PaintEvent } from "./PaintEvent"
+import { PaintEvent } from './PaintEvent'
 
-type KeyChangeEvent = PaintEvent<{key: string, isDown: boolean}>
+type KeyChangeEvent = PaintEvent<{ key: string; isDown: boolean }>
 
 /**
  * キーの押下状態を監視・保持します
@@ -21,12 +21,12 @@ export class KeyPressWatcher {
     const onDown = (ev: KeyboardEvent) => {
       const name = ev.key
       this._keys[name] = true
-      this.onChange.fire({key: name, isDown: true})
+      this.onChange.fire({ key: name, isDown: true })
     }
     const onUp = (ev: KeyboardEvent) => {
       const name = ev.key
       delete this._keys[name]
-      this.onChange.fire({key: name, isDown: false})
+      this.onChange.fire({ key: name, isDown: false })
     }
     this.target.addEventListener('keydown', onDown)
     this.target.addEventListener('keyup', onUp)

@@ -1,7 +1,7 @@
-import { Coordinate } from "..";
-import { CanvasToolName } from "./CanvasToolName";
-import { StrokeRecord } from "./StrokeRecord";
-import { StrokeStyle } from "./StrokeStyle";
+import { Coordinate } from '..'
+import { CanvasToolName } from './CanvasToolName'
+import { StrokeRecord } from './StrokeRecord'
+import { StrokeStyle } from './StrokeStyle'
 
 export type PaintCanvasSetting = {
   style: StrokeStyle

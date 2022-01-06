@@ -4,7 +4,7 @@ export class Checkbox {
   readonly el: HTMLDivElement
   readonly elCheck: HTMLInputElement
 
-  constructor(label: string, value = false, ) {
+  constructor(label: string, value = false) {
     const elOuter = (this.el = document.createElement('div'))
     const elCheck = (this.elCheck = document.createElement('input'))
     const elLabel = document.createElement('label')
@@ -18,7 +18,7 @@ export class Checkbox {
     elCheck.type = 'checkbox'
     elCheck.checked = value
     elLabelText.textContent = label
-   }
+  }
 
   get value() {
     return this.elCheck.checked
@@ -28,14 +28,10 @@ export class Checkbox {
     this.elCheck.checked = v
   }
 
-  addEventListener(
-    ...params: Parameters<HTMLInputElement['addEventListener']>
-  ) {
+  addEventListener(...params: Parameters<HTMLInputElement['addEventListener']>) {
     return this.elCheck.addEventListener(...params)
   }
-  removeEventListener(
-    ...params: Parameters<HTMLInputElement['removeEventListener']>
-  ) {
+  removeEventListener(...params: Parameters<HTMLInputElement['removeEventListener']>) {
     return this.elCheck.removeEventListener(...params)
   }
 }

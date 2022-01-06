@@ -4,7 +4,7 @@ export class PaintEvent<T> {
 
   /** イベントを発火します */
   fire(param: T) {
-    this.listeners.forEach(l => l(param))
+    this.listeners.forEach((l) => l(param))
   }
 
   /** イベントリスナーを登録します */

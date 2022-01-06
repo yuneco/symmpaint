@@ -66,7 +66,7 @@ export const paintKaleidoGrid = (
   canvas.ctx.lineWidth = 1
   for (let index = 0; index < count; index++) {
     const isSubLine = isKaleido && index % 2 !== 0
-    const len = (index === 0 || !is2nd) ? lenMax : lenShort
+    const len = index === 0 || !is2nd ? lenMax : lenShort
     canvas.ctx.strokeStyle = isSubLine ? colSub : colMain
     canvas.ctx.setLineDash(isSubLine ? [4, 4] : [])
     canvas.ctx.beginPath()

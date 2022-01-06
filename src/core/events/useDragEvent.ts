@@ -12,9 +12,7 @@ type Canceler = () => void
  */
 const elementAnchor = (el: HTMLElement, elementCenter?: Point): Point => {
   const r = el.getBoundingClientRect()
-  return new Point(r.left, r.top).move(
-    elementCenter ?? new Point(r.width / 2, r.height / 2)
-  )
+  return new Point(r.left, r.top).move(elementCenter ?? new Point(r.width / 2, r.height / 2))
 }
 
 /** 角AOBを求めます */
@@ -24,11 +22,7 @@ const pointsAngle = (pO: Point, pA: Point, pB: Point): number => {
   return angleB - angleA
 }
 
-const distForPoint = (
-  pCenter: Point,
-  pStart: Point,
-  pEnd: Point
-): PointsDist => ({
+const distForPoint = (pCenter: Point, pStart: Point, pEnd: Point): PointsDist => ({
   distance: pEnd.sub(pStart),
   angle: pointsAngle(pCenter, pStart, pEnd),
 })

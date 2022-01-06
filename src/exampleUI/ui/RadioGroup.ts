@@ -60,5 +60,4 @@ export class RadioGroup<K extends readonly string[]> {
   listenChange(...params: Parameters<typeof this.onChange.listen>) {
     this.onChange.listen(...params)
   }
-
 }

@@ -12,10 +12,7 @@ export const paintCanvasKaleidoAnchor = (
 ) => {
   const [hasParentGrid, hasChildGrid] = [penCount[0] >= 2, penCount[1] >= 2]
   const [pKaleido, cKaleido] = isKaleido
-  const [pCount, cCount] = [
-    penCount[0] * (pKaleido ? 2 : 1),
-    penCount[1] * (cKaleido ? 2 : 1),
-  ]
+  const [pCount, cCount] = [penCount[0] * (pKaleido ? 2 : 1), penCount[1] * (cKaleido ? 2 : 1)]
   const [pAnchor, cAnchor] = anchor
   const angleP2C = cAnchor.scroll.sub(pAnchor.scroll).angle
 
@@ -30,10 +27,7 @@ export const paintCanvasKaleidoAnchor = (
       pCount,
       isKaleido[0],
       new Coordinate({
-        scroll: coord.scroll.invert
-          .move(anchor[0].scroll)
-          .scale(coord.scale)
-          .rotate(coord.angle),
+        scroll: coord.scroll.invert.move(anchor[0].scroll).scale(coord.scale).rotate(coord.angle),
         angle: pAngle,
       }),
       hasChildGrid ? '#cccccc' : color[0]
@@ -47,10 +41,7 @@ export const paintCanvasKaleidoAnchor = (
       cCount,
       isKaleido[1],
       new Coordinate({
-        scroll: coord.scroll.invert
-          .move(anchor[1].scroll)
-          .scale(coord.scale)
-          .rotate(coord.angle),
+        scroll: coord.scroll.invert.move(anchor[1].scroll).scale(coord.scale).rotate(coord.angle),
         angle: coord.angle + angleP2C + anchor[1].angle + 90,
       }),
       color[1],

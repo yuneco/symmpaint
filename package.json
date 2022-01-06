@@ -7,7 +7,7 @@
     "build:lib": "tsup src/core/index.ts --format esm,cjs,iife --dts --minify",
     "prepare": "npm run build:lib",
     "serve": "vite preview",
-    "format": "prettier src/**/*.ts --write"
+    "format": "prettier 'src/**/*.ts' --write"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

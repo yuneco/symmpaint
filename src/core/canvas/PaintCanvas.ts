@@ -81,14 +81,8 @@ export class PaintCanvas {
     this.width = width
     this.height = height
     // 描画先・表示先を生成
-    this.canvas = new AbstractCanvas(
-      this.width * RESOLUTION,
-      this.height * RESOLUTION
-    )
-    this.view = new AbstractCanvas(
-      this.width * RESOLUTION,
-      this.height * RESOLUTION
-    )
+    this.canvas = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
+    this.view = new AbstractCanvas(this.width * RESOLUTION, this.height * RESOLUTION)
     this.history = new CanvasHistory({
       canvasCoord: this.coord,
       penState: this.pen.state,
@@ -111,10 +105,8 @@ export class PaintCanvas {
 
     // ストロークイベントの初期化
     const stroke = useStrokeTools(this, {
-      onScroll: (point, target) =>
-        this.events.requestScrollTo.fire({ point, target }),
-      onRotate: (angle, target) =>
-        this.events.requestRotateTo.fire({ angle, target }),
+      onScroll: (point, target) => this.events.requestScrollTo.fire({ point, target }),
+      onRotate: (angle, target) => this.events.requestRotateTo.fire({ angle, target }),
       onZoom: (scale) => this.events.requestChangeZoom.fire(scale),
     })
     this.strokeState = stroke.strokeState
@@ -127,9 +119,7 @@ export class PaintCanvas {
           this.strokeState.enabled = false
         },
         onTransform: (tr, count) =>
-          count >= 3
-            ? this.onTouchTramsformAnchor(tr)
-            : this.onTouchTramsformCanvas(tr),
+          count >= 3 ? this.onTouchTramsformAnchor(tr) : this.onTouchTramsformCanvas(tr),
         onEnd: () => {
           this.strokeState.enabled = true
         },
@@ -337,16 +327,12 @@ export class PaintCanvas {
   }
 
   /** アンカー移動/回転操作発生時のリスナーを登録します。アンカー移動を行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorTransform(
-    fn: (p: CanvasEventParm<'requestAnchorTransform'>) => void
-  ) {
+  listenRequestAnchorTransform(fn: (p: CanvasEventParm<'requestAnchorTransform'>) => void) {
     this.events['requestAnchorTransform'].listen(fn)
   }
 
   /** アンカーリセット操作発生時のリスナーを登録します。アンカーリセットを行うにはリスナー側でanchorプロパティを変更します */
-  listenRequestAnchorReset(
-    fn: (p: CanvasEventParm<'requestAnchorReset'>) => void
-  ) {
+  listenRequestAnchorReset(fn: (p: CanvasEventParm<'requestAnchorReset'>) => void) {
     this.events['requestAnchorReset'].listen(fn)
   }
 
@@ -362,12 +348,7 @@ export class PaintCanvas {
   /** キャンバスをクリアします */
   clear(shouldClearHistory: boolean) {
     if (!shouldClearHistory) {
-      this.history.start(
-        this.coord,
-        this.pen.state,
-        this.setting.style,
-        'clearAll'
-      )
+      this.history.start(this.coord, this.pen.state, this.setting.style, 'clearAll')
       this.history.commit(this.canvas)
     } else {
       this.history = new CanvasHistory({
@@ -426,8 +407,7 @@ export class PaintCanvas {
    * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
    */
   view2canvasPos = (vp: Point, coordType: 'start' | 'current'): Point => {
-    const coord =
-      coordType === 'start' ? this.strokeState.startCoord : this.coord
+    const coord = coordType === 'start' ? this.strokeState.startCoord : this.coord
     const cp = vp
       .scale(1 / coord.scale)
       .rotate(-coord.angle)
@@ -440,12 +420,8 @@ export class PaintCanvas {
    * 実キャンバス座標 : データ実体のキャンバスの座標系。中心が0,0
    */
   canvas2viewPos = (cp: Point, coordType: 'start' | 'current'): Point => {
-    const coord =
-      coordType === 'start' ? this.strokeState.startCoord : this.coord
-    const vp = cp
-      .move(coord.scroll.invert)
-      .rotate(coord.angle)
-      .scale(coord.scale)
+    const coord = coordType === 'start' ? this.strokeState.startCoord : this.coord
+    const vp = cp.move(coord.scroll.invert).rotate(coord.angle).scale(coord.scale)
     return vp
   }
   /**
@@ -526,9 +502,7 @@ export class PaintCanvas {
       .rotate(-this.strokeState.startCoord.angle)
       .move(targetAnchor.scroll)
 
-    this.events.requestAnchorTransform.fire(
-      targetAnchor.clone({ scroll, angle })
-    )
+    this.events.requestAnchorTransform.fire(targetAnchor.clone({ scroll, angle }))
   }
 
   private rePaintRequestId = 0

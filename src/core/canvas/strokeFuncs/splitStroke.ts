@@ -5,15 +5,15 @@ import { PenInput } from '../PenInput'
  * @param stroke ペン座標の配列
  */
 export const splitStoke = (stroke: PenInput[]): PenInput[][] => {
-if (stroke.length === 0) return []
+  if (stroke.length === 0) return []
 
   const result: PenInput[][] = []
   let current: PenInput[] = [stroke[0]]
   let isInSegment = stroke[0].pressure !== 0
 
-  for(let index = 1; index < stroke.length; index++) {
+  for (let index = 1; index < stroke.length; index++) {
     const inp = stroke[index]
-    
+
     // 筆圧0が出現したらセグメント終了
     if (isInSegment && inp.pressure === 0) {
       current.push(inp)
@@ -32,7 +32,6 @@ if (stroke.length === 0) return []
     // セグメント中は入力点をそのまま追加
     current.push(inp)
     isInSegment = true
-
   }
 
   // 最後のセグメントが途中なら追加

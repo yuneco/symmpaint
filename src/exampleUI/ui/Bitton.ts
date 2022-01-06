@@ -8,14 +8,10 @@ export class Button {
     el.textContent = caption
   }
 
-  addEventListener(
-    ...params: Parameters<HTMLButtonElement['addEventListener']>
-  ) {
+  addEventListener(...params: Parameters<HTMLButtonElement['addEventListener']>) {
     return this.el.addEventListener(...params)
   }
-  removeEventListener(
-    ...params: Parameters<HTMLButtonElement['removeEventListener']>
-  ) {
+  removeEventListener(...params: Parameters<HTMLButtonElement['removeEventListener']>) {
     return this.el.removeEventListener(...params)
   }
 }

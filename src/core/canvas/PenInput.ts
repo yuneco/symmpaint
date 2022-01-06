@@ -1,4 +1,4 @@
-import { Point } from "../coords/Point";
+import { Point } from '../coords/Point'
 
 export type PenInput = {
   point: Point

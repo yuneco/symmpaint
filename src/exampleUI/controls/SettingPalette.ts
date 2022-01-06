@@ -9,7 +9,7 @@ import { CanvasToolName } from '../../core/canvas/CanvasToolName'
 import { RadioGroup } from '../ui/RadioGroup'
 import { isSameArray } from '../../core/misc/ArrayUtil'
 
-const TOOL_NAMES: {[k in CanvasToolName]: string} = {
+const TOOL_NAMES: { [k in CanvasToolName]: string } = {
   draw: 'Draw',
   'draw:line': 'Line',
   'draw:stamp': 'Stamp',
@@ -18,10 +18,20 @@ const TOOL_NAMES: {[k in CanvasToolName]: string} = {
   rotate: 'Rotate',
   'rotate:anchor': 'Rotate Anchor',
   zoomup: '+',
-  zoomdown: '-'
+  zoomdown: '-',
 } as const
 
-const toolList = ['draw', 'draw:line', 'draw:stamp', 'scroll', 'scroll:anchor', 'zoomup', 'zoomdown', 'rotate', 'rotate:anchor'] as const
+const toolList = [
+  'draw',
+  'draw:line',
+  'draw:stamp',
+  'scroll',
+  'scroll:anchor',
+  'zoomup',
+  'zoomdown',
+  'rotate',
+  'rotate:anchor',
+] as const
 export class SettingPalette {
   private readonly slScale: Slider
   private readonly slAngle: Slider
@@ -192,17 +202,12 @@ export class SettingPalette {
     this.slY.elSlider.max = String(y)
   }
 
-  constructor(parent: HTMLElement, canvasSetting: {width: number, height: number}) {
+  constructor(parent: HTMLElement, canvasSetting: { width: number; height: number }) {
     this.canvasWidth = canvasSetting.height
     this.canvasHeight = canvasSetting.height
     const slScale = (this.slScale = new Slider('Scale', 50, 300, 100, true))
     const slAngle = (this.slAngle = new Slider('Angle', -360, 360, 0))
-    const slX = (this.slX = new Slider(
-      'Scroll X',
-      -this.canvasWidth / 2,
-      this.canvasWidth / 2,
-      0
-    ))
+    const slX = (this.slX = new Slider('Scroll X', -this.canvasWidth / 2, this.canvasWidth / 2, 0))
     const slY = (this.slY = new Slider(
       'Scroll Y',
       -this.canvasHeight / 2,
@@ -219,11 +224,11 @@ export class SettingPalette {
     const cbKaleido1 = (this.cbKaleido1 = new Checkbox('Kalaidoscope'))
     const cbKaleido2 = (this.cbKaleido2 = new Checkbox('Kalaidoscope'))
     const cbEraser = (this.cbEraser = new Checkbox('Eraser'))
-    const csDrawingColor = this.csDrawingColor = new colorSelector('Pen Color')
-    const csCanvasColor = this.csCanvasColor = new colorSelector('BG Color')
-    const slDrawingAlpha = this.slDrawingAlpha = new Slider('Pen Alpha', 1, 100, 100, true)
+    const csDrawingColor = (this.csDrawingColor = new colorSelector('Pen Color'))
+    const csCanvasColor = (this.csCanvasColor = new colorSelector('BG Color'))
+    const slDrawingAlpha = (this.slDrawingAlpha = new Slider('Pen Alpha', 1, 100, 100, true))
 
-    const cbTools = this.cbTools = new RadioGroup(TOOL_NAMES, 'draw')
+    const cbTools = (this.cbTools = new RadioGroup(TOOL_NAMES, 'draw'))
 
     // 使わないコントロールは表示しない
     // parent.appendChild(slScale.el)

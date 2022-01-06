@@ -1,4 +1,4 @@
-import { CanvasToolName } from "../canvas/CanvasToolName"
+import { CanvasToolName } from '../canvas/CanvasToolName'
 
 /** 押されているキーから行うべき操作を判定します */
 export const toolForKeys = (keys: string[]): CanvasToolName => {

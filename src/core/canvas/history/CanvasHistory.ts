@@ -7,16 +7,8 @@ import { StrokeStyle } from '../StrokeStyle'
 import { drawHistory } from './drawHistory'
 import { getSnapshotFor } from './getSnapshotFor'
 import { goBackHistory, goForwardHistory } from './goHistory'
-import {
-  getForwardHistory,
-  hasBackHistory,
-  hasForwardHistory,
-} from './hasHistory'
-import {
-  addToDebugBox,
-  clearDebugBox,
-  removeFromDebugBox,
-} from './historyDebugArea'
+import { getForwardHistory, hasBackHistory, hasForwardHistory } from './hasHistory'
+import { addToDebugBox, clearDebugBox, removeFromDebugBox } from './historyDebugArea'
 import { HistoryState } from './HistoryState'
 import { pushHistory } from './pushHistory'
 

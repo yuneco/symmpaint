@@ -28,7 +28,7 @@ export class Point {
   }
 
   get angle() {
-    return Math.atan2(this.y, this.x) / Math.PI * 180
+    return (Math.atan2(this.y, this.x) / Math.PI) * 180
   }
 
   get length() {
@@ -53,4 +53,5 @@ export class Point {
   }
 }
 
-export const toPoint = (pointLike: {x: number; y: number}): Point => new Point(pointLike.x, pointLike.y)
+export const toPoint = (pointLike: { x: number; y: number }): Point =>
+  new Point(pointLike.x, pointLike.y)

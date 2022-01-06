@@ -95,7 +95,7 @@ export const useTouchTransform = (
   let maxMove = 0
 
   // 1点目のタッチ時に呼び出す
-     const onFirstTouch = () => {
+  const onFirstTouch = () => {
     firstTouchMs = Date.now()
     isInMultiTouch = false
     maxTouchCount = 0
@@ -173,8 +173,8 @@ export const useTouchTransform = (
         Date.now() - firstTouchMs < MAX_TWO_FINGER_TAP_DOWN_MS &&
         maxMove <= MAX_TWO_FINGER_TAP_MOVE_PX
       ) {
-        if(maxTouchCount === 2) handlers.onTwoFingerTap?.()
-        if(maxTouchCount === 3) handlers.onThreeFingerTap?.()
+        if (maxTouchCount === 2) handlers.onTwoFingerTap?.()
+        if (maxTouchCount === 3) handlers.onThreeFingerTap?.()
       }
     }
   }
@@ -187,10 +187,7 @@ export const useTouchTransform = (
 
     const currentPoints = first2Points()
     if (basePoints && currentPoints) {
-      const [s1, s2] = [
-        points2segment(basePoints),
-        points2segment(currentPoints),
-      ]
+      const [s1, s2] = [points2segment(basePoints), points2segment(currentPoints)]
       const transformAmount = diffSegments([s1, s2])
       maxMove = Math.max(maxMove, transformAmount.scroll.length)
       handlers.onTransform?.(transformAmount, maxTouchCount)

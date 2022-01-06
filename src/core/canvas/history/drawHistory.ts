@@ -1,7 +1,7 @@
-import { AbstractCanvas } from "../AbstractCanvas"
-import { replayStrokes } from "../strokeFuncs/replayStrokes"
-import { getSnapshotIndexFor } from "./getSnapshotFor"
-import { HistoryState } from "./HistoryState"
+import { AbstractCanvas } from '../AbstractCanvas'
+import { replayStrokes } from '../strokeFuncs/replayStrokes'
+import { getSnapshotIndexFor } from './getSnapshotFor'
+import { HistoryState } from './HistoryState'
 
 export const drawHistory = (state: HistoryState, output: AbstractCanvas, indexOf?: number) => {
   const goalIndex = indexOf ?? state.currentIndex
@@ -18,7 +18,7 @@ export const drawHistory = (state: HistoryState, output: AbstractCanvas, indexOf
     output.ctx.restore()
   }
 
-  const strokes = state.stack.slice(snapIndex + 1, goalIndex + 1).map(ent => ent.stroke)
+  const strokes = state.stack.slice(snapIndex + 1, goalIndex + 1).map((ent) => ent.stroke)
   const tempCanvas = new AbstractCanvas(output.width, output.height)
   replayStrokes(output, tempCanvas, strokes)
   output.ctx.restore()

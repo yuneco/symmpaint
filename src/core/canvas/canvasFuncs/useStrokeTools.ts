@@ -51,9 +51,9 @@ export type StrokeState = {
  * pointerdown〜pointerupまでの一連の操作を1ストロークとし、ストロークの中間状態を管理します。
  * 描画操作：
  *   ツールがdrawやdraw:line等の描画系に設定されている場合、ストロークによるこれらの描画を行います
- * 変形操作: 
+ * 変形操作:
  *   スクロール・回転・ズームの量を計算し、変形要求としてhandlerで指定されたコールバックを呼び出します
- * @param canvas 
+ * @param canvas
  * @param handler 変形操作のコールバック
  */
 export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
@@ -66,7 +66,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     lastPoint: new Point(),
     isCapturing: false,
     currentStroke: undefined,
-    pen: new Pen()
+    pen: new Pen(),
   }
 
   const strokeCanvas = new AbstractCanvas(
@@ -104,11 +104,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       return false
     }
 
-    if (
-      action === 'draw' ||
-      action === 'draw:line' ||
-      action === 'draw:stamp'
-    ) {
+    if (action === 'draw' || action === 'draw:line' || action === 'draw:stamp') {
       startStroke(eventStatus.startPoint)
     }
 
@@ -130,13 +126,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       const dp = inp.point.sub(eventStatus.startPoint)
       const stampScale = dp.length / 100
       clearCanvas(strokeCanvas)
-      putStroke(
-        canvas.stamp,
-        eventStatus.startPoint,
-        stampScale,
-        dp.angle,
-        true
-      )
+      putStroke(canvas.stamp, eventStatus.startPoint, stampScale, dp.angle, true)
     }
     if (action === 'scroll') onScroll(dist, 'canvas')
     if (action === 'scroll:anchor') onScroll(dist, 'anchor')
@@ -160,8 +150,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       point: event2viewPoint(ev),
       pressure: ev.pressure,
     }
-    const hasPaint =
-      action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
+    const hasPaint = action === 'draw' || action === 'draw:line' || action === 'draw:stamp'
     if (action === 'draw') {
       continueStroke(inp.point, ev.pressure || 0)
     }
@@ -181,19 +170,10 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       clearCanvas(strokeCanvas)
       const dp = inp.point.sub(eventStatus.startPoint)
       const stampScale = dp.length / 100
-      putStroke(
-        canvas.stamp,
-        eventStatus.startPoint,
-        stampScale,
-        dp.angle,
-        false
-      )
+      putStroke(canvas.stamp, eventStatus.startPoint, stampScale, dp.angle, false)
     }
 
-    if (
-      (action === 'draw' || action === 'draw:line') &&
-      eventStatus.isCapturing
-    ) {
+    if ((action === 'draw' || action === 'draw:line') && eventStatus.isCapturing) {
       canvas.stamp = eventStatus.currentStroke?.flatten
       endStroke(false)
       rePaint()
@@ -281,10 +261,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     pen.state = eventStatus.pen.state
 
     const previewStyle = canvas.style.clone({
-      color:
-        canvas.penKind === 'eraser'
-          ? canvas.backgroundColor
-          : canvas.style.color,
+      color: canvas.penKind === 'eraser' ? canvas.backgroundColor : canvas.style.color,
     })
 
     const canvasP = p
@@ -314,7 +291,6 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
     endStroke(false)
   }
 
-
   const onScroll = (dist: PointsDist, target: TransformTarget) => {
     const anchorIndex = canvas.hasSubPen ? 1 : 0
     const targetCoord = {
@@ -337,7 +313,7 @@ export const useStrokeTools = (canvas: PaintCanvas, handler: CanvasEvents) => {
       anchor: eventStatus.startAnchor[anchorIndex],
     }[target]
     const angle = targetCoord.angle + dist.angle
-    handler.onRotate(normalizeAngle(angle), target )
+    handler.onRotate(normalizeAngle(angle), target)
   }
 
   /**

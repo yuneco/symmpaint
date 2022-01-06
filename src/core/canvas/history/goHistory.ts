@@ -1,5 +1,5 @@
-import { hasBackHistory, hasForwardHistory } from "./hasHistory";
-import { HistoryState } from "./HistoryState";
+import { hasBackHistory, hasForwardHistory } from './hasHistory'
+import { HistoryState } from './HistoryState'
 
 export const goBackHistory = (state: HistoryState): HistoryState => {
   if (!hasBackHistory(state)) {
@@ -8,7 +8,7 @@ export const goBackHistory = (state: HistoryState): HistoryState => {
   }
   return {
     currentIndex: state.currentIndex - 1,
-    stack: [...state.stack]
+    stack: [...state.stack],
   }
 }
 
@@ -19,6 +19,6 @@ export const goForwardHistory = (state: HistoryState): HistoryState => {
   }
   return {
     currentIndex: state.currentIndex + 1,
-    stack: [...state.stack]
+    stack: [...state.stack],
   }
 }

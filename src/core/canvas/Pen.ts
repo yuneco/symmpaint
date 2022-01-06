@@ -82,7 +82,7 @@ export class Pen {
   matricesBasedFirstPen(parent: DOMMatrix): DOMMatrix[] {
     const mxs = this.matrices(parent)
     const mxBase = mxs[0].inverse()
-    return mxs.map(mx => mx.multiply(mxBase))
+    return mxs.map((mx) => mx.multiply(mxBase))
   }
 
   /**
