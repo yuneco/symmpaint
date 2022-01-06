@@ -55,6 +55,9 @@ setting.onClear.listen(() => {
 setting.onUndo.listen(() => {
   canvas.undo()
 })
+setting.onRedo.listen(() => {
+  canvas.redo()
+})
 const copyImg = async () => {
   // see: https://stackoverflow.com/questions/61187374/how-to-fix-the-cannot-find-name-clipboarditem-error
   let item: ClipboardItem | undefined
@@ -157,7 +160,11 @@ window.addEventListener('keydown', (ev) => {
     setting.penCountDown()
   }
   if (ev.key === 'z' && ev.metaKey) {
-    setting.onUndo.fire()
+    if (ev.shiftKey) {
+      setting.onRedo.fire()
+    } else {
+      setting.onUndo.fire()
+    }
   }
   if (ev.key === 'c' && ev.metaKey) {
     setting.onCopy.fire()

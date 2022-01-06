@@ -304,6 +304,10 @@ export class PaintCanvas {
     return this.history.undoable
   }
 
+  get enableRedo() {
+    return this.history.redoable
+  }
+
   private rebuildPen() {
     this.pen.state = createPen(
       this.setting.penCount,
@@ -380,7 +384,16 @@ export class PaintCanvas {
   undo() {
     if (!this.history.undoable) return
     clearCanvas(this.canvas)
-    this.history.undo(this.canvas)
+    this.history.undo()
+    this.history.draw(this.canvas)
+    this.rePaint()
+  }
+
+  redo() {
+    if (!this.history.redoable) return
+    clearCanvas(this.canvas)
+    this.history.redo()
+    this.history.draw(this.canvas)
     this.rePaint()
   }
 

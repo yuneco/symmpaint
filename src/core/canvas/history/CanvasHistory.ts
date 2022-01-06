@@ -6,9 +6,17 @@ import { StrokeRecord, StrokeTool } from '../StrokeRecord'
 import { StrokeStyle } from '../StrokeStyle'
 import { drawHistory } from './drawHistory'
 import { getSnapshotFor } from './getSnapshotFor'
-import { goBackHistory } from './goHistory'
-import { getForwardHistory, hasBackHistory } from './hasHistory'
-import { addToDebugBox, clearDebugBox, removeFromDebugBox } from './historyDebugArea'
+import { goBackHistory, goForwardHistory } from './goHistory'
+import {
+  getForwardHistory,
+  hasBackHistory,
+  hasForwardHistory,
+} from './hasHistory'
+import {
+  addToDebugBox,
+  clearDebugBox,
+  removeFromDebugBox,
+} from './historyDebugArea'
 import { HistoryState } from './HistoryState'
 import { pushHistory } from './pushHistory'
 
@@ -27,14 +35,19 @@ export class CanvasHistory {
   private currentStroke?: StrokeRecord
 
   constructor(initialState?: {
-    canvasCoord: Coordinate,
-    penState: PenState,
-    style: StrokeStyle,
+    canvasCoord: Coordinate
+    penState: PenState
+    style: StrokeStyle
     tool?: StrokeTool
   }) {
     clearDebugBox()
     if (initialState) {
-      this.start(initialState.canvasCoord, initialState.penState, initialState.style, initialState.tool)
+      this.start(
+        initialState.canvasCoord,
+        initialState.penState,
+        initialState.style,
+        initialState.tool
+      )
       // Blank snapshot for back to initial state
       this.commit(new AbstractCanvas(1, 1))
     }
@@ -54,6 +67,10 @@ export class CanvasHistory {
 
   get undoable() {
     return hasBackHistory(this.state)
+  }
+
+  get redoable() {
+    return hasForwardHistory(this.state)
   }
 
   start(
@@ -76,7 +93,10 @@ export class CanvasHistory {
 
     // 削除されるスナップショットがあればデバッグエリアからも消す
     const forwards = getForwardHistory(this.state)
-    forwards.map(ent => ent.snapshot?.el).filter(notNull).forEach(removeFromDebugBox)
+    forwards
+      .map((ent) => ent.snapshot?.el)
+      .filter(notNull)
+      .forEach(removeFromDebugBox)
 
     // 履歴を追加
     this.state = pushHistory(
@@ -97,17 +117,19 @@ export class CanvasHistory {
     this.currentStroke = undefined
   }
 
-  /**
-   * @param output Undo後のキャンバスの出力先
-   * @return undoが行われた場合true
-   */
-  undo(output: AbstractCanvas): boolean {
-    if (!this.undoable) {
-      return false
-    }
-
+  undo(): boolean {
+    if (!this.undoable) return false
     this.state = goBackHistory(this.state)
-    drawHistory(this.state, output, this.state.currentIndex)
     return true
+  }
+
+  redo(): boolean {
+    if (!this.redoable) return false
+    this.state = goForwardHistory(this.state)
+    return true
+  }
+
+  draw(output: AbstractCanvas) {
+    drawHistory(this.state, output, this.state.currentIndex)
   }
 }

@@ -46,6 +46,7 @@ export class SettingPalette {
   readonly onPenWidthChange = new PaintEvent<number>()
   readonly onClear = new PaintEvent<void>()
   readonly onUndo = new PaintEvent<void>()
+  readonly onRedo = new PaintEvent<void>()
   readonly onCopy = new PaintEvent<void>()
   readonly onKaleidoChange = new PaintEvent<[boolean, boolean]>()
   readonly onEraserChange = new PaintEvent<boolean>()
@@ -213,6 +214,7 @@ export class SettingPalette {
     const slPenWidth = (this.slPenWidth = new Slider('Pen Size', 2, 100, 20))
     const btnClear = new Button('Clear All')
     const btnUndo = new Button('Undo')
+    const btnRedo = new Button('Redo')
     const btnCopy = new Button('Copy Image')
     const cbKaleido1 = (this.cbKaleido1 = new Checkbox('Kalaidoscope'))
     const cbKaleido2 = (this.cbKaleido2 = new Checkbox('Kalaidoscope'))
@@ -241,6 +243,7 @@ export class SettingPalette {
     parent.appendChild(slPenWidth.el)
     parent.appendChild(btnClear.el)
     parent.appendChild(btnUndo.el)
+    parent.appendChild(btnRedo.el)
     parent.appendChild(btnCopy.el)
 
     slScale.addEventListener('input', () => {
@@ -269,6 +272,9 @@ export class SettingPalette {
     })
     btnUndo.addEventListener('click', () => {
       this.onUndo.fire()
+    })
+    btnRedo.addEventListener('click', () => {
+      this.onRedo.fire()
     })
     btnCopy.addEventListener('click', () => {
       this.onCopy.fire()
