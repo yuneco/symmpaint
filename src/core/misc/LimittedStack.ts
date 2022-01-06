@@ -17,6 +17,10 @@ export class LimittedStack<T> {
     return this.items.length
   }
 
+  set length(v) {
+    this.items.length = Math.min(this.maxItems, v)
+  }
+
   clear() {
     this.items.length = 0
   }
@@ -34,6 +38,10 @@ export class LimittedStack<T> {
 
   peek(offset = 0): T | undefined {
     return this.items[this.items.length - 1 + offset]
+  }
+
+  item(index: number): T | undefined {
+    return this.items[index]
   }
 
   getItems(): T[] {

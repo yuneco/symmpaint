@@ -3,7 +3,6 @@ import { Coordinate } from '../coords/Coordinate'
 import { PaintEvent } from '../events/PaintEvent'
 import { clearCanvas, fillCanvas } from './strokeFuncs/canvasPaintFuncs'
 import { Point } from '../coords/Point'
-import { CanvasHistory } from './CanvasHistory'
 import { Pen } from './Pen'
 import { StrokeStyle } from './StrokeStyle'
 import { cursorForTool } from '../events/cursorForTool'
@@ -15,6 +14,7 @@ import { CanvasEventParm, PaintCanvasEvent } from './PaintCanvasEvent'
 import { createPen } from './penFuncs/createPen'
 import { PaintCanvasSetting } from './PaintCanvasSetting'
 import { paintCanvasKaleidoAnchor } from './canvasFuncs/paintCanvasKaleidoAnchor'
+import { CanvasHistory } from './history/CanvasHistory'
 
 // Retina対応: 固定でx2
 const RESOLUTION = 2 //window.devicePixelRatio
@@ -89,10 +89,11 @@ export class PaintCanvas {
       this.width * RESOLUTION,
       this.height * RESOLUTION
     )
-    this.history = new CanvasHistory(
-      this.width * RESOLUTION,
-      this.height * RESOLUTION
-    )
+    this.history = new CanvasHistory({
+      canvasCoord: this.coord,
+      penState: this.pen.state,
+      style: this.setting.style,
+    })
 
     // canvas要素をDOMに挿入
     this.view.el.style.width = `${width}px`
@@ -299,8 +300,8 @@ export class PaintCanvas {
     this.setting.enableCapure = v
   }
 
-  get historyCount() {
-    return this.history.length
+  get enableUndo() {
+    return this.history.undoable
   }
 
   private rebuildPen() {
@@ -365,10 +366,11 @@ export class PaintCanvas {
       )
       this.history.commit(this.canvas)
     } else {
-      this.history = new CanvasHistory(
-        this.width * RESOLUTION,
-        this.height * RESOLUTION
-      )
+      this.history = new CanvasHistory({
+        canvasCoord: this.coord,
+        penState: this.pen.state,
+        style: this.setting.style,
+      })
     }
     clearCanvas(this.canvas)
     this.rePaint()
@@ -391,11 +393,11 @@ export class PaintCanvas {
       this.history.rollback()
       return
     }
-    this.history.commit(this.canvas)
     strokeCanvas?.copy(this.canvas.ctx, {
       alpha: this.setting.style.alpha,
       composition: this.setting.style.composition,
     })
+    this.history.commit(this.canvas)
     this.rePaint()
   }
 
